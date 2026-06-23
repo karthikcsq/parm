@@ -30,5 +30,6 @@ Available baselines:
 The canonical generated dataset is in `data/benchmark_v1/cases.jsonl`.
 Project plans and benchmark run artifacts live under `.Codex/`.
 
-For a full component-by-component guide, see
-`.Codex/benchmark-guide.md`.
+For the public evaluation contract, metrics, scorer policy, and failure
+taxonomy, see `docs/benchmark-evaluation.md`. For a full component-by-component
+guide, see `.Codex/benchmark-guide.md`.

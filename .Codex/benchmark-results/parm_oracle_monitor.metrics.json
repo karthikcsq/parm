@@ -1,0 +1,463 @@
+{
+  "case_count": 50,
+  "correct_surfaced_suggestion_rate": 0.8,
+  "memory_fact_found_rate": 1.0,
+  "path_correct_rate": 1.0,
+  "precision": 0.8,
+  "recall": 0.8,
+  "rows": [
+    {
+      "case_id": "parm-v1-001",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-002",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-003",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-004",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-005",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-006",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-007",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-008",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-009",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-010",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-011",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-012",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-013",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-014",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-015",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-016",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-017",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-018",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-019",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-020",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-021",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-022",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-023",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-024",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-025",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-026",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-027",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-028",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-029",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-030",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-031",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-032",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-033",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-034",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-035",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-036",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-037",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-038",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-039",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-040",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-041",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-042",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-043",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-044",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-045",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-046",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-047",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-048",
+      "correct": false,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 1
+    },
+    {
+      "case_id": "parm-v1-049",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    },
+    {
+      "case_id": "parm-v1-050",
+      "correct": true,
+      "memory_fact_found": true,
+      "path_correct": true,
+      "suggestion_count": 1,
+      "trigger_found": true,
+      "useless_suggestion_count": 0
+    }
+  ],
+  "total_suggestions": 50,
+  "trigger_found_rate": 1.0,
+  "useless_intervention_rate": 0.2
+}

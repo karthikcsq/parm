@@ -4,20 +4,64 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from .backends import MemoryBackend
+from .models import LanguageModel
 
 
 class BaselineNotImplementedError(LookupError):
     pass
 
 
+@dataclass(frozen=True)
+class BenchmarkInput:
+    case_id: str
+    prompt: str
+    observation_kind: str
+    observation_text: str
+
+
 class Baseline(Protocol):
     name: str
+    requires_memory: bool
 
     def run(
         self,
-        case: dict[str, Any],
-        memory_backend: MemoryBackend,
+        case: BenchmarkInput,
+        model: LanguageModel,
+        memory_backend: MemoryBackend | None,
     ) -> dict[str, Any]: ...
+
+
+class NoMemoryBaseline:
+    name = "no_memory"
+    requires_memory = False
+
+    def run(
+        self,
+        case: BenchmarkInput,
+        model: LanguageModel,
+        memory_backend: MemoryBackend | None,
+    ) -> dict[str, Any]:
+        if memory_backend is not None:
+            raise ValueError("no_memory baseline must not receive a memory backend")
+        response = model.generate(
+            prompt=case.prompt,
+            observation_kind=case.observation_kind,
+            observation_text=case.observation_text,
+        )
+        return {
+            "case_id": case.case_id,
+            "response_text": response.text,
+            "requested_model": model.model_name,
+            "resolved_model": response.resolved_model,
+            "provider_response_id": response.response_id,
+            "usage": response.usage,
+            "trace": {
+                "detected_cues": [],
+                "retrieved_source_ids": [],
+                "admitted_source_ids": [],
+                "admitted_perturbations": {},
+            },
+        }
 
 
 @dataclass(frozen=True)
@@ -84,3 +128,16 @@ def get_baseline(name: str) -> Baseline:
             f"Baseline '{name}' is not implemented. "
             "No placeholder baseline will be executed."
         ) from exc
+
+
+def benchmark_input(case: dict[str, Any]) -> BenchmarkInput:
+    """Expose only model-visible benchmark fields to a baseline."""
+    return BenchmarkInput(
+        case_id=case["case_id"],
+        prompt=case["prompt"],
+        observation_kind=case["observation"]["kind"],
+        observation_text=case["observation_text"],
+    )
+
+
+register_baseline(NoMemoryBaseline())

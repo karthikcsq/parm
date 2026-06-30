@@ -7,7 +7,7 @@ name = "parm-bench"
 version = "0.1.0"
 description = "Output-cued personal-memory decision benchmark."
 requires-python = ">=3.10"
-dependencies = ["tiktoken>=0.7"]
+dependencies = ["openai>=2.44", "tiktoken>=0.7"]
 
 [project.scripts]
 parm-bench = "parm_bench.cli:main"

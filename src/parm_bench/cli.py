@@ -2,14 +2,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
 from .amara import normalize_amara
 from .backends import GBrainBackend
-from .baselines import BaselineNotImplementedError, get_baseline
+from .baselines import (
+    BaselineNotImplementedError,
+    benchmark_input,
+    get_baseline,
+)
 from .dataset import DatasetValidationError, load_cases, validate_cases
+from .models import OpenAIResponsesModel
 from .scoring import score_predictions
 
 
@@ -32,6 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("dataset_dir")
     run.add_argument("--baseline", required=True)
     run.add_argument("--memory-backend", choices=("gbrain",), default="gbrain")
+    run.add_argument("--model")
     run.add_argument("--out", required=True)
 
     score = commands.add_parser("score")
@@ -53,7 +61,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "inspect":
             return _inspect(args.dataset_dir, args.case_id)
         if args.command == "run":
-            return _run(args.dataset_dir, args.baseline, args.memory_backend, args.out)
+            return _run(
+                args.dataset_dir,
+                args.baseline,
+                args.memory_backend,
+                args.model,
+                args.out,
+            )
         if args.command == "score":
             return _score(args.results_jsonl, args.gold, args.out)
     except DatasetValidationError as exc:
@@ -81,20 +95,51 @@ def _inspect(dataset_dir: str, case_id: str | None) -> int:
     return 0
 
 
-def _run(dataset_dir: str, baseline: str, backend_name: str, out: str) -> int:
+def _run(
+    dataset_dir: str,
+    baseline: str,
+    backend_name: str,
+    model_name: str | None,
+    out: str,
+) -> int:
     cases = load_cases(dataset_dir)
     validate_cases(cases)
     implementation = get_baseline(baseline)
-    backend = GBrainBackend()
+    backend = GBrainBackend() if implementation.requires_memory else None
+    model = OpenAIResponsesModel(_resolve_model(model_name))
     path = Path(out)
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        for case in cases:
-            row = implementation.run(case, backend)
-            row["baseline"] = baseline
-            handle.write(json.dumps(row, sort_keys=True) + "\n")
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            for case in cases:
+                row = implementation.run(
+                    benchmark_input(case),
+                    model,
+                    backend,
+                )
+                row["baseline"] = baseline
+                handle.write(json.dumps(row, sort_keys=True) + "\n")
+        temporary_path.replace(path)
+    except Exception:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+        raise
     print(f"Wrote {len(cases)} predictions to {path}")
     return 0
+
+
+def _resolve_model(cli_model: str | None) -> str:
+    return cli_model or os.environ.get("PARM_OPENAI_MODEL") or "gpt-5-mini"
 
 
 def _score(results_path: str, gold: str, out: str | None) -> int:

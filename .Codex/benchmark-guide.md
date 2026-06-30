@@ -24,22 +24,42 @@ GBrain-ready Markdown under `.gbrain-local/corpus/amara-life-v1`. The converter
 preserves source IDs, hashes, timestamps, and perturbation metadata before
 materializing deterministic entity pages.
 
-## Baseline scaffolding
+## Baseline execution
 
-No baseline is currently executable. `src/parm_bench/baselines.py` defines the
-`Baseline` protocol, a registration boundary, and a non-executable inventory of
-planned research comparisons. The registry is intentionally empty.
+The shared runner validates and resolves every dataset row, then creates a
+sanitized `BenchmarkInput` containing only:
 
-`run` accepts a name so the CLI contract is stable, but refuses any name that
-has not been backed by a reviewed implementation. `--memory-backend gbrain`
-will supply the pinned local GBrain CLI to a future registered baseline.
+- `case_id`;
+- the ordinary prompt;
+- the observation kind; and
+- the resolved observation text.
+
+Hidden cue metadata, gold decisions, memory text, distractors, and provenance
+remain outside the baseline boundary. Every registered baseline receives this
+same public input and returns the common prediction shape. The runner writes all
+rows through a temporary file and only publishes the requested output after
+every case succeeds.
+
+`no_memory` is the first registered implementation. It invokes OpenAI Responses
+once per case, does not instantiate GBrain, and emits an empty retrieval trace.
+The requested model is selected by `--model`, `PARM_OPENAI_MODEL`, then
+`gpt-5-mini`. Unimplemented baseline names are still refused.
 
 Every prediction contains:
 
 ```json
 {
   "case_id": "parm-amara-conference-agenda-positive",
+  "baseline": "no_memory",
+  "requested_model": "gpt-5-mini",
+  "resolved_model": "gpt-5-mini-...",
+  "provider_response_id": "resp_...",
   "response_text": "Session G-147 — Chen Wei, NovaMind: Edge Inference for Texas Grid Reliability Pilots",
+  "usage": {
+    "input_tokens": 10000,
+    "output_tokens": 20,
+    "total_tokens": 10020
+  },
   "trace": {
     "detected_cues": [],
     "retrieved_source_ids": [],

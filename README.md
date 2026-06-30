@@ -5,7 +5,14 @@ Parallel Asynchronous Retrieval of Memory research prototype.
 ## Benchmark V1
 
 This repo currently contains the first PARM deliverable: a synthetic benchmark
-for output- and tool-response-conditioned cross-source memory joins.
+for output- and tool-response-conditioned personal-memory retrieval.
+
+The core V1 question is not whether a system can solve elegant multi-hop graph
+paths. It is whether an agent can monitor large generated or tool-provided
+contexts, identify the few cues that warrant memory lookup, and suppress
+spurious memory matches. The memory store should stay realistic and simple:
+memory pages or facts linked to extracted entities, timestamps, and light graph
+metadata for diagnostics.
 
 ### Commands
 

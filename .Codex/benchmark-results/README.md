@@ -10,9 +10,9 @@ Generated on the 50-case synthetic V1 dataset.
 | `parm_oracle_monitor` | 1.00 | 1.00 | 1.00 | 0.00 |
 
 The oracle monitor is intentionally gold-assisted in V1. Its role is to prove
-that the dataset contains recoverable cross-source joins before later work adds
-noisy entity linking, learned scoring, FLARE-style retrieval, or proactive-agent
-baselines.
+that the dataset contains recoverable output/tool-conditioned memory
+interventions before later work adds noisy cue selection, hybrid memory search,
+reranking, FLARE-style retrieval, or proactive-agent baselines.
 
 The canonical 50-case dataset now covers 10 domains with 5 cases each:
 introductions, customer discovery, opportunity/risk, travel planning, health

@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "parm-bench"
 version = "0.1.0"
-description = "Synthetic benchmark harness for PARM cross-source memory joins."
+description = "Output-cued personal-memory decision benchmark."
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["tiktoken>=0.7"]
 
 [project.scripts]
 parm-bench = "parm_bench.cli:main"

@@ -41,11 +41,10 @@ ATTENDEES_LINE = re.compile(r"^(attendees\s*:\s*)(.+)$", re.MULTILINE)
 
 
 def sha256_file(path: str | Path) -> str:
-    digest = hashlib.sha256()
-    with Path(path).open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    # Corpus files are text. Canonicalize line endings so provenance survives
+    # Git's LF/CRLF checkout policy across operating systems.
+    payload = Path(path).read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def load_manifest(source: str | Path) -> dict[str, dict[str, Any]]:

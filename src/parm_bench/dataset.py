@@ -5,52 +5,41 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import tiktoken
 
-GOAL_FAMILIES = {
-    "customer_discovery",
-    "cooking_planning",
-    "event_planning",
-    "fitness_planning",
-    "general_travel",
-    "health_admin",
-    "hiring",
-    "home_ops",
-    "interview_prep",
-    "introductions",
-    "learning_research",
-    "opportunity_risk",
-    "personal_finance",
-    "travel_planning",
-    "writing_help",
-}
-TRIGGER_SOURCES = {"generated_output", "tool_response"}
-JOIN_DEPTHS = {1, 2, 3}
-DISTRACTOR_TYPES = {
-    "semantic",
-    "graph_proximity",
-    "stale_invalid_edge",
-    "goal_irrelevant",
-}
-ACTIONABILITIES = {
-    "enrichment",
-    "follow_up_question",
-    "intro",
-    "prioritization",
-    "warning",
-}
-REQUIRED_CASE_FIELDS = {
+from .amara import sha256_file
+
+
+TOKENIZER = "cl100k_base"
+MIN_CONTEXT_TOKENS = 8_000
+MAX_CONTEXT_TOKENS = 12_000
+VARIANTS = {"positive", "cue-ablated"}
+OBSERVATION_KINDS = {"assistant_output", "tool_result"}
+LISTING_PREFIXES = (
+    "Session ",
+    "Workshop ",
+    "Lead Story ",
+    "Item ",
+    "Brief ",
+    "Editor's Pick ",
+    "Episode ",
+    "New Release ",
+    "Vendor ",
+    "Candidate ",
+    "Result ",
+    "Listing ",
+)
+REQUIRED_FIELDS = {
     "case_id",
-    "goal_family",
-    "trigger_source",
-    "join_depth",
-    "distractor_type",
-    "actionability",
-    "user_goal",
-    "assistant_output",
-    "tool_response",
-    "graph",
-    "trigger_entity",
-    "expected",
+    "base_case_id",
+    "variant",
+    "prompt",
+    "observation",
+    "cue",
+    "memory",
+    "decisions",
+    "distractors",
+    "provenance",
 }
 
 
@@ -70,131 +59,166 @@ class DatasetValidationError(ValueError):
 
 
 def load_cases(dataset_dir: str | Path) -> list[dict[str, Any]]:
-    path = Path(dataset_dir) / "cases.jsonl"
+    root = Path(dataset_dir)
+    path = root / "cases.jsonl"
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found: {path}")
-
     cases: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as handle:
+    with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
-            stripped = line.strip()
-            if not stripped:
+            if not line.strip():
                 continue
             try:
-                cases.append(json.loads(stripped))
+                case = json.loads(line)
             except json.JSONDecodeError as exc:
                 raise ValueError(f"{path}:{line_number}: invalid JSON: {exc}") from exc
+            case["_dataset_root"] = str(root.resolve())
+            case["observation_text"] = observation_text(case, root)
+            cases.append(case)
     return cases
 
 
-def write_cases(cases: list[dict[str, Any]], dataset_dir: str | Path) -> Path:
-    path = Path(dataset_dir)
-    path.mkdir(parents=True, exist_ok=True)
-    cases_path = path / "cases.jsonl"
-    with cases_path.open("w", encoding="utf-8", newline="\n") as handle:
-        for case in cases:
-            handle.write(json.dumps(case, sort_keys=True) + "\n")
-    return cases_path
+def observation_text(case: dict[str, Any], dataset_root: str | Path) -> str:
+    observation = case["observation"]
+    path = Path(dataset_root) / observation["content_path"]
+    text = path.read_text(encoding="utf-8")
+    for replacement in observation.get("replacements", []):
+        old = replacement["old"]
+        if old not in text:
+            raise ValueError(f"{case['case_id']}: replacement source text not found")
+        text = text.replace(old, replacement["new"], 1)
+    return text
 
 
 def validate_cases(cases: list[dict[str, Any]]) -> None:
     issues: list[ValidationIssue] = []
-    seen_ids: set[str] = set()
+    seen: set[str] = set()
+    bases: dict[str, set[str]] = {}
+    encoding = tiktoken.get_encoding(TOKENIZER)
 
     for index, case in enumerate(cases):
         case_id = str(case.get("case_id", f"<case {index}>"))
-        missing = sorted(REQUIRED_CASE_FIELDS - set(case))
-        for field in missing:
+        for field in sorted(REQUIRED_FIELDS - set(case)):
             issues.append(ValidationIssue(case_id, f"missing required field '{field}'"))
-
-        if case_id in seen_ids:
+        if case_id in seen:
             issues.append(ValidationIssue(case_id, "duplicate case_id"))
-        seen_ids.add(case_id)
+        seen.add(case_id)
+        bases.setdefault(str(case.get("base_case_id")), set()).add(
+            str(case.get("variant"))
+        )
+        _validate_case(case, case_id, encoding, issues)
 
-        _validate_taxonomy(case, case_id, issues)
-        _validate_graph(case, case_id, issues)
-
+    for base_case_id, variants in bases.items():
+        if variants != VARIANTS:
+            issues.append(
+                ValidationIssue(
+                    base_case_id,
+                    "must contain one positive and one cue-ablated variant",
+                )
+            )
     if issues:
         raise DatasetValidationError(issues)
 
 
-def _validate_taxonomy(
+def _validate_case(
     case: dict[str, Any],
     case_id: str,
+    encoding: Any,
     issues: list[ValidationIssue],
 ) -> None:
-    if case.get("goal_family") not in GOAL_FAMILIES:
-        issues.append(ValidationIssue(case_id, "invalid goal_family"))
-    if case.get("trigger_source") not in TRIGGER_SOURCES:
-        issues.append(ValidationIssue(case_id, "invalid trigger_source"))
-    if case.get("join_depth") not in JOIN_DEPTHS:
-        issues.append(ValidationIssue(case_id, "invalid join_depth"))
-    if case.get("distractor_type") not in DISTRACTOR_TYPES:
-        issues.append(ValidationIssue(case_id, "invalid distractor_type"))
-    if case.get("actionability") not in ACTIONABILITIES:
-        issues.append(ValidationIssue(case_id, "invalid actionability"))
+    variant = case.get("variant")
+    if variant not in VARIANTS:
+        issues.append(ValidationIssue(case_id, "invalid variant"))
+    observation = case.get("observation", {})
+    if observation.get("kind") not in OBSERVATION_KINDS:
+        issues.append(ValidationIssue(case_id, "invalid observation.kind"))
 
+    text = str(case.get("observation_text", ""))
+    token_count = len(encoding.encode(text))
+    if not MIN_CONTEXT_TOKENS <= token_count <= MAX_CONTEXT_TOKENS:
+        issues.append(
+            ValidationIssue(
+                case_id,
+                f"observation has {token_count} tokens; expected "
+                f"{MIN_CONTEXT_TOKENS}-{MAX_CONTEXT_TOKENS} using {TOKENIZER}",
+            )
+        )
 
-def _validate_graph(
-    case: dict[str, Any],
-    case_id: str,
-    issues: list[ValidationIssue],
-) -> None:
-    graph = case.get("graph")
-    if not isinstance(graph, dict):
-        issues.append(ValidationIssue(case_id, "graph must be an object"))
-        return
+    prompt = str(case.get("prompt", "")).casefold()
+    cue = case.get("cue", {})
+    cue_text = str(cue.get("text", ""))
+    if cue_text.casefold() in prompt:
+        issues.append(ValidationIssue(case_id, "cue leaks into prompt"))
+    if bool(cue.get("present")) != (variant == "positive"):
+        issues.append(ValidationIssue(case_id, "cue.present disagrees with variant"))
+    if variant == "positive" and cue_text not in text:
+        issues.append(ValidationIssue(case_id, "gold cue is absent from observation"))
+    if variant == "cue-ablated" and cue_text in text:
+        issues.append(ValidationIssue(case_id, "ablated observation still contains cue"))
 
-    nodes = graph.get("nodes", [])
-    edges = graph.get("edges", [])
-    node_ids = {node.get("id") for node in nodes if isinstance(node, dict)}
-    if None in node_ids:
-        issues.append(ValidationIssue(case_id, "all graph nodes need an id"))
-        node_ids.discard(None)
-
-    for edge in edges:
-        if not isinstance(edge, dict):
-            issues.append(ValidationIssue(case_id, "all graph edges must be objects"))
-            continue
-        source = edge.get("source")
-        target = edge.get("target")
-        if source not in node_ids or target not in node_ids:
+    decisions = case.get("decisions", {})
+    if decisions.get("answer_type") != "natural_language_choice":
+        issues.append(
+            ValidationIssue(case_id, "decisions.answer_type must be natural_language_choice")
+        )
+    output_choice = decisions.get("output_only", {}).get("choice")
+    memory_choice = decisions.get("memory_conditioned", {}).get("choice")
+    if "exactly one" not in prompt:
+        issues.append(ValidationIssue(case_id, "prompt must request exactly one choice"))
+    for label, choice in (
+        ("output-only", output_choice),
+        ("memory-conditioned", memory_choice),
+    ):
+        if not isinstance(choice, str) or not choice.strip():
+            issues.append(ValidationIssue(case_id, f"{label} choice must be natural language"))
+        elif text.casefold().count(choice.casefold()) != 1:
             issues.append(
                 ValidationIssue(
                     case_id,
-                    f"edge '{edge.get('id', '<missing>')}' references unknown nodes",
+                    f"{label} choice must appear exactly once in the observation",
                 )
             )
+    if variant == "positive" and output_choice == memory_choice:
+        issues.append(ValidationIssue(case_id, "positive case does not change decision"))
+    if variant == "cue-ablated" and output_choice != memory_choice:
+        issues.append(ValidationIssue(case_id, "control case changes decision"))
 
-    trigger_node = case.get("trigger_entity", {}).get("node_id")
-    if trigger_node not in node_ids:
-        issues.append(ValidationIssue(case_id, "trigger_entity.node_id is not in graph"))
+    visible_labels = [
+        line.split(".", 1)[0].strip()
+        for line in text.splitlines()
+        if line.startswith(LISTING_PREFIXES)
+    ]
+    distractor_sources = case.get("distractors", {}).get("sources", [])
+    if len(visible_labels) < 25:
+        issues.append(ValidationIssue(case_id, "needs at least 25 visible choices"))
+    if len(visible_labels) != len({label.casefold() for label in visible_labels}):
+        issues.append(
+            ValidationIssue(case_id, "visible choice labels must be unique")
+        )
+    if len(distractor_sources) < 3:
+        issues.append(ValidationIssue(case_id, "needs at least 3 memory distractors"))
 
-    expected = case.get("expected", {})
-    memory_node = expected.get("memory_fact_node_id")
-    if memory_node not in node_ids:
-        issues.append(ValidationIssue(case_id, "expected.memory_fact_node_id is not in graph"))
-
-    gold_path = expected.get("gold_path")
-    if not isinstance(gold_path, list) or len(gold_path) < 2:
-        issues.append(ValidationIssue(case_id, "expected.gold_path must contain at least two node ids"))
-        return
-    if gold_path[0] != trigger_node:
-        issues.append(ValidationIssue(case_id, "gold_path must start with trigger entity"))
-    if gold_path[-1] != memory_node:
-        issues.append(ValidationIssue(case_id, "gold_path must end with memory fact node"))
-    for node_id in gold_path:
-        if node_id not in node_ids:
-            issues.append(ValidationIssue(case_id, f"gold_path references unknown node '{node_id}'"))
-
-    valid_pairs = {
-        (edge.get("source"), edge.get("target"))
-        for edge in edges
-        if edge.get("valid", True) is True
-    }
-    valid_pairs |= {(target, source) for source, target in valid_pairs}
-    for left, right in zip(gold_path, gold_path[1:]):
-        if (left, right) not in valid_pairs:
+    memory = case.get("memory", {})
+    if not str(memory.get("text", "")).strip():
+        issues.append(ValidationIssue(case_id, "memory text must be readable prose"))
+    source_ids = set(memory.get("gold_source_ids", []))
+    sources = memory.get("sources", [])
+    if source_ids != {source.get("source_id") for source in sources}:
+        issues.append(ValidationIssue(case_id, "gold source IDs and sources disagree"))
+    corpus_root = (
+        Path(case.get("_dataset_root", ".")).parent
+        / "amara-life-v1"
+        / "source"
+    )
+    for source in sources:
+        if "poison" in source.get("perturbations", []):
+            issues.append(ValidationIssue(case_id, "poison source cannot be gold"))
+        path = corpus_root / source.get("path", "")
+        if not path.exists():
             issues.append(
-                ValidationIssue(case_id, f"gold_path has no valid edge between '{left}' and '{right}'")
+                ValidationIssue(case_id, f"missing memory source {source.get('path')}")
+            )
+        elif sha256_file(path) != source.get("sha256"):
+            issues.append(
+                ValidationIssue(case_id, f"source hash mismatch {source.get('path')}")
             )

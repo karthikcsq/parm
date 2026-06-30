@@ -1,117 +1,121 @@
 from __future__ import annotations
 
 import copy
+import tempfile
 import unittest
+from pathlib import Path
 
-from parm_bench.dataset import DatasetValidationError, validate_cases
-from parm_bench.synthetic import generate_cases
+from parm_bench.amara import normalize_amara
+from parm_bench.dataset import (
+    LISTING_PREFIXES,
+    DatasetValidationError,
+    load_cases,
+    validate_cases,
+)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DATASET = ROOT / "data" / "benchmark_v1"
 
 
 class DatasetValidationTests(unittest.TestCase):
-    def test_generated_cases_are_valid(self) -> None:
-        cases = generate_cases(50)
+    def test_pilot_dataset_is_valid(self) -> None:
+        cases = load_cases(DATASET)
         validate_cases(cases)
-        self.assertEqual(len(cases), 50)
+        self.assertEqual(len(cases), 10)
+        self.assertEqual(len({case["base_case_id"] for case in cases}), 5)
 
-    def test_generated_cases_cover_multiple_domains(self) -> None:
-        cases = generate_cases(50)
-        families = {case["goal_family"] for case in cases}
-        self.assertGreaterEqual(len(families), 8)
-        self.assertIn("travel_planning", families)
-        self.assertIn("general_travel", families)
-        self.assertIn("cooking_planning", families)
-        self.assertIn("health_admin", families)
-        self.assertIn("home_ops", families)
-
-    def test_user_goals_do_not_prompt_memory_search(self) -> None:
-        cases = generate_cases(50)
-        forbidden_phrases = [
-            "flag ",
-            "hidden",
-            "latent",
-            "personal context",
-            "personal memory",
-            "memory",
-            "note what",
-            "surface hidden",
-        ]
+    def test_every_case_has_positive_and_ablated_variant(self) -> None:
+        cases = load_cases(DATASET)
+        by_base: dict[str, set[str]] = {}
         for case in cases:
-            user_goal = case["user_goal"].lower()
-            with self.subTest(case_id=case["case_id"]):
-                for phrase in forbidden_phrases:
-                    self.assertNotIn(phrase, user_goal)
+            by_base.setdefault(case["base_case_id"], set()).add(case["variant"])
+        self.assertTrue(all(value == {"positive", "cue-ablated"} for value in by_base.values()))
 
-    def test_trigger_cue_appears_after_initial_prompt(self) -> None:
-        cases = generate_cases(50)
-        for case in cases:
-            trigger_label = case["trigger_entity"]["label"].lower()
-            user_goal = case["user_goal"].lower()
-            assistant_output = case["assistant_output"].lower()
-            tool_summary = case["tool_response"]["summary"].lower()
+    def test_prompts_do_not_leak_cues_or_memory_search(self) -> None:
+        for case in load_cases(DATASET):
+            prompt = case["prompt"].casefold()
+            self.assertNotIn(case["cue"]["text"].casefold(), prompt)
+            for phrase in ("search memory", "look through memory", "gbrain"):
+                self.assertNotIn(phrase, prompt)
 
-            with self.subTest(case_id=case["case_id"]):
-                self.assertNotIn(trigger_label, user_goal)
-                if case["trigger_source"] == "generated_output":
-                    self.assertIn(trigger_label, assistant_output)
-                else:
-                    self.assertIn(trigger_label, tool_summary)
+    def test_contexts_are_large_and_distractor_rich(self) -> None:
+        for case in load_cases(DATASET):
+            labels = [
+                line.split(".", 1)[0].strip()
+                for line in case["observation_text"].splitlines()
+                if line.startswith(LISTING_PREFIXES)
+            ]
+            self.assertGreaterEqual(len(labels), 25)
+            self.assertEqual(len(labels), len({label.casefold() for label in labels}))
+            self.assertGreaterEqual(len(case["distractors"]["sources"]), 3)
 
-    def test_context_requirement_controls_tool_use(self) -> None:
-        cases = generate_cases(50)
-        requirements = {case["context_requirement"] for case in cases}
-        self.assertIn("tool", requirements)
-        self.assertIn("general_knowledge", requirements)
+    def test_each_case_requests_one_natural_language_choice(self) -> None:
+        for case in load_cases(DATASET):
+            self.assertIn("exactly one", case["prompt"].casefold())
+            self.assertEqual(
+                case["decisions"]["answer_type"], "natural_language_choice"
+            )
+            for condition in ("output_only", "memory_conditioned"):
+                choice = case["decisions"][condition]["choice"]
+                self.assertIsInstance(choice, str)
+                self.assertEqual(
+                    case["observation_text"].casefold().count(choice.casefold()), 1
+                )
 
-        for case in cases:
-            tool_response = case["tool_response"]
-            with self.subTest(case_id=case["case_id"]):
-                if case["context_requirement"] == "tool":
-                    self.assertEqual(case["trigger_source"], "tool_response")
-                    self.assertEqual(tool_response["source"], "synthetic_local_context")
-                    self.assertGreaterEqual(tool_response["summary"].count("- "), 3)
-                    self.assertIn("Best objective fit:", tool_response["summary"])
-                else:
-                    self.assertEqual(case["trigger_source"], "generated_output")
-                    self.assertEqual(tool_response["source"], "not_required")
-                    self.assertIn("general model knowledge", tool_response["summary"])
+    def test_memory_is_readable_prose_not_an_opaque_answer_id(self) -> None:
+        for case in load_cases(DATASET):
+            memory_text = case["memory"]["text"]
+            self.assertGreater(len(memory_text.split()), 6)
+            self.assertNotIn("selected_item_id", memory_text)
+            self.assertNotIn("session-g-147", memory_text)
 
-    def test_cases_encode_memory_decision_effect_without_generic_gold_answer(self) -> None:
-        cases = generate_cases(50)
-        for case in cases:
-            expected = case["expected"]
-            with self.subTest(case_id=case["case_id"]):
-                self.assertNotIn("generic_decision", expected)
-                self.assertNotIn("memory_augmented_delta", expected)
-                self.assertIn("decision_effect", expected)
-                self.assertEqual(expected["decision_effect"]["item_node_id"], "n_item")
+    def test_memory_sources_expose_identifying_language_in_prose(self) -> None:
+        identifying_terms = {
+            "parm-amara-conference-agenda": "novamind",
+            "parm-amara-ai-news-digest": "coreweave",
+            "parm-amara-podcast-feed": "burnout",
+            "parm-amara-vendor-report": "novatech labs",
+            "parm-amara-lunch-search": "lunch at my desk",
+        }
+        corpus = ROOT / "data" / "amara-life-v1" / "source"
+        for case in load_cases(DATASET):
+            source_text = "\n".join(
+                (corpus / source["path"]).read_text(encoding="utf-8")
+                for source in case["memory"]["sources"]
+            ).casefold()
+            self.assertIn(identifying_terms[case["base_case_id"]], source_text)
 
-    def test_missing_required_field_fails(self) -> None:
-        case = generate_cases(1)[0]
-        del case["expected"]
+    def test_gold_sources_are_real_and_never_poison(self) -> None:
+        for case in load_cases(DATASET):
+            for source in case["memory"]["sources"]:
+                self.assertNotIn("poison", source.get("perturbations", []))
+
+    def test_broken_source_hash_fails(self) -> None:
+        cases = load_cases(DATASET)
+        broken = copy.deepcopy(cases)
+        broken[0]["memory"]["sources"][0]["sha256"] = "0" * 64
         with self.assertRaises(DatasetValidationError) as context:
-            validate_cases([case])
-        self.assertIn("missing required field 'expected'", str(context.exception))
+            validate_cases(broken)
+        self.assertIn("source hash mismatch", str(context.exception))
 
-    def test_duplicate_case_id_fails(self) -> None:
-        cases = generate_cases(2)
-        cases[1]["case_id"] = cases[0]["case_id"]
+    def test_positive_decision_must_change(self) -> None:
+        cases = load_cases(DATASET)
+        broken = copy.deepcopy(cases)
+        positive = next(case for case in broken if case["variant"] == "positive")
+        positive["decisions"]["memory_conditioned"] = positive["decisions"]["output_only"]
         with self.assertRaises(DatasetValidationError) as context:
-            validate_cases(cases)
-        self.assertIn("duplicate case_id", str(context.exception))
+            validate_cases(broken)
+        self.assertIn("does not change decision", str(context.exception))
 
-    def test_invalid_graph_reference_fails(self) -> None:
-        case = generate_cases(1)[0]
-        case["graph"]["edges"][0]["target"] = "missing"
-        with self.assertRaises(DatasetValidationError) as context:
-            validate_cases([case])
-        self.assertIn("references unknown nodes", str(context.exception))
-
-    def test_broken_gold_path_fails(self) -> None:
-        case = copy.deepcopy(generate_cases(1)[0])
-        case["expected"]["gold_path"] = ["n_trigger", "n_distractor", "n_memory"]
-        with self.assertRaises(DatasetValidationError) as context:
-            validate_cases([case])
-        self.assertIn("gold_path has no valid edge", str(context.exception))
+    def test_normalizer_preserves_poison_metadata(self) -> None:
+        source = ROOT / "data" / "amara-life-v1" / "source"
+        with tempfile.TemporaryDirectory() as tmp:
+            count = normalize_amara(source, tmp)
+            self.assertEqual(count, 600)
+            poison = (Path(tmp) / "slack" / "sl-0178.md").read_text(encoding="utf-8")
+            self.assertIn('"poison"', poison)
+            self.assertIn("perturbation_fixture_id", poison)
 
 
 if __name__ == "__main__":

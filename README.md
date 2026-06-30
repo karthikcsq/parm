@@ -41,13 +41,32 @@ python -m unittest discover -s tests
 
 ## Baseline status
 
-No baseline is currently implemented or registered. The repository contains
-only the `Baseline` protocol, registry, CLI boundary, and planned comparison
-inventory. `parm-bench run` refuses unimplemented names rather than executing a
-placeholder.
+`no_memory` is the first implemented baseline. It sends only the ordinary
+prompt and resolved observation to the response model: no cue metadata, answer
+key, personal-memory text, distractors, or GBrain backend are available to the
+implementation.
 
-Each baseline will be developed and reviewed as a real experiment before it can
-produce results. The repo-local GBrain adapter is available as infrastructure:
+Run the five positive/control pairs and score them:
+
+```powershell
+$env:PYTHONPATH='src'
+python -m parm_bench.cli run data/benchmark_v1 `
+  --baseline no_memory `
+  --model gpt-5-mini `
+  --out .Codex/benchmark-results/no-memory-gpt-5-mini.jsonl
+python -m parm_bench.cli score `
+  .Codex/benchmark-results/no-memory-gpt-5-mini.jsonl `
+  --gold data/benchmark_v1 `
+  --out .Codex/benchmark-results/no-memory-gpt-5-mini.metrics.json
+```
+
+The model defaults to `PARM_OPENAI_MODEL` and then `gpt-5-mini` when `--model`
+is omitted. OpenAI authentication uses `OPENAI_API_KEY`. Results record the
+requested and resolved model names, response ID, usage, response text, and an
+empty memory trace.
+
+Later baselines will be developed and reviewed one at a time. The repo-local
+GBrain adapter is available as infrastructure:
 
 ```powershell
 python -m parm_bench.cli prepare-amara

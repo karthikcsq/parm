@@ -2,16 +2,16 @@
 
 ## Current
 
-- Design and implement the first baseline end to end. Register it only after its
-  agent behavior, retrieval policy, model configuration, and trace contract
-  have been explicitly reviewed.
+- Review the real `no_memory` run as the response-model floor for all later
+  comparisons. Do not interpret it as a retrieval result: its trace is empty by
+  construction.
 - Review the five 9K-token contexts for realism, scheduling consistency, and
   whether each output-only decision is genuinely defensible.
-- Add a model response adapter that preserves the model's natural-language
-  answer. The scorer should continue recognizing the visible option title or
-  name directly; optional source traces remain diagnostic only.
-- Build later comparisons one at a time; do not recreate heuristic stand-ins to
-  fill out the baseline table.
+- Design `input_rag` next using the same sanitized input, OpenAI response
+  adapter, prediction schema, and GBrain corpus. Register it only after the
+  retrieval query and admission policy are reviewed.
+- Build later comparisons one at a time; do not recreate heuristic stand-ins
+  to fill out the baseline table.
 
 ## Expansion queue
 

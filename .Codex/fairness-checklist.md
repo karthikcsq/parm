@@ -1,27 +1,27 @@
-# PARM Benchmark Fairness Checklist
+# PARM Case Fairness Checklist
 
-Use this checklist when adding or reviewing V1 benchmark cases.
-
-- The trigger entity is absent from the initial user goal and present in either generated output or a tool response.
-- The initial user goal contains enough task context for a useful generic response without memory.
-- If the task requires local, current, private, or otherwise non-obvious option discovery, the fixture includes a tool/local-context response.
-- Generated-output-only cues are reserved for cases where a capable base model could plausibly supply the cue from general knowledge.
-- Generated output or tool response is large enough to contain many plausible
-  cue candidates, not a placeholder or single clue sentence.
-- The attractive item is plausible from prompt plus tool/output context before memory is considered.
-- The memory-augmented suggestion changes, qualifies, or improves the final recommendation for that item.
-- The initial user goal does not ask for memory search, personal context, latent context, or hidden-memory surfacing.
-- The initial user goal is an ordinary task request; it should not directly ask to flag the same warning, constraint, follow-up, or enrichment that the gold suggestion provides.
-- The gold suggestion requires selecting the right visible cue and retrieving a
-  latent memory-side fact.
-- Naive output-RAG over every entity or sentence would retrieve tempting but
-  wrong memories, not just the gold one.
-- The expected suggestion includes both the connection and the action implied by the user's goal.
-- Distractors are plausible enough to test precision, but they do not accidentally satisfy the goal.
-- Invalid or stale distractor edges are marked with `valid: false`.
-- Gold paths, when present, use only valid graph edges and are diagnostic rather
-  than the main benchmark challenge.
-- Cases are balanced across goal family, trigger source, distractor type, and
-  actionability. Multi-hop depth is optional and should not drive the case.
-- Baseline failures are explained by benchmark mechanics, not by quirks of one implementation.
-- No case relies on private or real personal memory; V1 cases are synthetic.
+- The prompt is independently answerable and does not mention memory, GBrain,
+  personal context, or the eventual intervention.
+- The decisive cue is absent from the prompt and appears only in the one later
+  output or tool result.
+- The observation is 8,000-12,000 tokens under the pinned tokenizer.
+- The prompt requests exactly one final choice.
+- Every option has a unique, natural label such as a session title, story
+  label, episode title, company name, or restaurant name.
+- The relevant identity or behavioral pattern appears in readable memory
+  prose, not only in source metadata or a benchmark-only ID.
+- The output-only choice is credible before memory is admitted.
+- The memory-conditioned choice is materially different and better.
+- A cue-ablated twin keeps the noise and task intact but removes the reason to
+  intervene.
+- At least 25 visible cue candidates and three plausible memory distractors are
+  present.
+- Gold sources exist, hashes match, provenance is recorded, and no poison
+  record is authoritative.
+- Stale or contradictory sources are labeled rather than silently flattened.
+- Naive whole-output retrieval can produce tempting false matches.
+- A correct response may use memory quietly; it need not repeat private facts.
+- Mentioning the memory without changing the decision fails.
+- Functional prompt leakage is rejected even when the word "memory" is absent.
+- A normal model can answer by repeating the requested title or name; success
+  does not depend on emitting a synthetic ID or hidden JSON field.

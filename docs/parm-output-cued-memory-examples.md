@@ -1,6 +1,8 @@
 # PARM Output Cue-Triggered Memory Examples
 
-**Status:** Working draft for future expansion.
+**Status:** Canonical expansion specification. Examples 1, 2, 3, 5, and 12
+are implemented in the executable V1 pilot; the other 15 remain approved
+expansion candidates.
 
 This document begins with 20 approved examples developed against the local
 Amara Life GBrain corpus. It is intentionally extensible: future examples
@@ -14,6 +16,10 @@ Every example follows the same contract:
 3. The cue is absent from the prompt.
 4. Recalled memory materially changes the response decision.
 5. The output contains enough other entities and propositions to make whole-output RAG noisy.
+6. The prompt requests exactly one final choice, identified by a unique title
+   or name that a normal model can repeat.
+7. The relevant item identity or affordance is readable in the memory prose,
+   rather than existing only as benchmark metadata.
 
 Unless noted otherwise, each mock output should be 8-12K tokens.
 
@@ -21,11 +27,11 @@ Unless noted otherwise, each mock output should be 8-12K tokens.
 
 **Status:** Approved; existing Amara memory.
 
-- **Prompt:** "I have Thursday afternoon free at the conference. Pick three sessions from the agenda without schedule conflicts."
+- **Prompt:** "Choose exactly one Thursday-afternoon conference session. Reply with its full session label as written in the agenda."
 - **Noisy output cue:** A lower-ranked agenda entry names Chen Wei of NovaMind speaking on edge inference for grid reliability.
 - **Memory:** Amara is leaning toward leading NovaMind's Series A but wants the Texas grid pilot data before presenting it to the partnership.
-- **Decision delta:** Replace one agenda-only choice with Chen's session and use its Q&A to resolve the pilot-data gate.
-- **Pass contract:** The response must select or elevate Chen's session and connect it to the outstanding Texas pilot evidence. Merely describing the session fails.
+- **Decision delta:** Choose `Session G-147 — Chen Wei, NovaMind: Edge Inference for Texas Grid Reliability Pilots` instead of the agenda's general-interest favorite.
+- **Pass contract:** The response must output Chen's full session label. Merely describing or discussing the session fails.
 - **Cue unit:** `Chen Wei + NovaMind + grid reliability session`.
 - **Source:** `notes/2026-04-09-novamind-followup.md`.
 
@@ -33,11 +39,11 @@ Unless noted otherwise, each mock output should be 8-12K tokens.
 
 **Status:** Approved; existing Amara memory.
 
-- **Prompt:** "Give me a morning digest of enterprise AI-infrastructure news and choose one story worth sharing with founders."
+- **Prompt:** "Choose exactly one enterprise AI-infrastructure story worth sharing with founders. Reply with the story label as written in the digest."
 - **Noisy output cue:** A lower-ranked item reports a material change to CoreWeave reserved-GPU pricing.
 - **Memory:** Jordan Park said NovaMind's updated financial projections were built from its CoreWeave contract pricing.
 - **Decision delta:** Select the CoreWeave story instead of the generic headline and flag NovaMind's cost assumptions for review.
-- **Pass contract:** The response must elevate the CoreWeave story, connect it to NovaMind's projections, and recommend reassessing those assumptions.
+- **Pass contract:** The response must output `Item 147 — CoreWeave Reserved-GPU Pricing Revision`.
 - **Cue unit:** `CoreWeave -> material GPU pricing change`.
 - **Source:** `emails/em-0017.md`.
 
@@ -45,11 +51,11 @@ Unless noted otherwise, each mock output should be 8-12K tokens.
 
 **Status:** Approved; existing Amara memory.
 
-- **Prompt:** "Choose one episode from today's new podcast releases for my commute."
+- **Prompt:** "Choose exactly one episode from today's new podcast releases for my commute. Reply with the episode title."
 - **Noisy output cue:** A lower-ranked episode describes skipped workouts, desk lunches, and repeatedly working weekends as quiet burnout signals.
 - **Memory:** Amara missed two gym sessions, ate at her desk four days in one week, and had worked three consecutive Saturdays.
 - **Decision delta:** Choose the burnout episode instead of the feed's top-ranked technology episode.
-- **Pass contract:** The response must change the episode selection because the behavioral pattern is personally timely, while avoiding an invasive recital of private facts.
+- **Pass contract:** The response must output `Quiet Burnout Signals`, while avoiding an invasive recital of private facts.
 - **Cue unit:** `behavioral pattern in output <-> pattern across personal notes`.
 - **Sources:** `notes/2026-03-22-weekly-review.md`; `notes/2026-02-02-weekly-review.md`.
 
@@ -69,11 +75,11 @@ Unless noted otherwise, each mock output should be 8-12K tokens.
 
 **Status:** Approved; existing Amara memory.
 
-- **Prompt:** "Compare the warehouse-automation vendors in this procurement report and recommend one for a twelve-month pilot."
+- **Prompt:** "Choose exactly one warehouse-automation vendor for the twelve-month pilot. Reply with the company name."
 - **Noisy output cue:** NovaTech Labs ranks first on price and technical capability and offers a large discount for annual prepayment.
 - **Memory:** NovaTech's burn increased, runway fell to roughly eight months, and Amara required updated financials before any commitment.
-- **Decision delta:** Reject annual prepayment; recommend a short cancellable pilot or a different vendor pending financial review.
-- **Pass contract:** The response must materially change the contract recommendation because of NovaTech's runway risk. A generic vendor-risk disclaimer fails.
+- **Decision delta:** Choose the second-ranked `Redwood Robotics` instead of `NovaTech Labs`.
+- **Pass contract:** The response must output `Redwood Robotics`. A generic vendor-risk disclaimer while retaining NovaTech fails.
 - **Cue unit:** `NovaTech Labs + annual prepayment`.
 - **Source:** `meetings/mtg-0006.md`.
 
@@ -153,11 +159,11 @@ Unless noted otherwise, each mock output should be 8-12K tokens.
 
 **Status:** Approved; existing Amara memory.
 
-- **Prompt:** "Pick one lunch option from these nearby restaurant results."
+- **Prompt:** "Choose exactly one lunch option from these nearby restaurant results. Reply with the restaurant name."
 - **Noisy output cue:** The tool's top-ranked option emphasizes fast delivery directly to the office, while a slightly lower-ranked nearby restaurant has immediate dine-in availability.
 - **Memory:** Amara had eaten lunch at her desk four days in one week and explicitly marked the pattern as unsustainable.
 - **Decision delta:** Choose the dine-in option instead of the delivery winner so lunch becomes an actual break from the desk.
-- **Pass contract:** The response must change the restaurant or fulfillment choice in favor of eating away from the desk. Ordering the top delivery option with a generic wellness reminder fails.
+- **Pass contract:** The response must output `Garden Table`. Ordering from `Dispatch Kitchen` with a generic wellness reminder fails.
 - **Cue unit:** `office delivery versus immediate dine-in`.
 - **Source:** `notes/2026-03-22-weekly-review.md`.
 
@@ -268,6 +274,13 @@ Unless noted otherwise, each mock output should be 8-12K tokens.
 | Existing Amara memory | 1-18 |
 | Proposed addition | 19-20 |
 
+## Executable pilot
+
+The committed pilot under `data/benchmark_v1/` implements examples 1, 2, 3, 5,
+and 12. Each has a 8-12K-token observation plus a cue-ablated control. The
+remaining examples should be promoted only after receiving the same context,
+provenance, distractor, and counterfactual treatment.
+
 ## Shared evaluation rule
 
 The primary score is not whether the system retrieved a relevant memory. It is
@@ -276,7 +289,8 @@ decision. Each example therefore needs:
 
 - a baseline decision supported by the tool output alone;
 - a different gold decision supported by the output plus memory;
-- required evidence or action language;
-- forbidden unchanged-decision language; and
+- exactly one requested answer, represented by a natural title or name;
+- enough identifying language in the memory itself to connect it to the
+  relevant output item or affordance; and
 - enough noisy output to make whole-output retrieval produce irrelevant or
   misleading memory candidates.

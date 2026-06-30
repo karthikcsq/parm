@@ -10,17 +10,20 @@ PARM V1 isolates a specific memory-retrieval failure mode:
 1. The user asks for a concrete task with enough context for a generic answer.
 2. If the task requires local, current, private, or otherwise non-obvious
    option discovery, a tool/local-context response gathers that context by
-   comparing a few plausible options. Generated-output-only cue cases are
+   comparing many plausible options. Generated-output-only cue cases are
    appropriate only when the cue is something a capable base model could
    plausibly supply from general knowledge.
-3. The compared options make one item objectively attractive before memory is
-   considered, but a latent personal-memory fact connected to the cue catches an
-   edge case or changes the best final recommendation.
-4. Input-conditioned memory retrieval misses the connection because the cue was
-   absent from the original user prompt.
+3. The generated/tool context contains many possible entities, sentences, and
+   options, most of which would produce spurious or low-value memory matches.
+4. One or a few visible cues connect to latent personal-memory facts that
+   change, qualify, or improve the recommendation.
+5. Input-conditioned memory retrieval misses the connection because the cue was
+   absent from the original user prompt, and naive output-RAG is too noisy.
 
-The benchmark asks whether a system can proactively surface the right
-cross-source suggestion without flooding the user with useless interventions.
+The benchmark asks whether a system can proactively select the right
+output/tool-side cues, retrieve useful memory, and avoid flooding the user with
+useless interventions. Multi-hop graph paths are optional diagnostics; they are
+not the core V1 challenge.
 
 For the active/passive recall framing behind this benchmark, see
 `.Codex/active-passive-recall.md`.
@@ -69,7 +72,8 @@ Each generated case varies across:
   are used when the option set is local, current, private, or synthetic.
   Generated-output cases are used when the cue is plausibly available from
   general model knowledge.
-- `join_depth`: 1-hop, 2-hop, or 3-hop graph joins.
+- `join_depth`: optional 1-hop, 2-hop, or 3-hop graph diagnostics. This is not
+  the headline difficulty.
 - `distractor_type`: semantic, graph proximity, stale/invalid edge, or
   goal-irrelevant.
 - `actionability`: intro, prioritization, warning, follow-up question, or
@@ -78,9 +82,11 @@ Each generated case varies across:
 The generator creates synthetic selected items, bridge/cue entities, people,
 personal-memory facts, distractors, and gold graph paths across multiple task
 domains. The user prompt is intentionally answerable without memory. The key
-design choice is that the trigger entity is the cue introduced later by
-assistant output or tool content, while the memory side supplies user-specific
-edge cases, warnings, introductions, or enrichments.
+design choice is that the trigger cue is introduced later by assistant output or
+tool content inside a noisy context, while the memory side supplies
+user-specific edge cases, warnings, introductions, or enrichments. The graph
+should remain a simple memory-store scaffold, not a perfect reasoning
+substrate.
 
 ### `data/benchmark_v1/cases.jsonl`
 
@@ -99,8 +105,8 @@ Each line is one benchmark case. Important fields:
   distractors.
 - `trigger_entity`: the output/tool-side cue PARM should notice.
 - `expected.suggestion`: the gold surfaced suggestion.
-- `expected.gold_path`: the required graph path from trigger entity to memory
-  fact.
+- `expected.gold_path`: optional diagnostic graph path from trigger entity to
+  memory fact for oracle/debug traces.
 - `expected.decision_effect`: the item-level decision impact, such as avoiding
   or reconsidering an otherwise attractive item.
 - `expected.memory_fact_node_id`: the latent memory fact that makes the
@@ -118,9 +124,9 @@ Validation checks:
 - Taxonomy labels are valid.
 - Graph edges reference known nodes.
 - The trigger entity and memory fact exist in the graph.
-- The gold path starts at the trigger entity.
-- The gold path ends at the expected memory fact.
-- Every step in the gold path uses a valid graph edge.
+- When present, the gold path starts at the trigger entity.
+- When present, the gold path ends at the expected memory fact.
+- When present, every step in the gold path uses a valid graph edge.
 
 If validation fails, the CLI prints case-specific errors and exits nonzero.
 
@@ -131,7 +137,7 @@ Implements the Core 4 V1 baselines.
 `no_memory`
 
 Returns no suggestions. This establishes the floor: without memory access, the
-latent cross-source join should not be recoverable.
+latent memory intervention should not be recoverable.
 
 `input_rag`
 
@@ -148,12 +154,18 @@ input retrieval when the prompt itself contains obvious memory-search cues.
 This captures the structural problem PARM targets: the relevance often becomes
 visible only after the lookup.
 
+Future baselines should include naive output-RAG and salience-filtered
+output-RAG. Those are the most important comparisons for the updated V1 target:
+they test whether cue selection and spurious-correlation control add value over
+searching every output entity or sentence.
+
 `parm_oracle_monitor`
 
 Watches output/tool entities and uses gold linking/scoring to emit the expected
 suggestion. This is not a production PARM implementation. Its job is to prove
-the dataset contains recoverable signal before later work adds noisy entity
-linking, graph scoring, FLARE-style triggers, or proactive-agent baselines.
+the dataset contains recoverable signal before later work adds noisy sentence
+segmentation, entity extraction, hybrid memory search, reranking, FLARE-style
+triggers, or proactive-agent baselines.
 
 ### `src/parm_bench/scoring.py`
 
@@ -163,7 +175,6 @@ A suggestion is correct only when it satisfies all of these:
 
 - Identifies the trigger entity.
 - Identifies the memory-side fact.
-- Provides the exact gold graph path.
 - Contains an action keyword tied to the user goal.
 
 Primary metrics:
@@ -223,10 +234,10 @@ The current sanity-check result:
 
 | Baseline | Expected V1 Behavior |
 | --- | --- |
-| `no_memory` | Misses all joins. |
-| `input_rag` | Misses all joins because triggers are absent from prompts. |
-| `prompted_memory_tool` | Misses all joins because relevance is not visible before lookup. |
-| `parm_oracle_monitor` | Recovers all joins using gold output-conditioned monitoring. |
+| `no_memory` | Misses all interventions. |
+| `input_rag` | Misses interventions because triggers are absent from prompts. |
+| `prompted_memory_tool` | Misses interventions because relevance is not visible before lookup. |
+| `parm_oracle_monitor` | Recovers all interventions using gold output-conditioned monitoring. |
 
 ## End-To-End Data Flow
 
@@ -296,10 +307,11 @@ interventions.
 
 Future likely baselines:
 
+- Naive output-RAG over every extracted output/tool entity or sentence.
+- Salience-filtered output-RAG over selected cue candidates.
 - FLARE-style uncertainty-triggered generation-time retrieval.
 - Proactive-agent heuristic over the same graph store.
 - Relevance-only output-conditioned retrieval.
-- Goal-grounded graph scoring without oracle path access.
 
 ## How To Add Or Regenerate Cases
 
@@ -321,7 +333,7 @@ should remain represented.
 ## Design Limitations
 
 - The PARM baseline is oracle-assisted; it is a recoverability check, not a real
-  entity linker or graph scorer.
+  cue selector, memory searcher, or reranker.
 - The synthetic data is controlled and intentionally repetitive. That is useful
   for causal testing, but later versions need more realistic curated cases.
 - `prompted_memory_tool` is a heuristic stand-in, not a full model-agent
@@ -332,9 +344,11 @@ should remain represented.
 
 ## Recommended Next Steps
 
+- Add naive output-RAG and salience-filtered output-RAG baselines.
+- Replace oracle monitor pieces incrementally: sentence/item segmentation,
+  entity extraction, hybrid memory search, cue/actionability reranking, then
+  optional graph diagnostics.
 - Add the FLARE-style and proactive-agent baselines.
-- Replace oracle monitor pieces incrementally: entity extraction, linking,
-  candidate graph traversal, then goal-grounded scoring.
 - Add model-call adapters while preserving the same JSONL prediction contract.
 - Add latency and context-overhead fields once streaming/model baselines exist.
 - Expand the dataset with realistic curated cases after the synthetic harness is

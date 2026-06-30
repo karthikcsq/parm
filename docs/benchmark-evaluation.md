@@ -14,15 +14,19 @@ it is the evaluation posture.
 For PARM, the full behavior is:
 
 1. A user asks a normal task.
-2. A cue appears later in generated output or a tool response.
-3. The system notices the cue.
-4. The system joins that cue to a hidden personal-memory fact.
-5. The system surfaces an actionable intervention without excessive noise.
+2. A large generated output or tool response introduces many entities,
+   sentences, options, and distractors.
+3. The system identifies the few output/tool-side cues that warrant memory
+   lookup.
+4. The system retrieves the relevant personal-memory fact without overreacting
+   to spurious correlations.
+5. The system surfaces an actionable intervention asynchronously, without
+   excessive noise.
 
 The oracle is a quality gate, not a production baseline. If
-`parm_oracle_monitor` emits the gold cue, memory fact, and path, it should score
-as the recoverability ceiling. If the oracle fails, the scorer or gold contract
-needs review before comparing non-oracle baselines.
+`parm_oracle_monitor` emits the gold cue and memory fact, it should score as the
+recoverability ceiling. If the oracle fails, the scorer or gold contract needs
+review before comparing non-oracle baselines.
 
 ## Metrics
 
@@ -49,7 +53,8 @@ Stage metrics:
 - `decision_effect_found_rate`: response expresses the expected intervention
   type.
 - `path_correct_rate`: exact gold path rate for structured oracle/debug traces.
-  Natural responses without traces are not penalized for missing paths.
+  Natural responses without traces are not penalized for missing paths. This is
+  diagnostic, not the headline V1 metric.
 
 ## Scoring Policy
 
@@ -63,7 +68,9 @@ The scorer uses normalized text matching plus hidden gold fields:
 - Structured fields (`trigger_entity_id`, `memory_fact_node_id`, `path`) are
   scored exactly when present.
 - Natural text is scored by normalized labels and action terms.
-- `path` is required only when a structured trace is emitted.
+- `path` is required only when a structured trace is emitted. It helps diagnose
+  retrieval mechanics, but V1 does not require a production system to perform
+  multi-hop graph reasoning.
 - Decision effects use small controlled vocabularies, not fuzzy semantic
   grading.
 

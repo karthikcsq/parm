@@ -1,6 +1,8 @@
 # PARM Realistic Trace Seeds
 
-Generated with the OpenAI API as first-turn realistic traces for PARM benchmark data creation. These are seed prompts plus assistant/tool-style local context outputs. The next human pass is to add four memory cards per seed that would change, warn on, or refine the output.
+Generated with the OpenAI API as first-turn realistic traces for PARM benchmark data creation. These are seed prompts plus assistant/tool-style local context outputs. The next human pass is to add memory cards that can become realistic stored facts.
+
+Current V1 target: each finished case should test cue selection in noisy generated/tool context. The useful memory should be triggered by a visible output/tool cue that the initial user prompt would not make the agent search for on its own. Memory cards should be trace-like facts, not prewritten answers. Multi-hop graph paths are optional diagnostics; the main challenge is avoiding spurious retrieval while asynchronously injecting the right memory.
 
 ---
 
@@ -23,6 +25,13 @@ Factors like dietary restrictions, preferred cooking time, and budget will influ
 **Annotation Notes:**
 
 Memory cards could modify preferences, dietary restrictions, usual shopping habits, budget constraints, and neighborhood store options.
+
+**Example Memory Cards:**
+
+- The user's family dislikes Italian food and finds it bland.
+- The user's sister is allergic to avocados.
+- The user's dad is trying to hit high-protein nutrition goals.
+- Two years ago, the user's family had a really good meal at a Thai restaurant.
 
 ---
 
@@ -47,6 +56,13 @@ Consider your goals such as weight loss, flexibility, or strength, along with ti
 
 Memory cards could update current fitness level, past injuries, access to gyms, workout preferences, and schedule flexibility.
 
+**Example Memory Cards:**
+
+- At the user's last doctor's visit, their doctor recommended improving heart health with light aerobic exercise.
+- The user is currently doing strength training at the gym, with related gym access and routine details available in memory.
+- The user had a meniscus injury two months ago, has already seen a doctor, and running or jumping still hurts.
+- The user wants to find a stronger sense of community.
+
 ---
 
 ### 3. Finding a Pediatrician in San Francisco
@@ -70,6 +86,13 @@ Consider insurance coverage, distance from home, office hours, language support,
 
 Memory cards could reflect insurance type, preferred language, prior pediatrician experience, transportation constraints, and any child health concerns.
 
+**Example Memory Cards:**
+
+- The user's child is covered by Kaiser Permanente HMO insurance.
+- The user lives in the Sunset District.
+- The user's 2-year-old has a speech delay and the family wants a pediatrician comfortable coordinating developmental evaluations.
+- The user's partner prefers Mandarin-speaking staff when possible.
+
 ---
 
 ### 4. Planning a Week-Long Trip to Japan
@@ -91,6 +114,13 @@ Transport options include the Japan Rail Pass for efficient Shinkansen travel. A
 **Annotation Notes:**
 
 Memory cards might include budget, travel pace, preference for cultural vs. modern attractions, accommodation type, and mobility needs.
+
+**Example Memory Cards:**
+
+- The user's friend told them to see the bowing deer.
+- The user does not like changing hotels often.
+- The user is interested in trying a lot of food.
+- The user gets motion sick easily.
 
 ---
 
@@ -115,6 +145,13 @@ Important factors include monthly premium, deductible amounts, copays, network s
 
 Memory cards could update current health conditions, preferred providers, medication needs, medical history, and financial preferences.
 
+**Example Memory Cards:**
+
+- The user takes a monthly brand-name medication and needs plans compared by formulary coverage, not just premiums.
+- The user wants to make sure their current therapist stays in network.
+- The user expects one planned specialist procedure next year, so deductible and out-of-pocket maximum matter more than usual.
+- The user strongly prefers PPO flexibility even if the monthly premium is higher.
+
 ---
 
 ### 6. Hiring a Marketing Manager for a Startup
@@ -137,6 +174,13 @@ Job posting platforms: AngelList and LinkedIn attract startup-minded professiona
 **Annotation Notes:**
 
 Memory cards might affect the desired experience level, remote vs. in-person work, budget for salary, specific industry focus, and urgency of hiring.
+
+**Example Memory Cards:**
+
+- The user's friend runs a small marketing agency that may be useful for referrals, contracting, or calibrating the role.
+- The startup has not yet set up SEO or ads.
+- The team has a limited hiring budget.
+- The startup sells to technical buyers.
 
 ---
 
@@ -161,6 +205,13 @@ Consider your favorite genres, desire for live sports, simultaneous streams allo
 
 Memory cards could reflect preferred genres, budget, device usage, household size, and interest in sports or kid-friendly content.
 
+**Example Memory Cards:**
+
+- Some of the user's favorite shows are on Apple TV+.
+- The user really likes watching the NBA, usually through Amazon Prime Video, Peacock, ESPN, or NBC.
+- The user already has Amazon Prime.
+- Netflix with ads is a hard no for the user.
+
 ---
 
 ### 8. Planning Social Volunteer Activities for a Group
@@ -184,6 +235,13 @@ Make sure to check age restrictions, group sign-up policies, and transportation 
 
 Memory cards may change available time slots, physical ability constraints, preferred causes, geographic convenience, and group interests.
 
+**Example Memory Cards:**
+
+- Two of the user's friends love dogs a lot.
+- One of the user's friends hates working with dirt and trash.
+- The user prefers to stay indoors when working for a long time.
+- One of the user's friends maintains her own garden.
+
 ---
 
 ### 9. Comparing Laptops for Remote Work
@@ -205,6 +263,13 @@ Specs to prioritize: processor speed, RAM with 8GB minimum, SSD storage of 256GB
 **Annotation Notes:**
 
 Memory cards might affect preferred OS, budget ceiling, typical software used, preferred screen size, and mobility needs.
+
+**Example Memory Cards:**
+
+- The user's work requires running applications that need at least 8 GB of RAM to run smoothly.
+- The user values having a lightweight laptop.
+- The user has a lot of files and wants at least 512 GB of SSD storage.
+- The user has an iPhone and likes Apple products.
 
 ---
 
@@ -229,53 +294,73 @@ Consider guest count, indoor/outdoor preferences, budget, and whether parents wi
 
 Memory cards could update teen interests, dietary restrictions, number of guests, supervision preferences, and season/weather considerations.
 
----
+**Example Memory Cards:**
 
-### 11. Selecting Ingredients for a Gluten-Free Baking Project
-
-**User Prompt:**
-
-I want to bake something gluten-free for a gathering. What ingredients and recipe ideas do you suggest?
-
-**Assistant/Tool Output:**
-
-For gluten-free baking, here are some key ingredient options and recipe ideas:
-
-- **Flour Substitutes:** Almond flour has a nutty flavor and works well for dense cakes, rice flour gives a lighter texture, and tapioca starch helps bind and adds chewiness. Many gluten-free blends combine these for best results.
-- **Leavening Agents:** Use baking powder and baking soda carefully, as some brands add wheat starch. Check gluten-free certification.
-- **Moisture and Binding:** Eggs, applesauce, or flaxseed meal can help bind ingredients and improve texture.
-- **Recipe Ideas:** Flourless chocolate cake, gluten-free banana bread using almond flour, or chickpea flour brownies. For party settings, mini muffins or cookies with mixed flours and chocolate chips are crowd-pleasers.
-- **Vendors:** Bob's Red Mill and King Arthur Flour offer quality gluten-free baking mixes and flours available online or in health food stores like Whole Foods.
-
-Be cautious about cross-contamination if preparing for people with celiac disease.
-
-**Annotation Notes:**
-
-Memory cards could affect dietary restrictions, preferred baking skill level, availability of specialty ingredients, and recipient allergies.
+- The user's teen really likes logic puzzles, and escape rooms use logic puzzles.
+- The user's teen has a lot of friends, so the expected guest count is probably over 10.
+- The teen's friends are all from art and theater class, so art, painting, or dancing activities may fit the group.
+- At the last birthday party, the user's kid loved bowling.
 
 ---
 
-### 12. Scheduling Doctor Appointments with Multiple Specialists
+### 11. Choosing a Dessert or Snack to Bring to Dinner
 
 **User Prompt:**
 
-I have several doctor appointments coming up with different specialists. Can you help me organize an efficient schedule?
+I'm planning to bring a dessert or snack to a dinner this weekend. What should I take?
 
 **Assistant/Tool Output:**
 
-To optimize multiple specialist appointments:
+For a dessert or snack this weekend, you have a few convenient options depending on how much prep or travel you want to manage:
 
-- **Identify Specialties:** Cardiology, endocrinology, and dermatology are common; know each office's location and hours. For example, cardiology is at UCSF Medical Center on Parnassus Ave, endocrinology at Kaiser Permanente Downtown, dermatology at a private clinic in SoMa.
-- **Group by Location:** Try to cluster visits on the same day if offices are near each other to minimize travel time. For instance, schedule endocrinology and dermatology back-to-back in SoMa.
-- **Check Insurance Requirements:** Some require referrals or pre-authorizations, which can affect timing. Kaiser usually bundles appointments within primary care; private clinics might differ.
-- **Appointment Type:** Separate physical exams from lab work or imaging; schedule blood tests early morning if fasting is required.
-- **Transportation:** Consider public transit or parking availability, especially if accessibility matters.
+- **Apple strudel from Elsie's Market on Main Street:** Easy to transport and can be served warm or at room temperature.
+- **Classic tiramisu from Veneto Patisserie:** Creamy and indulgent, but it requires refrigeration, so plan to bring a cooler bag if you choose this.
+- **Fruit tart from Sweet Blossom Bakery:** Fresh berries on a crisp pastry shell; travels reasonably well but is best served the same day.
+- **Savory snack tray from The Olive Grove:** Marinated olives, roasted nuts, and focaccia, useful if guests might want something less sweet.
+- **Homemade oatmeal raisin cookies:** Simple to bake, stable in transit, and do not need chilling; rolled oats from Green Valley Market can give them a richer texture.
 
-Using a calendar app with reminders and contact info will help avoid overlaps.
+Each option has different storage, transport, timing, and serving tradeoffs, so the best choice depends on how far you are traveling, whether you can keep something chilled, and how formal the dinner feels.
 
 **Annotation Notes:**
 
-Memory cards might modify health concerns, mobility needs, preferred healthcare providers, insurance rules, and appointment urgency.
+Memory cards could affect the best option through guest preferences, ingredient constraints, past vendor experiences, transport timing, refrigeration access, texture dislikes, or whether the host tends to serve a very sweet menu.
+
+**Example Memory Cards:**
+
+- The user does not like coffee, and tiramisu has coffee.
+- The user's friend is allergic to apples.
+- The user likes savory things more than sweet ones.
+- The user is bad at baking.
+
+---
+
+### 12. Planning a Saturday Errand Route
+
+**User Prompt:**
+
+I have several errands to complete this Saturday starting at 9:00 AM, with a deadline to finish everything by 3:00 PM. The list includes picking up a package at the UPS Store, grocery shopping at the local supermarket, returning a book to the public library, and buying a coffee near the library. Could you help me plan an efficient route considering store hours, perishables, weekend crowds, and parking?
+
+**Assistant/Tool Output:**
+
+Given your 9:00 AM start and 3:00 PM deadline, here are a few route options and tradeoffs:
+
+- **UPS Store first:** Package pickup is usually quick, and many UPS Store locations open around 9:00 AM on Saturdays, but verify the specific branch hours. Doing this first avoids carrying groceries or coffee while handling the package.
+- **Library plus coffee together:** Public libraries often open closer to 10:00 AM on Saturdays, so this works well as your second cluster. Return the book, then use the nearby coffee shop as a short break before the grocery stop.
+- **Grocery store last:** This keeps refrigerated and frozen items in the car for the shortest time. The tradeoff is that supermarkets can get busier late morning or early afternoon on weekends.
+- **Alternate route if parking is the priority:** Go to the library and coffee shop right after they open, then UPS Store, then groceries. This may improve parking near the library but could add a little backtracking.
+
+The default route would be UPS Store -> library -> coffee -> grocery store. Before leaving, confirm Saturday hours for the UPS Store and library, bring reusable grocery bags or an insulated bag for cold items, and leave enough buffer before 3:00 PM in case the supermarket checkout line is long.
+
+**Annotation Notes:**
+
+Memory cards could change the best route through branch-specific hours, parking trouble, grocery preferences, coffee habits, package urgency, walking tolerance, or the user's tendency to forget cold groceries in the car.
+
+**Example Memory Cards:**
+
+- The grocery store is close but in the opposite direction.
+- Parking at the UPS Store is very difficult in the morning.
+- The user's library only opens after 11:00 AM.
+- The grocery store and library are close together.
 
 ---
 
@@ -299,6 +384,13 @@ Look for range that comfortably exceeds round-trip distance, charging infrastruc
 **Annotation Notes:**
 
 Memory cards could adjust budget limits, garage parking availability, preferred brands, charging habits, and desired tech features.
+
+**Example Memory Cards:**
+
+- The user is morally opposed to buying Teslas.
+- The user has bought Nissan vehicles in the past.
+- The user sometimes needs to drive 300 miles.
+- The user wants to save as much money on charging as possible.
 
 ---
 
@@ -324,29 +416,42 @@ Time allocation depends on your role, such as software engineer vs. product mana
 
 Memory cards could adjust technical background, interview stage, specific role, time available for prep, and known company culture.
 
+**Example Memory Cards:**
+
+- The interview email mentioned that the company values STAR format answers.
+- The user is interviewing for a junior position, not a senior one.
+- The user has trouble writing Java.
+- The user's friend offered to do a mock interview with them.
+
 ---
 
-### 15. Planning School Supplies Shopping for Middle School
+### 15. Planning Back-to-School Supply Shopping
 
 **User Prompt:**
 
-Can you help me make a shopping list for school supplies suitable for an 8th grader?
+I need to shop for my child starting 6th grade this fall. The school sent a supply list including 3 binders, 5 notebooks, a scientific calculator, headphones, a planner, PE clothes, and a Chromebook charger. I have a $100 budget and about two hours this weekend to shop. Options near me are Target, Staples, Walmart, and the school bookstore, which offers online ordering with pickup. Can you help me plan how to make the best purchases while staying on budget and time?
 
 **Assistant/Tool Output:**
 
-Typical middle school supplies for 8th grade include:
+Given the $100 budget and two-hour window, here is a practical shopping plan:
 
-- **Writing Tools:** Pencils, blue and black pens, highlighters in yellow, pink, and green, plus colored pencils or markers for art. Brands like Ticonderoga and Sharpie are popular.
-- **Notebooks & Paper:** Spiral notebooks, graph paper, binders around 1.5 inches, and loose-leaf paper. Durable options like Five Star work well.
-- **Organization:** Pencil case, folders for each subject, and planner or agenda to track assignments.
-- **Tech Accessories:** USB flash drive, wireless mouse if using a laptop, and earbuds or headphones for virtual learning.
-- **Miscellaneous:** Calculator such as a TI-30, ruler, scissors, and glue sticks. Some schools require specific items, so check the school's supply list.
+- **Staples for binders and notebooks:** Staples usually has a strong back-to-school selection and mid-range prices. Buying the 3 binders and 5 notebooks there may be cheaper than Target's higher-quality options while still being durable enough for daily use.
+- **Walmart or Target for the scientific calculator:** A basic calculator may be cheaper at Walmart, while Target can be easier for returns or exchanges depending on the local store.
+- **School bookstore pickup for headphones, planner, and Chromebook charger:** Online order with pickup could save browsing time and reduce compatibility risk for school-approved tech items, especially the charger.
+- **Target for PE clothes:** Target may have seasonal deals, but this stop can take longer because sizing and availability need to be checked.
 
-Stores like Target, Staples, or office supply outlets often run back-to-school sales.
+A good route would be Staples first for paper supplies and calculator comparison, school bookstore pickup for tech and planner items, then Target for PE clothes if budget and time remain. Prioritize compatibility for the Chromebook charger and durability for binders and the planner, since those are the items most likely to cause problems later if chosen poorly.
 
 **Annotation Notes:**
 
-Memory cards could tweak required supplies from the school, preferred brands, budget, presence of digital curriculum, and any learning accommodations.
+Memory cards could change the best plan through child-specific organization habits, school tech compatibility, brand preferences, return issues, PE sizing constraints, store reliability, transportation limits, or whether cheap binders tend to fall apart for this student.
+
+**Example Memory Cards:**
+
+- The child stuffs loose papers into binders and broke two cheap binders last semester.
+- Target youth sizes ran small for this child last time.
+- The user has a Walmart rewards card that helps a lot with deals.
+- Staples has a very large back-to-school sale right now, and the user has a bunch of coupons.
 
 ---
 
@@ -371,6 +476,13 @@ You may also want an interior designer or architect if the remodel is extensive.
 **Annotation Notes:**
 
 Memory cards could affect budget size, desired design style, timeline flexibility, existing home conditions, and previous contractor experiences.
+
+**Example Memory Cards:**
+
+- The user's neighbor used XYZ Kitchen Remodelers and had a really good experience.
+- The user previously found Houzz leads spammy or low quality.
+- The user's building HOA requires licensed contractors and pre-approval for plumbing changes.
+- The user has family visiting in six weeks.
 
 ---
 

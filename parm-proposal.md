@@ -1,7 +1,7 @@
 # Parallel Asynchronous Retrieval of Memory
 
 *A research proposal for ambient, goal-aware memory retrieval.*
-*Draft v0.3 · for discussion*
+*Draft v0.4 - for discussion*
 
 ---
 
@@ -11,17 +11,17 @@ A founder doing customer-discovery research asks an LLM to surface candidate sta
 
 The useful action, asking the professor for an intro, requires joining two facts from two sources: an entity that arrived in a tool response and got restated in the model's output, and an attribute sitting in a personal knowledge graph. The founder only found it by reading the company profile by hand. The model had both halves in front of it. It had emitted "High Alpha," and the professor's record was already in the personal knowledge graph. Nothing connected them, because memory lookups key off what the user asks, and the user asked about customer discovery, not about the professor.
 
-PARM targets that gap. It does output- and tool-response-conditioned recall, joining a just-seen entity to a latent personal fact and surfacing a suggestion the user never thought to request.
+PARM targets that gap. It does output- and tool-response-conditioned recall: after generated or tool context introduces new cues, it decides which of those cues deserve memory lookup, retrieves relevant personal memory, and surfaces a suggestion the user never thought to request.
 
 ## 1. Summary
 
 Most LLM memory is explicit and input-triggered. A retrieval step fires on the user's query, looks up a store, and prepends the result before generation begins. PARM makes two narrow bets and runs the loop asynchronously alongside generation.
 
-First, condition retrieval on the model's own output stream and on the contents of tool responses, not the user's query, so an entity the model merely mentions can trigger a lookup even when it was never the focus of the request. Second, score what to surface by how much it advances the user's goal, computed over a knowledge graph, instead of by raw semantic similarity.
+First, condition retrieval on the model's own output stream and on the contents of tool responses, not only the user's query, so an entity, sentence, option, or tool-result fact the model merely mentions can trigger a lookup even when it was never the focus of the request. Second, add a precision layer that selects which output/tool cues are worth searching and suppresses spurious memory matches, instead of naively searching every extracted entity.
 
-The second bet exists for precision. Watching every entity the model emits against a personal graph throws off mostly weak matches, and the goal-grounded scoring is there to keep the few that surface from being noise.
+The second bet exists for precision. Large agent outputs contain many plausible names, products, places, people, and constraints. Searching all of them against personal memory creates a flood of weak matches. PARM's central problem is cue selection under noisy output/tool context: surface the few memories that should change the answer, and suppress the rest.
 
-Most of the ingredients here are not new. Neither output-conditioned retrieval nor proactive surfacing is. Generation-time retrieval is established (FLARE, Self-RAG), and proactive memory-grounded assistants are an active 2025 to 2026 subfield (ProActor, PASK; see §2). Goal- and intent-conditioned retrieval also exists (MemGuide, PKG, RPO-RAG), and PARM reuses that machinery rather than inventing it. The contribution is narrower, a combination of both: triggering on confident entity mentions in the output or a tool response, then scoring the resulting cross-source join against personal memory by goal-advancement over a graph, run asynchronously and at high enough precision to be usable. The first deliverable is a benchmark that isolates this case, which does not currently exist.
+Most of the ingredients here are not new. Neither output-conditioned retrieval nor proactive surfacing is. Generation-time retrieval is established (FLARE, Self-RAG), and proactive memory-grounded assistants are an active 2025 to 2026 subfield (ProActor, PASK). Goal- and intent-conditioned retrieval also exists (MemGuide, PKG, RPO-RAG), and graph memory systems offer useful stores. PARM's contribution is narrower: a benchmark and system loop for output/tool-conditioned cue selection, asynchronous memory injection, and spurious-correlation control. The first deliverable isolates this case, which current memory benchmarks do not.
 
 ## 2. Background and the gap
 
@@ -32,81 +32,65 @@ The relevant prior work falls into six rough strands.
 - **Memory as a subsystem.** MemGPT/Letta and memory-OS work (MemOS) treat memory as a managed, tiered resource outside model weights.
 - **Goal- and intent-conditioned retrieval (2025 to 2026).** A fast-growing line argues semantic similarity is the wrong objective and retrieval should condition on task intent. MemGuide (AAAI-26) does intent-aligned retrieval plus a filter that reranks memory units by marginal slot-completion gain, reporting large task-success gains over similarity retrieval. PKG pre-stores meta-paths for goal-relevant traversal. RPO-RAG (WWW'26) learns relation-aware path preferences and argues against shortest-path heuristics. SYNAPSE (2026) revives spreading activation for associative recall, and ProGraph-R1 trains graph retrieval with a progress-toward-goal reward. This line is the closest prior art to PARM's salience mechanism, and PARM borrows from it directly. Every system in it is input- or intent-conditioned: it infers the goal from the current query and fires on the user's turn.
 - **Generation-time retrieval.** FLARE (EMNLP 2023) already conditions retrieval on the model's generation, using the predicted upcoming sentence as the query and triggering when the model emits low-confidence tokens. Self-RAG learns an on-demand variant. Output-conditioned retrieval is established. Both are uncertainty-triggered and corpus-grounding for factuality. They retrieve when the model is unsure, to support what it is about to assert. PARM runs close to the inverse. It triggers on confident entity mentions (the model is not unsure about "High Alpha," which is the point), retrieves from personal memory, and surfaces an unsolicited suggestion rather than rewriting a sentence.
-- **Proactive and anticipatory agents (2025 to 2026).** A subfield now studies assistants that surface help before being asked. ProActor (ACL 2026) builds agents that monitor conversations, identify emerging opportunities, and intervene when appropriate. PASK targets intent-aware proactive agents with long-term memory. Related work names a proactivity gap in long-lived agents (LLaMAPIE, GUM). PARM is one instance of this paradigm and does not invent it. What this work mostly leaves open is the mechanism for cross-source-join salience and a benchmark that isolates it.
+- **Proactive and anticipatory agents (2025 to 2026).** A subfield now studies assistants that surface help before being asked. ProActor (ACL 2026) builds agents that monitor conversations, identify emerging opportunities, and intervene when appropriate. PASK targets intent-aware proactive agents with long-term memory. Related work names a proactivity gap in long-lived agents (LLaMAPIE, GUM). PARM is one instance of this paradigm and does not invent it. What this work mostly leaves open is how to evaluate output/tool-conditioned memory triggers inside noisy agent contexts.
 
-Seen together, the three leave a gap. None of them assembles the full combination of triggering on confident entity mentions in the output or a tool response (not model uncertainty, not the query), retrieving a cross-source join against personal memory (not corpus facts for grounding), and scoring by goal-advancement over a graph. Two practical limitations also recur in the memory line PARM builds its store from. Retrieval is usually input- or query-conditioned (ImplicitMemBench, 2026, reports explicit-retrieval mechanisms miss implicit memory), and it is serial and blocking (the retrieve-then-generate bottleneck noted in MemOS), which discourages frequent fine-grained retrieval.
+Seen together, the three leave a gap. None of them directly evaluates the combination of large noisy output/tool context, cue selection, personal-memory retrieval, asynchronous injection, and resistance to spurious matches. Two practical limitations also recur in the memory line PARM builds its store from. Retrieval is usually input- or query-conditioned (ImplicitMemBench, 2026, reports explicit-retrieval mechanisms miss implicit memory), and it is serial and blocking (the retrieve-then-generate bottleneck noted in MemOS), which discourages frequent fine-grained retrieval.
 
-The natural objection is that none of this is needed, that you could give the model a memory-search tool and tell it to retrieve when a memory seems relevant. That fails on the cases that motivate PARM. A self-triggered search fires only on relevance the model already suspects, but a cross-source join's relevance becomes visible only after the lookup. The trigger lives in the memory rather than in the model's current reasoning. The model emits "High Alpha" as a throwaway descriptor; to choose to search on it, it would have to already suspect the connection it has not yet retrieved. Two further problems compound this. Self-directed tool use is unreliable, with tool selection easily biased (Faghih et al., 2025). And a prompt fires on the model's reasoning, not its emitted output, so throwaway entities never reach the trigger. Prompting reaches input-cued, model-salient retrieval, which is roughly what shipping product memory already does, and structurally cannot reach the output-cued cross-source case. Rather than threatening the work, this objection just defines its primary baseline (§7).
+The natural objection is that none of this is needed, that you could give the model a memory-search tool and tell it to retrieve when a memory seems relevant. That fails on the cases that motivate PARM. A self-triggered search fires only on relevance the model already suspects, but the useful cue often appears later as a throwaway detail in a long output or tool result. The model emits "High Alpha" as one descriptor among many; to choose to search on it, it would have to already suspect the connection it has not yet retrieved. Two further problems compound this. Self-directed tool use is unreliable, with tool selection easily biased (Faghih et al., 2025). And a prompt fires on the model's reasoning, not its emitted output, so many tool-result or generated cues never reach the trigger. Prompting reaches input-cued, model-salient retrieval, which is roughly what shipping product memory already does. Rather than threatening the work, this objection defines a primary baseline, alongside naive output-RAG over every extracted cue.
 
 ## 3. Core idea and hypotheses
 
-The shift is from "retrieve once, on the input, before generating" to "retrieve continuously, on the unfolding output and on tool responses, during generation," a setting FLARE and the proactive-agent line already occupy. The specific elements PARM adds are that the trigger is a confident entity mention, the target is a cross-source join against personal memory, and salience is goal-advancement over a graph.
+The shift is from "retrieve once, on the input, before generating" to "retrieve continuously, on the unfolding output and on tool responses, during generation," a setting FLARE and the proactive-agent line already occupy. The specific elements PARM adds are cue selection in large noisy output/tool contexts, personal-memory retrieval after those cues become visible, and asynchronous injection with enough precision to be useful.
 
-- **H1 (coverage).** Entity-triggered, output-conditioned retrieval surfaces relevant memories that input-conditioned retrieval misses, improving accuracy on tasks where the cue is absent from the prompt.
+- **H1 (coverage).** Output/tool-conditioned retrieval surfaces relevant memories that input-conditioned retrieval misses, improving accuracy on tasks where the cue is absent from the prompt.
 - **H2 (latency).** An asynchronous design adds negligible wall-clock latency versus a blocking retrieve-then-generate baseline at equal retrieval frequency.
-- **H3 (cross-source surfacing, the headline).** Goal-grounded graph matching surfaces useful cross-source joins (the High Alpha pattern) that none of the obvious baselines produce: a "retrieve when relevant" prompt, a FLARE-style uncertainty-triggered retriever, or a proactive-agent baseline. This is the experiment the paper lives or dies on.
-- **H4 (precision under high-frequency watching).** Scoring candidates by how much they advance the unfilled part of the goal, computed over the graph, beats relevance-only retrieval and a MemGuide-style unit-level filter on surfaced-suggestion precision, and suppresses the N×M spurious-match flood at the scoring stage rather than after retrieval.
+- **H3 (cue selection, the headline).** A PARM monitor over generated/tool context beats both input-only memory and naive output-RAG that searches every extracted entity or sentence. The gain should come from finding the few cues that matter while avoiding spurious correlations.
+- **H4 (precision under high-frequency watching).** Salience filtering and reranking beat relevance-only output-conditioned retrieval on surfaced-suggestion precision and useless-intervention rate.
 
 ## 4. How the system works, end to end
 
-The pipeline has six steps. Steps 3 and 4 carry the contribution; the rest can be borrowed from existing graph-memory systems.
+The pipeline has six steps. Steps 2 to 5 carry the contribution; the memory store can be a simple page/fact store with extracted entities, keyword indexes, embeddings, timestamps, and optional light graph metadata.
 
 1. **Watch the output and tool responses.** As the model generates, read the tokens as they emit, and read entities arriving in tool results. This is the output-conditioning. PARM attends to what the model says and what its tools return, not only what the user asked.
-2. **Extract and link distinctive entities.** NER pulls named items from the stream ("High Alpha," "Acme"). Entity linking maps each surface form to a graph node by nearest-neighbor in embedding space.
-3. **Ground the active goal onto the graph (§5.1).** Decompose the user's goal into sub-goals and link each to real existing nodes (contacts, target companies). These grounded anchors are where salience is measured from.
-4. **Score salience, off the critical path (§5.2 to §5.3).** For a linked entity, compute how much it advances the goal, using the graph structure between it and the grounded anchors. Done in a side worker so it never blocks generation.
-5. **Surface asynchronously (§5.4).** If salient, raise a side-channel suggestion ("spun out of High Alpha; your professor worked there, want a warm intro?") while the model keeps writing.
-6. **Write back.** New facts (the company, that it is a High Alpha spinout) are added to the graph for next time.
+2. **Segment and extract candidate cues.** Split output/tool text into sentences, list items, options, and claims. NER and phrase extraction pull named items and distinctive constraints from the stream ("High Alpha," "Acme," "UPS Store first at 9 AM").
+3. **Select search-worthy cues.** Rank cue candidates by how likely they are to affect the user's current decision, not merely by whether they are named entities. This is where PARM avoids querying every item in a long tool result.
+4. **Search memory with a simple hybrid stack.** For selected cues, use vector similarity, keyword/BM25-style search, and entity overlap over a realistic personal-memory store. A graph can help diagnostics or reranking, but multi-hop traversal is not required for V1.
+5. **Rerank and surface asynchronously.** Suppress spurious matches and raise only actionable suggestions ("spun out of High Alpha; your professor worked there, want a warm intro?") while the model keeps writing.
+6. **Write back.** New facts can be added to the memory store for next time.
 
 ## 5. The salience mechanism (the precision layer)
 
-### 5.1 Grounding the goal into the graph
+For V1, salience is a practical retrieval-filtering problem, not a commitment to a learned graph reasoner. The default implementation can be deliberately simple: cue segmentation, NER, hybrid memory search, and reranking by actionability. Graph structure remains useful for provenance, stale-edge handling, diagnosis, and later ablations, but the benchmark should not require beautiful multi-hop paths.
 
-This step is borrowed. MemGuide infers a goal and reranks by slot-completion, PKG pre-stores goal-relevant meta-paths, and RPO-RAG learns relation preferences. PARM uses the same idea. Decompose the goal into sub-goals, then link each sub-goal to real nodes by embedding similarity, reusing the entity-linking from the output text but pointed at goal fragments. "Find a warm intro to a target company" decomposes into roughly two anchors: people I know (grounds to existing contact nodes) and the company I'm targeting (grounds to a company node). The walk is seeded from those real anchors. The goal is a small set of seed nodes plus a preference for which edge types count.
+A minimal PARM monitor can run this loop:
 
-The part that is not borrowed is that the concrete target end of the goal often arrives from the model's own output. "Find intros" has no specific company attached until the model surfaces Acme mid-answer; that is the moment Acme becomes a live anchor. PARM seeds from {your contacts} and {Acme}, and the bridge between them (Professor to High Alpha) lights up. The output stream supplies half the seeds. Existing goal-conditioned systems seed entirely from the query.
+```text
+output/tool text
+-> sentence and item segmentation
+-> NER and distinctive phrase extraction
+-> cue salience filter
+-> hybrid memory search: vector + keyword + entity overlap
+-> actionability and spurious-match rerank
+-> asynchronous memory injection
+```
 
-Grounding an open-ended goal into anchors is fragile, and the fragility is inherited from the prior work above. It is a known difficulty in intent-conditioned retrieval rather than a new risk PARM introduces, which is some reassurance, since MemGuide and PKG ship with it and still report gains. PARM treats it as a first-class risk (§9) and tests sensitivity to it (RQ5).
-
-### 5.2 Scoring salience: the random-walk-to-GNN ladder
-
-Salience is one scoring function. Given the grounded goal and a node the model mentioned, it asks how much that node helps the goal. It can be instantiated at three levels of "how learned," all doing the same job. Think of it as one idea with a dial rather than three competing mechanisms.
-
-**Rung 1, a goal-biased random walk (cheap, no training).** Run a random walk with restart (Personalized PageRank, as in HippoRAG) seeded at the grounded anchors. Where the walk spends its time marks nodes close to the goal. What makes it goal-aware is that it does not cross all edges equally. Crossing an edge depends on whether that edge's vector fits the goal, so for an intro goal the walk flows across `worked_at`, `knows`, and `spun_out_of` edges and stalls on irrelevant ones. Run once, and every node carries a goal-relevance score read off at match time.
-
-**Rung 2, template meta-paths (goal-aware, still no training).** If you can name which edge types matter for a goal, encode them as a pre-stored meta-path template per goal type, the PKG approach. This gives goal-aware walks with no learned component. You can sit on this rung for a long time.
-
-**Rung 3, a goal-conditioned GNN (learned).** Same job, learned weights instead of fixed ones. Ordinary message passing, each node gathering from its neighbors over a few hops, except every message is conditioned on the goal vector, so the network learns which relations matter for which goals. A small readout head turns each node's representation into a salience score. The random walk is the untrained special case.
-
-**Why Rung 1 is the default.** It is cheap, needs no labels, and already works. The GNN earns its place only when you cannot hand-name the goal-relevant edge types and want to learn them, or when you want the score to reflect outcome-driven usefulness (this kind of connection tends to pay off; that one looks close but dead-ends), which a parameterless walk cannot learn. Whether Rung 3 beats a well-tuned Rung 1 or 2 is an open empirical question. The proposal treats the GNN as a hypothesis to test against the walk, not as the design, and the contribution does not depend on the GNN winning. If it loses, that result is reported plainly and the contribution stands on grounding, output-conditioning, and the benchmark.
-
-### 5.3 From relevance to usefulness (the unfilled-goal layer)
-
-A node can be on-topic and still not move you forward. So seed the walk from the still-unfilled parts of the goal (you have the company, not the way in), and score a node by how much it covers a sub-goal that is still open, with diminishing returns so a filled sub-goal stops attracting score. The diminishing-returns property is what stops the system re-suggesting the same thing. This coverage rule can be a plain heuristic, or a learned value where a head predicts how much progress surfacing a candidate makes, rewarded by task outcomes, in the ProGraph-R1 direction.
-
-This also makes salience live. As sub-goals fill, the goal representation changes and scores re-rank on their own, so relevance tracks where the user is in the task rather than being computed once and frozen.
-
-### 5.4 Running it ambiently (compute, injection, races)
-
-You do not fire a full GNN every token. Precompute the cheap walk-field once per goal, refresh it when a sub-goal fills via incremental updates, then at match time run a light message-passing pass only on the small neighborhood around the matched node.
-
-Two design questions to resolve early. First, the injection mechanism: prefix update, interleaved side-note, or constrained re-decode of the current span, and its interaction with KV-cache reuse. Second, race conditions: what to do when scoring returns after the model has emitted past the relevant point (re-decode, defer to the next sentence, or accept lag). These determine whether the negligible-latency claim (H2) holds.
+Graph-aware scoring is an optional later rung. It can help explain why a cue connected to a memory, identify stale edges, and diagnose failure modes. But the V1 paper should live or die on cue selection in noisy output/tool context, not on whether a learned graph model beats a random walk.
 
 ## 6. Research questions
 
 - RQ1: How much accuracy on cue-in-output tasks comes from output-conditioning specifically, holding store and scorer fixed?
-- RQ2: Does goal-grounded salience (§5.2 to §5.3) beat the "just prompt it" baseline on cross-source joins, and by how much?
-- RQ3: Does the learned GNN (Rung 3) beat a tuned random walk or meta-path field (Rungs 1 and 2), and on which cases?
+- RQ2: Does cue selection plus reranking beat naive output-RAG that searches every extracted entity or sentence?
+- RQ3: Do graph-aware salience methods beat a simple Mem0-style hybrid retrieval pipeline, and on which cases?
 - RQ4: What injection mechanism keeps added latency negligible without polluting context?
-- RQ5: How sensitive is everything to goal-decomposition quality (§5.1)?
+- RQ5: How sensitive is everything to cue-extraction and reranking quality?
 
 ## 7. Evaluation plan
 
-**The benchmark (first deliverable).** A cross-source-join set modeled on the High Alpha case: items where an entity appears only in retrieved or generated content and the payoff requires connecting it, possibly multi-hop, to a stored personal-memory attribute, plus distractor entities that look matchable but lead nowhere. The set is built first, both because it is the instrument every later experiment needs and because it answers the prior question of whether the phenomenon is frequent enough to be worth a method. Its value does not depend on PARM working: it isolates a retrieval case nothing currently measures. Distractor design and an independent pass over the items to confirm the baselines fail for principled reasons (rather than because the set was tuned against them) are part of the construction, not an afterthought. Alongside it, use LongMemEval and LoCoMo for long-session conversational memory and ImplicitMemBench for implicit behavioral adaptation.
+**The benchmark (first deliverable).** A noisy-output cue-selection set modeled on the High Alpha case: the initial user prompt does not make the agent search for the relevant memory, but generated output or a tool response later introduces many possible cues. One or a few of those cues should trigger useful personal-memory retrieval; many others are spurious correlations. The set is built first, both because it is the instrument every later experiment needs and because it answers the prior question of whether the phenomenon is frequent enough to be worth a method. Its value does not depend on PARM working: it isolates a retrieval timing and cue-selection case nothing currently measures. Distractor design and an independent pass over the items to confirm the baselines fail for principled reasons are part of the construction, not an afterthought. Alongside it, use LongMemEval and LoCoMo for long-session conversational memory and ImplicitMemBench for implicit behavioral adaptation.
 
-**Baselines.** (i) no memory; (ii) input-conditioned RAG; (iii) input-conditioned graph memory (Mem0 or Zep style); (iv) the prompt baseline, a model with a memory-search tool instructed to retrieve when relevant; (v) a FLARE-style generation-time retriever, output-conditioned but uncertainty-triggered and similarity-scored, to show the difference is the trigger and the scoring rather than merely retrieving during generation; (vi) a proactive-agent baseline (ProActor or PASK style) over the same store; (vii) PARM with synchronous blocking retrieval, to isolate async; (viii) PARM with relevance-only scoring, to isolate goal-grounding; (ix) a MemGuide-style unit-level slot-completion filter, to isolate edge-level versus unit-level; (x) full PARM. Baselines (iv) to (vi) are the headline comparisons for H3.
+**Baselines.** (i) no memory; (ii) input-conditioned RAG; (iii) prompted memory tool, a model instructed to retrieve when relevant; (iv) naive output-RAG that searches every extracted output/tool entity or sentence; (v) salience-filtered output-RAG with simple heuristic cue selection; (vi) a Mem0-style hybrid search baseline using vector, keyword, and entity overlap; (vii) a FLARE-style generation-time retriever, output-conditioned but uncertainty-triggered; (viii) a proactive-agent baseline (ProActor or PASK style) over the same store; (ix) PARM with synchronous blocking retrieval, to isolate async; (x) full PARM with asynchronous cue selection and reranking. Baselines (iii) to (vi) are the headline comparisons for H3.
 
-**Headline experiment.** PARM versus the prompt baseline, the FLARE-style retriever, and the proactive-agent baseline on the cross-source-join set. The theory predicts all three fall short there for distinct reasons. The prompt cannot trigger on relevance visible only after the lookup. The FLARE-style retriever fires on uncertainty rather than confident entities and scores by similarity rather than goal-advancement. The proactive baseline lacks the graph mechanism to find the multi-hop join. Each should look competitive on ordinary input-cued retrieval. Beating all three on the join set is the result; failing to means there is no paper.
+**Headline experiment.** PARM versus input-only memory, the prompt baseline, naive output-RAG, and simple hybrid output retrieval on the noisy-output cue-selection set. The theory predicts input-only and prompted retrieval miss cues that appear only after output/tool context is produced. Naive output-RAG retrieves too many spurious memories. Simple hybrid output retrieval improves coverage but still needs cue/actionability filtering to avoid noise. Beating these on correct surfaced suggestions and useless-intervention rate is the result; failing to means there is no paper.
 
 **Metrics.** Task accuracy; added wall-clock latency and tokens per second (H2); surfaced-suggestion precision and recall, plus a recommendation-fatigue rate, the fraction of injected items judged useless (H3, H4); retrieval precision and recall; context-overhead tokens.
 
@@ -114,29 +98,28 @@ Published benchmark numbers in this area are largely vendor-reported and not ind
 
 ## 8. Contributions (claimed)
 
-1. **A cross-source-join benchmark.** An evaluation set isolating the case where a relevant entity appears only in output or tool-response content and the payoff requires joining it to a latent personal-memory attribute, with distractors and an independent fairness pass. Nothing currently measures this. It stands whether or not the method below wins.
-2. **Output- and tool-response-conditioned, asynchronous retrieval.** A trigger on confident entity mentions in the output and in tool responses, with surfacing that runs alongside generation without blocking, positioned inside active retrieval (FLARE/Self-RAG) and proactive agents (ProActor/PASK) rather than claimed as a new paradigm, with a structural argument for why a "retrieve when relevant" prompt cannot reach this class.
-3. **Goal-grounded graph salience for precision.** A scoring function that keeps high-frequency output watching from flooding the user, spanning a cheap goal-biased random walk, a no-training meta-path field, and a learned goal-conditioned GNN, with an unfilled-goal layer that makes relevance track task progress. The grounding machinery is reused from MemGuide, PKG, and RPO-RAG; the new element is seeding part of the goal from output entities. The GNN is tested against the cheap walk rather than assumed to win.
+1. **A noisy-output cue-selection benchmark.** An evaluation set isolating the case where relevant memory cues appear only in output or tool-response content, surrounded by many tempting but spurious cue candidates. Nothing currently measures this directly. It stands whether or not the method below wins.
+2. **Output- and tool-response-conditioned, asynchronous retrieval.** A trigger on generated/tool context, with surfacing that runs alongside generation without blocking, positioned inside active retrieval (FLARE/Self-RAG) and proactive agents (ProActor/PASK) rather than claimed as a new paradigm, with a structural argument for why a "retrieve when relevant" prompt cannot reach this class.
+3. **Cue salience and spurious-correlation control for precision.** A filtering and reranking layer that keeps high-frequency output watching from flooding the user. The default version can use segmentation, NER, hybrid search, and actionability reranking; graph-aware scoring remains an optional extension rather than the V1 dependency.
 4. A prototype and injection mechanism that integrates surfaced memory mid-generation without blocking.
 
 ## 9. Risks and limitations
 
-- **Goal grounding is the crux (§5.1).** Decomposing an open-ended goal into seed anchors is fragile, and a bad decomposition degrades every downstream score, with no obvious supervised target. The fragility is inherited from the intent-conditioned line, which ships with it and still reports gains, so it is a managed risk rather than a novel one, and RQ5 tests for it.
-- **Training signal for usefulness is sparse.** "This surfaced join was useful" is expensive to label, which puts the learned scorer in weak-supervision and outcome-reward territory, with cold-start.
-- **The learned rung may not beat the cheap one.** If the GNN does not beat a tuned random walk or meta-path field, the contribution narrows to grounding, output-conditioning, and the benchmark, which I would report plainly rather than bury.
+- **Cue selection is the crux.** Long tool outputs contain many entities and sentences that are plausible memory queries. A weak cue selector either misses the relevant cue or floods the user with spurious matches.
+- **Training signal for usefulness is sparse.** "This surfaced memory was useful" is expensive to label, which puts learned rerankers in weak-supervision and outcome-reward territory, with cold-start.
+- **Graph-aware scoring may not beat simple hybrid retrieval.** If a tuned vector/keyword/entity pipeline is enough, the contribution narrows to output-conditioning, asynchronous injection, cue-selection evaluation, and the benchmark. That would still be a useful result.
 - **Latency may not hide cleanly.** If injection forces KV-cache invalidation or re-decoding, the async claim weakens, so this is worth measuring early.
-- **Linking and edge-validity compound.** NER and linking errors on the output stream, plus temporally stale edges (the professor's `worked_at` may be expired), feed garbage into an otherwise-correct walk. Temporal validity on join edges matters.
+- **Linking and validity errors compound.** NER and linking errors on the output stream, plus stale memory facts, can feed garbage into an otherwise-correct monitor. Temporal validity and provenance matter.
 - **Context pollution.** Frequent injection can hurt, since LLMs are sensitive to proactive interference.
 - **Privacy.** Ambient, non-prompted memory takes away the user's explicit recall trigger. That is where the usefulness comes from, and it is also what makes the system hard to audit, so a consent and inspection surface belongs in the design.
 - **Scope versus in-weights memory.** A competing school (Titans, memory-layer architectures) puts memory inside the model. PARM is deliberately external and non-parametric, and I should say so up front.
 
 ## 10. Rough milestones
 
-1. *Weeks 1 to 4* — Build the cross-source-join set and the independent fairness pass. Stand up a graph and vector store on an existing backend, and reproduce the input-conditioned and prompt baselines. By the end of this block, know whether the phenomenon is frequent enough to justify the rest.
-2. *Weeks 5 to 8* — Output and tool-response monitor, entity linking, goal grounding (§5.1), and Rung-1 random-walk salience. Validate H1 and the H3 headline against the prompt baseline before optimizing anything.
-3. *Weeks 9 to 12* — Async injection; measure H2; resolve the race-condition policy; add the unfilled-goal layer (§5.3).
-4. *Weeks 13 to 15* — Rung-3 GNN and the Rung-1-versus-Rung-3 ablation (RQ3); goal-decomposition sensitivity (RQ5); write-up.
-
+1. *Weeks 1 to 4* - Build the noisy-output cue-selection set and the independent fairness pass. Stand up a simple memory store with vector, keyword, entity, and light graph metadata. Reproduce the input-conditioned, prompted-memory, and naive output-RAG baselines. By the end of this block, know whether the phenomenon is frequent enough to justify the rest.
+2. *Weeks 5 to 8* - Output and tool-response monitor, sentence/item segmentation, NER, hybrid memory search, and cue/actionability reranking. Validate H1 and the H3 headline against the prompt and naive output-RAG baselines before optimizing anything.
+3. *Weeks 9 to 12* - Async injection; measure H2; resolve the race-condition policy; add context-overhead and fatigue metrics.
+4. *Weeks 13 to 15* - Optional graph-aware salience ablations, FLARE/proactive comparisons, and write-up.
 ## Selected references
 
 *(arXiv IDs verified against live listings during drafting where shown. Re-confirm the recent 2026 IDs at submission.)*

@@ -13,5 +13,7 @@ for related memories was not the original intent of the task. The relevance is
 recognized only after the new entity, fact, or situation appears.
 
 PARM targets passive recall. It watches the model's output and tool responses
-for newly introduced entities, then checks whether those entities connect to
-latent personal memory in a way that advances the user's goal.
+for newly introduced entities, sentences, options, and tool-result facts, then
+checks whether a small number of those visible cues should trigger personal
+memory. The V1 benchmark emphasizes cue selection in large noisy contexts and
+spurious-correlation control, not deep multi-hop graph reasoning.

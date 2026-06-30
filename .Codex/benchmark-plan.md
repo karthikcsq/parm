@@ -2,13 +2,16 @@
 
 ## Summary
 
-Build a Python CLI benchmark harness for PARM's first deliverable: a controlled synthetic cross-source-join benchmark. V1 should prove whether output/tool-response-conditioned entity watching can surface useful personal-memory joins that input-triggered memory systems miss.
+Build a Python CLI benchmark harness for PARM's first deliverable: a controlled synthetic output/tool-conditioned memory benchmark. V1 should prove whether a system can identify memory-relevant cues inside large noisy agent outputs or tool responses, retrieve useful personal memories, and avoid spurious correlations that input-triggered memory systems and naive output-RAG miss.
 
 ## Benchmark Shape
 
 - Create a 50-case synthetic seeded dataset.
-- Each case includes a user goal, simulated assistant or tool output containing the trigger entity, a personal memory graph, distractors, an expected surfaced suggestion, and a gold rationale path.
-- Headline success metric: surfaced join quality, measured by correct cross-source suggestions and low useless-intervention rate.
+- Each case includes a user goal, simulated assistant or tool output containing
+  many possible cue candidates, a simple personal memory store/graph,
+  distractors, and an expected surfaced suggestion.
+- Headline success metric: correct memory intervention with low
+  useless-intervention rate under noisy output/tool context.
 
 ## Harness And Interfaces
 
@@ -25,15 +28,21 @@ Build a Python CLI benchmark harness for PARM's first deliverable: a controlled 
 
 ## Dataset Taxonomy
 
-- Include warm-intro cases and two additional goal families: customer-discovery prioritization and opportunity/risk surfacing.
-- Label trigger source, join depth, distractor type, and actionability for every case.
+- Include multiple everyday and work goal families where output/tool context can
+  introduce cues the agent would not search from the initial prompt alone.
+- Label trigger source, distractor type, actionability, and whether the case
+  includes optional graph-path diagnostics.
 - Include semantic, graph-proximity, stale/invalid-edge, and goal-irrelevant distractors.
 
 ## Scoring
 
 - Primary metrics: correct surfaced suggestion rate, useless intervention rate, precision, and recall.
-- Secondary metrics: path correctness, trigger detection, memory-fact detection, and optional context overhead.
-- A suggestion is correct only if it identifies the trigger-side entity, the memory-side fact, the useful action, and the gold graph path.
+- Secondary metrics: cue detection, memory-fact detection, affected-item
+  detection, optional path correctness for trace-emitting systems, and optional
+  context overhead.
+- A suggestion is correct if it identifies the trigger-side cue, the memory-side
+  fact, and the useful action. Gold paths are diagnostic, not required for
+  natural responses.
 
 ## Test Plan
 

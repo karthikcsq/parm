@@ -1,74 +1,86 @@
 from __future__ import annotations
 
-from typing import Any, Callable
+from dataclasses import dataclass
+from typing import Any, Protocol
+
+from .backends import MemoryBackend
 
 
-PredictionFn = Callable[[dict[str, Any]], dict[str, Any]]
+class BaselineNotImplementedError(LookupError):
+    pass
 
 
-def available_baselines() -> dict[str, PredictionFn]:
-    return {
-        "no_memory": no_memory,
-        "input_rag": input_rag,
-        "prompted_memory_tool": prompted_memory_tool,
-        "parm_oracle_monitor": parm_oracle_monitor,
-    }
+class Baseline(Protocol):
+    name: str
+
+    def run(
+        self,
+        case: dict[str, Any],
+        memory_backend: MemoryBackend,
+    ) -> dict[str, Any]: ...
 
 
-def no_memory(case: dict[str, Any]) -> dict[str, Any]:
-    return _prediction(case, suggestions=[], notes="No memory graph access.")
+@dataclass(frozen=True)
+class PlannedBaseline:
+    """Design inventory only. A planned baseline is not executable."""
+
+    name: str
+    research_question: str
 
 
-def input_rag(case: dict[str, Any]) -> dict[str, Any]:
-    user_goal = case["user_goal"].lower()
-    trigger_label = case["trigger_entity"]["label"].lower()
-    if trigger_label not in user_goal:
-        return _prediction(
-            case,
-            suggestions=[],
-            notes="Trigger entity is absent from the initial prompt, so input-conditioned retrieval misses it.",
-        )
-    return _oracle_suggestion(case, notes="Trigger was present in the initial prompt.")
+PLANNED_BASELINES = (
+    PlannedBaseline(
+        "no_memory",
+        "How does the response change when no personal-memory system is present?",
+    ),
+    PlannedBaseline(
+        "input_rag",
+        "What can retrieval triggered only from the original prompt recover?",
+    ),
+    PlannedBaseline(
+        "prompted_memory_tool",
+        "Will a real agent elect to use an available memory tool without being asked?",
+    ),
+    PlannedBaseline(
+        "naive_output_rag",
+        "What happens when the complete output is used for retrieval without cue selection?",
+    ),
+    PlannedBaseline(
+        "all_entity_output_rag",
+        "What happens when every extracted output entity becomes a retrieval query?",
+    ),
+    PlannedBaseline(
+        "key_sentence_output_rag",
+        "Does a deliberately developed key-sentence selector improve retrieval precision?",
+    ),
+    PlannedBaseline(
+        "oracle_cue",
+        "Is the gold memory recoverable when the correct cue is supplied?",
+    ),
+)
+
+_BASELINES: dict[str, Baseline] = {}
 
 
-def prompted_memory_tool(case: dict[str, Any]) -> dict[str, Any]:
-    user_goal = case["user_goal"].lower()
-    obvious_cues = {"memory", "connection", "intro", "relationship", "contact"}
-    if not obvious_cues.intersection(user_goal.split()):
-        return _prediction(
-            case,
-            suggestions=[],
-            notes="Prompt heuristic did not decide to call memory search.",
-        )
-    return input_rag(case)
+def register_baseline(baseline: Baseline) -> None:
+    """Register a reviewed implementation; planning metadata is insufficient."""
+    name = baseline.name.strip()
+    if not name:
+        raise ValueError("baseline.name must be non-empty")
+    if name in _BASELINES:
+        raise ValueError(f"baseline already registered: {name}")
+    _BASELINES[name] = baseline
 
 
-def parm_oracle_monitor(case: dict[str, Any]) -> dict[str, Any]:
-    return _oracle_suggestion(
-        case,
-        notes="Oracle monitor watches output/tool entities and uses gold graph linking.",
-    )
+def available_baselines() -> dict[str, Baseline]:
+    return dict(_BASELINES)
 
 
-def _oracle_suggestion(case: dict[str, Any], notes: str) -> dict[str, Any]:
-    expected = case["expected"]
-    suggestion = {
-        "text": expected["suggestion"],
-        "trigger_entity_id": case["trigger_entity"]["node_id"],
-        "memory_fact_node_id": expected["memory_fact_node_id"],
-        "path": expected["gold_path"],
-    }
-    return _prediction(case, suggestions=[suggestion], notes=notes)
-
-
-def _prediction(
-    case: dict[str, Any],
-    suggestions: list[dict[str, Any]],
-    notes: str,
-) -> dict[str, Any]:
-    return {
-        "case_id": case["case_id"],
-        "baseline": "",
-        "suggestions": suggestions,
-        "notes": notes,
-    }
+def get_baseline(name: str) -> Baseline:
+    try:
+        return _BASELINES[name]
+    except KeyError as exc:
+        raise BaselineNotImplementedError(
+            f"Baseline '{name}' is not implemented. "
+            "No placeholder baseline will be executed."
+        ) from exc

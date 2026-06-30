@@ -1,20 +1,15 @@
 # Benchmark Results
 
-Generated on the 50-case synthetic V1 dataset.
+No baseline results are currently published.
 
-| Baseline | Correct surfaced suggestion rate | Precision | Recall | Useless intervention rate |
-| --- | ---: | ---: | ---: | ---: |
-| `no_memory` | 0.00 | 0.00 | 0.00 | 0.00 |
-| `input_rag` | 0.00 | 0.00 | 0.00 | 0.00 |
-| `prompted_memory_tool` | 0.00 | 0.00 | 0.00 | 0.00 |
-| `parm_oracle_monitor` | 1.00 | 1.00 | 1.00 | 0.00 |
+The previous files were produced by placeholder policies that did not represent
+real agent or retrieval implementations, so they were deleted rather than
+retained as evidence.
 
-The oracle monitor is intentionally gold-assisted in V1. Its role is to prove
-that the dataset contains recoverable output/tool-conditioned memory
-interventions before later work adds noisy cue selection, hybrid memory search,
-reranking, FLARE-style retrieval, or proactive-agent baselines.
+This directory should receive results only after a baseline has:
 
-The canonical 50-case dataset now covers 10 domains with 5 cases each:
-introductions, customer discovery, opportunity/risk, travel planning, health
-admin, learning/research, event planning, hiring, personal finance, and home
-operations.
+1. been implemented as an explicit `Baseline` registered in
+   `src/parm_bench/baselines.py`;
+2. been reviewed as a faithful implementation of the intended comparison;
+3. run against the declared memory backend and response model; and
+4. recorded its configuration alongside its predictions.

@@ -12,42 +12,47 @@ ENCODING = tiktoken.get_encoding("cl100k_base")
 SPECS = {
     "conference-agenda": {
         "title": "Thursday Conference Agenda",
-        "cue": "Session G-147 — Chen Wei, NovaMind: Edge inference for Texas grid reliability pilots. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.",
+        "lead": "Session A-004 — Aurora Systems: Practical Evaluation Methods for Reliable Agent Infrastructure. The program committee marks this as the strongest general-interest session in the Thursday afternoon block.",
+        "cue": "Session G-147 — Chen Wei, NovaMind: Edge Inference for Texas Grid Reliability Pilots. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.",
         "templates": [
             "Session {code} — {speaker}, {company}: {topic}. This {format} session covers {detail}, with audience questions reserved for the final twelve minutes.",
-            "Workshop {code} — {company} presents {topic}. The listing emphasizes {detail}; capacity is limited and the room is a seven-minute walk from the main hall.",
+            "Workshop {code} — {company}: {topic}. The listing emphasizes {detail}; capacity is limited and the room is a seven-minute walk from the main hall.",
         ],
     },
     "ai-news-digest": {
         "title": "Enterprise AI Infrastructure Morning Digest",
-        "cue": "Item 147 — CoreWeave materially revised reserved-GPU contract pricing for several enterprise capacity tiers, changing the cost assumptions customers had used in forward projections.",
+        "lead": "Lead Story — Atlas-3 Enterprise Document Analysis Release. A new foundation-model release improves enterprise document analysis benchmarks. Editors rank it as today's most broadly shareable infrastructure story.",
+        "cue": "Item 147 — CoreWeave Reserved-GPU Pricing Revision. CoreWeave materially revised reserved-GPU contract pricing for several enterprise capacity tiers, changing the cost assumptions customers had used in forward projections.",
         "templates": [
-            "Item {code} — {company} announced {topic}. Analysts highlighted {detail}, while customers are still evaluating contract and deployment implications.",
-            "Brief {code} — A new report involving {company} examines {topic}. The report focuses on {detail} and includes several conflicting estimates.",
+            "Item {code} — {company}: {topic}. Analysts highlighted {detail}, while customers are still evaluating contract and deployment implications.",
+            "Brief {code} — {company}: {topic}. The report focuses on {detail} and includes several conflicting estimates.",
         ],
     },
     "podcast-feed": {
         "title": "New Podcast Releases",
-        "cue": "Episode 147 — Quiet Burnout Signals: a practical discussion of skipped workouts, repeated desk lunches, and working several weekends in succession before exhaustion becomes obvious.",
+        "lead": "Editor's Pick — The Chip Roadmap. A concise technology episode on accelerators, packaging, and the next two hardware cycles. It is the feed's highest-ranked commute listen.",
+        "cue": "Episode 147 — Quiet Burnout Signals. A practical discussion of skipped workouts, repeated desk lunches, and working several weekends in succession before exhaustion becomes obvious.",
         "templates": [
             "Episode {code} — {topic}, hosted by {speaker}. The conversation explores {detail} in a measured forty-two-minute interview.",
-            "New release {code} — {company} presents {topic}. Guests discuss {detail}; the episode runs fifty-six minutes and contains no advertisements after the opening segment.",
+            "New Release {code} — {company}: {topic}. Guests discuss {detail}; the episode runs fifty-six minutes and contains no advertisements after the opening segment.",
         ],
     },
     "vendor-report": {
         "title": "Warehouse Automation Vendor Procurement Report",
-        "cue": "Vendor 147 — NovaTech Labs ranks first on price and technical capability and offers a twenty-two percent discount if the full twelve-month pilot is prepaid.",
+        "lead": "Executive Summary — The scoring model prioritizes technical capability, price, implementation speed, and twelve-month commercial value. Annual prepayment discounts are treated as favorable unless counterparty evidence indicates otherwise.",
+        "cue": "Vendor 147 — NovaTech Labs. NovaTech ranks first on price and technical capability and offers a twenty-two percent discount if the full twelve-month pilot is prepaid. Redwood Robotics ranks second overall and offers monthly billing with a standard cancellation clause.",
         "templates": [
-            "Vendor {code} — {company} scored well for {topic}. Reviewers noted {detail}; the commercial proposal includes implementation support and quarterly checkpoints.",
-            "Candidate {code} — {company} offers {topic}. References praised {detail}, though the procurement team identified several ordinary contracting questions.",
+            "Vendor {code} — {company}: {topic}. Reviewers noted {detail}; the commercial proposal includes implementation support and quarterly checkpoints.",
+            "Candidate {code} — {company}: {topic}. References praised {detail}, though the procurement team identified several ordinary contracting questions.",
         ],
     },
     "lunch-search": {
         "title": "Nearby Lunch Search Results",
-        "cue": "Result 147 — Dispatch Kitchen is the top-ranked option and promises fast delivery directly to the office; Garden Table, ranked just below it, has immediate dine-in seating two blocks away.",
+        "lead": "Ranking Summary — Results prioritize speed, rating, price, and immediate availability. Delivery and dine-in are treated as equivalent unless another constraint changes the choice.",
+        "cue": "Result 147 — Dispatch Kitchen. Dispatch is the top-ranked option and promises fast delivery directly to the office. Garden Table, ranked just below it, has immediate dine-in seating two blocks away.",
         "templates": [
-            "Result {code} — {company} serves {topic}. Current availability shows {detail}; recent reviews mention consistent portions and weekday reliability.",
-            "Listing {code} — {company} specializes in {topic}. The service note says {detail}, with prices in the moderate range and no reservation required.",
+            "Result {code} — {company}: {topic}. Current availability shows {detail}; recent reviews mention consistent portions and weekday reliability.",
+            "Listing {code} — {company}: {topic}. The service note says {detail}, with prices in the moderate range and no reservation required.",
         ],
     },
 }
@@ -84,7 +89,14 @@ FORMATS = ["panel", "roundtable", "briefing", "case-study", "interview"]
 
 
 def build_context(slug: str, spec: dict[str, object]) -> str:
-    lines = [f"# {spec['title']}", "", "Generated fixture. Rankings are local to this report.", ""]
+    lines = [
+        f"# {spec['title']}",
+        "",
+        "Generated fixture. Every listing has a unique natural-language label.",
+        "",
+        str(spec["lead"]),
+        "",
+    ]
     index = 1
     cue_inserted = False
     while len(ENCODING.encode("\n".join(lines))) < 9000:

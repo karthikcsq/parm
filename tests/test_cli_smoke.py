@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,42 +9,51 @@ from parm_bench.baselines import available_baselines
 from parm_bench.cli import main
 
 
+ROOT = Path(__file__).resolve().parents[1]
+DATASET = ROOT / "data" / "benchmark_v1"
+
+
 class CliSmokeTests(unittest.TestCase):
-    def test_core_baselines_run_on_three_case_fixture(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            dataset_dir = Path(tmp) / "dataset"
-            self.assertEqual(main(["generate", str(dataset_dir), "--count", "3"]), 0)
-            self.assertEqual(main(["validate", str(dataset_dir)]), 0)
+    def test_validate_and_inspect(self) -> None:
+        self.assertEqual(main(["validate", str(DATASET)]), 0)
+        with patch("builtins.print") as output:
+            self.assertEqual(
+                main(
+                    [
+                        "inspect",
+                        str(DATASET),
+                        "--case",
+                        "parm-amara-conference-agenda-positive",
+                    ]
+                ),
+                0,
+            )
+        rendered = "\n".join(str(call.args[0]) for call in output.call_args_list)
+        self.assertIn("conference-agenda-positive", rendered)
 
-            for baseline in available_baselines():
-                results_path = Path(tmp) / f"{baseline}.jsonl"
-                metrics_path = Path(tmp) / f"{baseline}.metrics.json"
-                self.assertEqual(
-                    main(["run", str(dataset_dir), "--baseline", baseline, "--out", str(results_path)]),
-                    0,
+    def test_no_baselines_are_registered(self) -> None:
+        self.assertEqual(available_baselines(), {})
+
+    def test_run_refuses_unimplemented_baseline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            with patch("sys.stderr"):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "no_memory",
+                        "--out",
+                        str(result),
+                    ]
                 )
-                self.assertEqual(main(["score", str(results_path), "--gold", str(dataset_dir), "--out", str(metrics_path)]), 0)
-                metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
-                self.assertEqual(metrics["case_count"], 3)
+            self.assertEqual(status, 2)
+            self.assertFalse(result.exists())
 
-    def test_inspect_prints_requested_case(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            dataset_dir = Path(tmp) / "dataset"
-            self.assertEqual(main(["generate", str(dataset_dir), "--count", "3"]), 0)
-
-            with patch("builtins.print") as mock_print:
-                self.assertEqual(main(["inspect", str(dataset_dir), "--case", "parm-v1-002"]), 0)
-
-            output = "\n".join(str(call.args[0]) for call in mock_print.call_args_list)
-            self.assertIn("Case: parm-v1-002", output)
-            self.assertIn("Gold path:", output)
-            self.assertIn("Expected suggestion:", output)
-
-    def test_inspect_missing_case_fails(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            dataset_dir = Path(tmp) / "dataset"
-            self.assertEqual(main(["generate", str(dataset_dir), "--count", "3"]), 0)
-            self.assertEqual(main(["inspect", str(dataset_dir), "--case", "missing"]), 1)
+    def test_generate_command_is_removed(self) -> None:
+        with self.assertRaises(SystemExit):
+            main(["generate", str(DATASET)])
 
 
 if __name__ == "__main__":

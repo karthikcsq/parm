@@ -25,25 +25,39 @@ class MemoryBackend(Protocol):
 class GBrainBackend:
     """Adapter for the pinned repo-local GBrain CLI."""
 
+    corpus_id = "amara-life-v1"
+    embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+
     def __init__(
         self,
         command: list[str] | None = None,
         cwd: str | Path | None = None,
         provenance_source: str | Path = "data/amara-life-v1/source",
+        gbrain_home: str | Path | None = None,
+        repo_root: str | Path | None = None,
     ):
+        self.repo_root = Path(
+            repo_root or Path(__file__).resolve().parents[2]
+        ).resolve()
         self.command = command or [
             "bun",
             "run",
             "src/cli.ts",
             "search",
         ]
-        self.cwd = Path(
+        self.cwd = _resolve_from_root(
             cwd
-            or os.environ.get(
-                "PARM_GBRAIN_CWD", ".gbrain-local/runtime/gbrain"
-            )
+            or os.environ.get("PARM_GBRAIN_CWD")
+            or ".gbrain-local/runtime/gbrain",
+            self.repo_root,
         )
-        source = Path(provenance_source)
+        self.gbrain_home = _resolve_from_root(
+            gbrain_home
+            or os.environ.get("GBRAIN_HOME")
+            or ".gbrain-local/home",
+            self.repo_root,
+        )
+        source = _resolve_from_root(provenance_source, self.repo_root)
         self.provenance = load_manifest(source) if source.exists() else {}
 
     def search(self, query: str, limit: int = 5) -> list[MemoryHit]:
@@ -63,6 +77,10 @@ class GBrainBackend:
         result = subprocess.run(
             [*self.command, query, "--limit", str(limit)],
             cwd=self.cwd,
+            env={
+                **os.environ,
+                "GBRAIN_HOME": str(self.gbrain_home),
+            },
             text=True,
             capture_output=True,
             check=True,
@@ -100,3 +118,8 @@ def _canonical_source_id(value: str) -> str:
     if value.startswith("meetings/"):
         return "meeting/" + value.removeprefix("meetings/")
     return value
+
+
+def _resolve_from_root(value: str | Path, root: Path) -> Path:
+    path = Path(value).expanduser()
+    return path.resolve() if path.is_absolute() else (root / path).resolve()

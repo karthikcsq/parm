@@ -6,8 +6,8 @@ Recorded against GBrain `0.42.53.0` and the `amara-life-v1` fixture.
 
 ```text
 Amara Life = fictional personal-history corpus
-GBrain     = storage and candidate-retrieval substrate
-PARM       = output-cue policy and decision evaluation
+GBrain     = import, chunking, embedding, and graph substrate
+PARM       = ranking, output-cue policy, and decision evaluation
 ```
 
 The tracked source fixture contains 424 fictional artifacts across email,
@@ -77,14 +77,26 @@ The previously verified local state contained 600 pages, 600 chunks, 407 graph
 edges, and 55 timeline entries. Those counts describe the pinned setup, not a
 guarantee for later GBrain versions.
 
-## GBrain adapter
+## Freeze the retrieval artifact
 
-The GBrain adapter parses the CLI's ranked text output and chunks observations
-that exceed Windows command-line limits before merging results.
+Canonical runs never invoke `gbrain search`. Export the neutral database state:
 
-No baseline currently consumes the adapter. A future implementation must report
-its corpus version, embedding model, retrieval configuration, response model,
-and whether perturbation filtering occurred.
+```powershell
+$env:PYTHONPATH='src'
+python -m parm_bench.cli export-retrieval-index `
+  --out .gbrain-local\indexes\amara-life-v1 `
+  --chunker-version gbrain-0.42.53.0-default
+```
+
+The exporter reads `pages`, `content_chunks`, and `links`, verifies that every
+stored vector uses the configured 384-dimensional MiniLM model, attaches
+benchmark perturbation labels, and writes hashed pages, chunks, embeddings,
+links, and manifest files. The PARM loader revalidates hashes, IDs, references,
+counts, model identity, and dimensions before ranking.
+
+The current local database may contain vectors created by an earlier model even
+when the active GBrain config names MiniLM. The exporter fails loudly in that
+state; rerun GBrain embedding before freezing the artifact.
 
 ## What this setup proves
 

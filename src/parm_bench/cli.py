@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.metadata
 import json
 import os
 import sys
@@ -8,25 +9,63 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 from .amara import normalize_amara
-from .backends import GBrainBackend
 from .baselines import (
+    BaselineConfiguration,
     BaselineNotImplementedError,
     benchmark_input,
     get_baseline,
 )
 from .dataset import DatasetValidationError, load_cases, validate_cases
 from .models import OpenAIResponsesModel
+from .retrieval import (
+    CANDIDATE_DEPTH,
+    COSINE_WEIGHT,
+    EXPANSION_MODEL,
+    EXPANSION_PROMPT_VERSION,
+    GRAPH_MIN_INBOUND,
+    GRAPH_MULTIPLIER,
+    OFFICIAL_TOP_K,
+    RRF_K,
+    RRF_WEIGHT,
+    CachedOpenAIQueryExpander,
+    ExpansionCacheMissError,
+    ExpansionPolicy,
+    IndexRetriever,
+    RetrievalIndex,
+    RetrievalMode,
+    RetrievalValidationError,
+    SentenceTransformerEmbedder,
+)
+from .retrieval_export import export_gbrain_index
 from .scoring import score_predictions
 
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
 def main(argv: list[str] | None = None) -> int:
+    load_dotenv(REPO_ROOT / ".env", override=False)
     parser = argparse.ArgumentParser(prog="parm-bench")
     commands = parser.add_subparsers(dest="command", required=True)
 
     prepare = commands.add_parser("prepare-amara")
     prepare.add_argument("--source", default="data/amara-life-v1/source")
     prepare.add_argument("--out", default=".gbrain-local/corpus/amara-life-v1")
+
+    export = commands.add_parser("export-retrieval-index")
+    export.add_argument("--out", required=True)
+    export.add_argument(
+        "--gbrain-runtime"
+    )
+    export.add_argument("--gbrain-home")
+    export.add_argument("--corpus-id", default="amara-life-v1")
+    export.add_argument("--chunker-version", required=True)
+    export.add_argument(
+        "--provenance-source", default="data/amara-life-v1/source"
+    )
 
     validate = commands.add_parser("validate")
     validate.add_argument("dataset_dir")
@@ -38,7 +77,16 @@ def main(argv: list[str] | None = None) -> int:
     run = commands.add_parser("run")
     run.add_argument("dataset_dir")
     run.add_argument("--baseline", required=True)
-    run.add_argument("--memory-backend", choices=("gbrain",), default="gbrain")
+    run.add_argument(
+        "--retrieval-mode", choices=tuple(mode.value for mode in RetrievalMode)
+    )
+    run.add_argument("--retrieval-index")
+    run.add_argument("--retrieval-limit", type=_positive_int)
+    run.add_argument("--expansion-cache")
+    run.add_argument(
+        "--expansion-policy",
+        choices=tuple(policy.value for policy in ExpansionPolicy),
+    )
     run.add_argument("--model")
     run.add_argument("--out", required=True)
 
@@ -53,6 +101,27 @@ def main(argv: list[str] | None = None) -> int:
             count = normalize_amara(args.source, args.out)
             print(f"Prepared {count} Amara pages in {args.out}")
             return 0
+        if args.command == "export-retrieval-index":
+            manifest = export_gbrain_index(
+                args.out,
+                runtime=_from_repo_root(
+                    args.gbrain_runtime
+                    or os.environ.get("PARM_GBRAIN_CWD")
+                    or ".gbrain-local/runtime/gbrain"
+                ),
+                gbrain_home=_from_repo_root(
+                    args.gbrain_home
+                    or os.environ.get("GBRAIN_HOME")
+                    or ".gbrain-local/home"
+                ),
+                corpus_id=args.corpus_id,
+                chunker_version=args.chunker_version,
+                provenance_source=_from_repo_root(args.provenance_source),
+            )
+            print(
+                f"Exported {manifest['counts']['pages']} pages to {args.out}"
+            )
+            return 0
         if args.command == "validate":
             cases = load_cases(args.dataset_dir)
             validate_cases(cases)
@@ -61,10 +130,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "inspect":
             return _inspect(args.dataset_dir, args.case_id)
         if args.command == "run":
+            _validate_retrieval_args(args)
             return _run(
                 args.dataset_dir,
                 args.baseline,
-                args.memory_backend,
+                args.retrieval_mode,
+                args.retrieval_index,
+                args.retrieval_limit or OFFICIAL_TOP_K,
+                args.expansion_cache,
+                args.expansion_policy,
                 args.model,
                 args.out,
             )
@@ -75,6 +149,13 @@ def main(argv: list[str] | None = None) -> int:
             print(issue, file=sys.stderr)
         return 1
     except BaselineNotImplementedError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    except (
+        ExpansionCacheMissError,
+        RetrievalValidationError,
+        ValueError,
+    ) as exc:
         print(str(exc), file=sys.stderr)
         return 2
     return 2
@@ -98,14 +179,39 @@ def _inspect(dataset_dir: str, case_id: str | None) -> int:
 def _run(
     dataset_dir: str,
     baseline: str,
-    backend_name: str,
+    retrieval_mode: str | None,
+    retrieval_index: str | None,
+    retrieval_limit: int,
+    expansion_cache: str | None,
+    expansion_policy: str | None,
     model_name: str | None,
     out: str,
 ) -> int:
     cases = load_cases(dataset_dir)
     validate_cases(cases)
-    implementation = get_baseline(baseline)
-    backend = GBrainBackend() if implementation.requires_memory else None
+    implementation = get_baseline(
+        baseline,
+        BaselineConfiguration(retrieval_limit=retrieval_limit),
+    )
+    retriever: IndexRetriever | None = None
+    if implementation.requires_memory:
+        assert retrieval_mode is not None
+        assert retrieval_index is not None
+        mode = RetrievalMode(retrieval_mode)
+        expander = None
+        if mode is RetrievalMode.ENHANCED:
+            assert expansion_cache is not None
+            expander = CachedOpenAIQueryExpander(
+                expansion_cache,
+                expansion_policy or ExpansionPolicy.FROZEN,
+            )
+        index = RetrievalIndex.load(retrieval_index)
+        retriever = IndexRetriever(
+            index,
+            mode,
+            SentenceTransformerEmbedder(),
+            expander=expander,
+        )
     model = OpenAIResponsesModel(_resolve_model(model_name))
     path = Path(out)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -125,7 +231,7 @@ def _run(
                 row = implementation.run(
                     benchmark_input(case),
                     model,
-                    backend,
+                    retriever,
                 )
                 row["baseline"] = baseline
                 handle.write(json.dumps(row, sort_keys=True) + "\n")
@@ -134,12 +240,171 @@ def _run(
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
         raise
+    _write_run_configuration(
+        path,
+        baseline=baseline,
+        retriever=retriever,
+        retrieval_limit=(
+            retrieval_limit if implementation.requires_memory else None
+        ),
+        requested_model=model.model_name,
+    )
     print(f"Wrote {len(cases)} predictions to {path}")
     return 0
 
 
 def _resolve_model(cli_model: str | None) -> str:
     return cli_model or os.environ.get("PARM_OPENAI_MODEL") or "gpt-5-mini"
+
+
+def _positive_int(value: str) -> int:
+    parsed = int(value)
+    if parsed < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return parsed
+
+
+def _write_run_configuration(
+    results_path: Path,
+    *,
+    baseline: str,
+    retriever: IndexRetriever | None,
+    retrieval_limit: int | None,
+    requested_model: str,
+) -> None:
+    payload = {
+        "baseline": baseline,
+        "retrieval_mode": retriever.mode.value if retriever is not None else None,
+        "retrieval_index": (
+            str(retriever.index.path) if retriever is not None else None
+        ),
+        "retrieval_manifest_hash": (
+            retriever.index.manifest_hash if retriever is not None else None
+        ),
+        "corpus": (
+            retriever.index.manifest["corpus_id"]
+            if retriever is not None
+            else None
+        ),
+        "gbrain_version": (
+            retriever.index.manifest["gbrain_version"]
+            if retriever is not None
+            else None
+        ),
+        "chunker_version": (
+            retriever.index.manifest["chunker_version"]
+            if retriever is not None
+            else None
+        ),
+        "embedding_model": (
+            retriever.index.manifest["embedding_model"]
+            if retriever is not None
+            else None
+        ),
+        "retrieval_limit": retrieval_limit,
+        "admission_policy": (
+            "all_retrieved" if retriever is not None else None
+        ),
+        "perturbation_filtering": False if retriever is not None else None,
+        "requested_model": requested_model,
+        "constants": (
+            {
+                "candidate_depth": CANDIDATE_DEPTH,
+                "rrf_k": RRF_K,
+                "rrf_weight": RRF_WEIGHT,
+                "cosine_weight": COSINE_WEIGHT,
+                "graph_min_inbound": GRAPH_MIN_INBOUND,
+                "graph_multiplier": GRAPH_MULTIPLIER,
+            }
+            if retriever is not None
+            else None
+        ),
+        "expansion_model": (
+            EXPANSION_MODEL
+            if retriever is not None
+            and retriever.mode is RetrievalMode.ENHANCED
+            else None
+        ),
+        "expansion_prompt_version": (
+            EXPANSION_PROMPT_VERSION
+            if retriever is not None
+            and retriever.mode is RetrievalMode.ENHANCED
+            else None
+        ),
+        "expansion_cache_hash": (
+            retriever.expander.cache_hash
+            if retriever is not None and retriever.expander is not None
+            else None
+        ),
+        "dependency_versions": (
+            _dependency_versions() if retriever is not None else None
+        ),
+    }
+    path = results_path.with_suffix(".config.json")
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temporary_path = Path(handle.name)
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+        temporary_path.replace(path)
+    except Exception:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+        raise
+
+
+def _validate_retrieval_args(args: argparse.Namespace) -> None:
+    uses_memory = args.baseline != "no_memory"
+    retrieval_arguments = {
+        "--retrieval-mode": args.retrieval_mode,
+        "--retrieval-index": args.retrieval_index,
+        "--retrieval-limit": args.retrieval_limit,
+        "--expansion-cache": args.expansion_cache,
+        "--expansion-policy": args.expansion_policy,
+    }
+    if not uses_memory:
+        supplied = [name for name, value in retrieval_arguments.items() if value]
+        if supplied:
+            raise ValueError(
+                "no_memory rejects retrieval arguments: " + ", ".join(supplied)
+            )
+        return
+    if not args.retrieval_mode or not args.retrieval_index:
+        raise ValueError(
+            "memory-using baselines require --retrieval-mode and "
+            "--retrieval-index"
+        )
+    if args.retrieval_mode == RetrievalMode.ENHANCED.value:
+        if not args.expansion_cache:
+            raise ValueError("enhanced retrieval requires --expansion-cache")
+    elif args.expansion_cache or args.expansion_policy:
+        raise ValueError(
+            "expansion cache arguments are only valid for enhanced retrieval"
+        )
+
+
+def _dependency_versions() -> dict[str, str]:
+    versions = {}
+    for distribution in ("numpy", "sentence-transformers"):
+        try:
+            versions[distribution] = importlib.metadata.version(distribution)
+        except importlib.metadata.PackageNotFoundError:
+            versions[distribution] = "unknown"
+    return versions
+
+
+def _from_repo_root(value: str) -> Path:
+    path = Path(value).expanduser()
+    return path.resolve() if path.is_absolute() else (REPO_ROOT / path).resolve()
 
 
 def _score(results_path: str, gold: str, out: str | None) -> int:

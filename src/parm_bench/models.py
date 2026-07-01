@@ -29,6 +29,8 @@ class LanguageModel(Protocol):
         prompt: str,
         observation_kind: str,
         observation_text: str,
+        instructions: str = FINAL_ANSWER_INSTRUCTIONS,
+        memory_context: str | None = None,
     ) -> ModelResponse: ...
 
 
@@ -43,11 +45,18 @@ class OpenAIResponsesModel:
         prompt: str,
         observation_kind: str,
         observation_text: str,
+        instructions: str = FINAL_ANSWER_INSTRUCTIONS,
+        memory_context: str | None = None,
     ) -> ModelResponse:
         response = self.client.responses.create(
             model=self.model_name,
-            instructions=FINAL_ANSWER_INSTRUCTIONS,
-            input=_render_input(prompt, observation_kind, observation_text),
+            instructions=instructions,
+            input=_render_input(
+                prompt,
+                observation_kind,
+                observation_text,
+                memory_context,
+            ),
             max_output_tokens=512,
             store=False,
         )
@@ -63,9 +72,13 @@ def _render_input(
     prompt: str,
     observation_kind: str,
     observation_text: str,
+    memory_context: str | None = None,
 ) -> str:
     label = observation_kind.replace("_", " ")
-    return f"Task:\n{prompt}\n\nObserved {label}:\n{observation_text}"
+    rendered = f"Task:\n{prompt}\n\nObserved {label}:\n{observation_text}"
+    if memory_context:
+        rendered += f"\n\nRetrieved personal memory:\n{memory_context}"
+    return rendered
 
 
 def _usage_dict(usage: Any) -> dict[str, Any]:

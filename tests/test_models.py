@@ -64,6 +64,32 @@ class OpenAIResponsesModelTests(unittest.TestCase):
         self.assertEqual(response.resolved_model, "gpt-5-mini-resolved")
         self.assertEqual(response.usage["total_tokens"], 23)
 
+    def test_generate_accepts_baseline_specific_instructions_and_memory(self) -> None:
+        responses = FakeResponses()
+        client = SimpleNamespace(responses=responses)
+        model = OpenAIResponsesModel("gpt-5-mini", client=client)
+
+        model.generate(
+            prompt="Choose exactly one.",
+            observation_kind="tool_result",
+            observation_text="Choice A\nChoice B",
+            instructions="Use retrieved memory.",
+            memory_context="1. Relevant private fact",
+        )
+
+        self.assertEqual(
+            responses.calls[0]["instructions"],
+            "Use retrieved memory.",
+        )
+        self.assertEqual(
+            responses.calls[0]["input"],
+            (
+                "Task:\nChoose exactly one.\n\n"
+                "Observed tool result:\nChoice A\nChoice B\n\n"
+                "Retrieved personal memory:\n1. Relevant private fact"
+            ),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

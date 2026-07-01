@@ -136,6 +136,12 @@ implemented merely because its name appears here:
 7. gold-cue retrieval as a recoverability ceiling; and
 8. the learned or heuristic PARM cue selector.
 
+Each memory-using condition is evaluated under a separate retrieval-mode axis:
+`dense`, `hybrid`, or `enhanced`. These are ranking policies, not additional
+baselines. GBrain prepares and exports the neutral page/chunk/vector/link
+substrate; PARM performs all canonical BM25, cosine, RRF, title, and graph
+ranking from the frozen artifact.
+
 Later comparisons can add FLARE-style uncertainty triggers and proactive-agent
 policies. They should not replace the simpler baselines that isolate the actual
 V1 failure mode.
@@ -149,9 +155,10 @@ poison admission, abstention, and privacy overexposure.
 Primary scoring is deterministic. It recognizes the gold title or name directly
 in the model's natural-language response; models do not emit benchmark-only
 IDs. A correct response may use memory silently and need not expose the
-retrieval path. Optional traces record detected cues and retrieved/admitted
-source IDs for diagnosis. LLM judging is reserved for scorer-disagreement
-audits.
+retrieval path. Optional traces record detected cues, retrieved/admitted source
+IDs, and reconstructable ranking diagnostics for diagnosis. Run sidecars pin
+the retrieval-manifest and expansion-cache hashes. LLM judging is reserved for
+scorer-disagreement audits.
 
 Hand-authored prediction rows validate benchmark mechanics without pretending
 to be retrieval baselines. Publication claims require deliberately implemented
@@ -174,7 +181,8 @@ policies over the prepared GBrain corpus and the same response model.
 ## 9. Milestones
 
 1. Validate the five-case pilot and counterfactual controls.
-2. Run all reference retrieval policies over the real GBrain index.
+2. Freeze the real GBrain substrate and run every reference condition under
+   mode-matched PARM retrieval.
 3. Add a model response adapter and human-review the paired decisions.
 4. Implement cue selection and measure it against whole-output/entity search.
 5. Expand the approved examples one at a time.

@@ -27,6 +27,12 @@ The response is not required to quote, explain, or expose the private memory.
 Retrieval traces are optional for externally supplied responses and diagnostic
 for internal baselines.
 
+For internal memory baselines, the trace must identify the retrieval condition
+and mode separately and retain the original query, expansions, per-channel
+candidates and ranks, RRF/cosine/graph diagnostics, selected chunk, returned
+page/source IDs, and perturbation labels. These fields are provenance, not
+model-visible hints.
+
 ## Primary metrics
 
 - `correct_memory_conditioned_decision_rate`: selection matches the gold
@@ -69,3 +75,5 @@ disagreement audit.
 The scorer is tested with hand-authored prediction rows, independently of any
 retrieval policy. Headline evidence requires deliberately implemented
 baselines over the same prepared GBrain substrate and response model.
+Mode comparisons must use the same frozen retrieval-index manifest and
+expansion cache. Condition comparisons must use the same retrieval mode.

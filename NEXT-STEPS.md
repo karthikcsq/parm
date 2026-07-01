@@ -7,9 +7,16 @@
   construction.
 - Review the five 9K-token contexts for realism, scheduling consistency, and
   whether each output-only decision is genuinely defensible.
-- Design `input_rag` next using the same sanitized input, OpenAI response
-  adapter, prediction schema, and GBrain corpus. Register it only after the
-  retrieval query and admission policy are reviewed.
+- Re-embed the local Amara brain with the configured 384-dimensional MiniLM
+  model, then export and validate the frozen retrieval index. The current
+  exporter deliberately rejects stale vectors from any other model.
+- Replay one Amara case through `input_rag × dense`, `input_rag × hybrid`, and
+  `input_rag × enhanced`; inspect traces and repeat each run for deterministic
+  ordering and scores.
+- Treat the earlier live-`gbrain search` `input_rag` result as historical only.
+  Canonical comparisons now rank the frozen substrate inside PARM.
+- Design `prompted_memory_tool` next without letting the visible prompt ask for
+  memory use.
 - Build later comparisons one at a time; do not recreate heuristic stand-ins
   to fill out the baseline table.
 

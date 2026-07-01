@@ -9,7 +9,15 @@ from unittest.mock import patch
 
 from parm_bench.baselines import available_baselines
 from parm_bench.cli import _resolve_model, main
-from parm_bench.models import ModelResponse
+from parm_bench.models import FINAL_ANSWER_INSTRUCTIONS, ModelResponse
+from parm_bench.retrieval import (
+    EMBEDDING_DIMENSIONS,
+    EMBEDDING_MODEL,
+    RetrievalHit,
+    RetrievalMode,
+    RetrievalRequest,
+    RetrievalResult,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +29,7 @@ class FakeOpenAIModel:
 
     def __init__(self, model_name: str):
         self.model_name = model_name
-        self.calls: list[dict[str, str]] = []
+        self.calls: list[dict[str, object]] = []
         self.__class__.instances.append(self)
 
     def generate(
@@ -30,12 +38,16 @@ class FakeOpenAIModel:
         prompt: str,
         observation_kind: str,
         observation_text: str,
+        instructions: str = FINAL_ANSWER_INSTRUCTIONS,
+        memory_context: str | None = None,
     ) -> ModelResponse:
         self.calls.append(
             {
                 "prompt": prompt,
                 "observation_kind": observation_kind,
                 "observation_text": observation_text,
+                "instructions": instructions,
+                "memory_context": memory_context,
             }
         )
         return ModelResponse(
@@ -46,9 +58,59 @@ class FakeOpenAIModel:
         )
 
 
+class FakeIndex:
+    path = Path("fixture-index").resolve()
+    manifest_hash = "manifest-hash"
+    manifest = {
+        "corpus_id": "amara-life-v1",
+        "embedding_model": EMBEDDING_MODEL,
+        "embedding_dimensions": EMBEDDING_DIMENSIONS,
+        "gbrain_version": "test",
+        "chunker_version": "test",
+    }
+
+
+class FakeRetriever:
+    instances: list["FakeRetriever"] = []
+
+    def __init__(self, index: FakeIndex, mode: str, embedder: object, **kwargs: object):
+        self.index = index
+        self.mode = RetrievalMode(mode)
+        self.expander = kwargs.get("expander")
+        self.calls: list[RetrievalRequest] = []
+        self.__class__.instances.append(self)
+
+    def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
+        self.calls.append(request)
+        return RetrievalResult(
+            (
+                RetrievalHit(
+                    page_id="page/retrieved",
+                    source_id="fixture-source",
+                    slug="note/retrieved",
+                    title="Retrieved",
+                    chunk_id="page/retrieved:0",
+                    text="Retrieved memory",
+                    score=0.9,
+                    rank=1,
+                ),
+            ),
+            {
+                "retrieval_mode": self.mode.value,
+                "original_query": request.query,
+                "expansion_queries": [],
+                "candidate_lists": {
+                    "dense:original": ["page/retrieved"]
+                },
+                "returned_pages": [],
+            },
+        )
+
+
 class CliSmokeTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeOpenAIModel.instances.clear()
+        FakeRetriever.instances.clear()
 
     def test_validate_and_inspect(self) -> None:
         self.assertEqual(main(["validate", str(DATASET)]), 0)
@@ -68,7 +130,10 @@ class CliSmokeTests(unittest.TestCase):
         self.assertIn("conference-agenda-positive", rendered)
 
     def test_no_memory_baseline_is_registered(self) -> None:
-        self.assertEqual(set(available_baselines()), {"no_memory"})
+        self.assertEqual(
+            set(available_baselines()),
+            {"no_memory", "input_rag"},
+        )
 
     def test_run_refuses_unimplemented_baseline(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -96,8 +161,8 @@ class CliSmokeTests(unittest.TestCase):
                     FakeOpenAIModel,
                 ),
                 patch(
-                    "parm_bench.cli.GBrainBackend",
-                    side_effect=AssertionError("GBrain must not be instantiated"),
+                    "parm_bench.cli.IndexRetriever",
+                    side_effect=AssertionError("retriever must not be instantiated"),
                 ),
             ):
                 status = main(
@@ -126,6 +191,120 @@ class CliSmokeTests(unittest.TestCase):
             self.assertTrue(
                 all(row["trace"]["admitted_source_ids"] == [] for row in rows)
             )
+            configuration = json.loads(
+                result.with_suffix(".config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(configuration["baseline"], "no_memory")
+            self.assertIsNone(configuration["retrieval_limit"])
+
+    def test_input_rag_run_uses_configured_limit_and_writes_sidecar(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            with (
+                patch(
+                    "parm_bench.cli.OpenAIResponsesModel",
+                    FakeOpenAIModel,
+                ),
+                patch(
+                    "parm_bench.cli.RetrievalIndex.load",
+                    return_value=FakeIndex(),
+                ),
+                patch(
+                    "parm_bench.cli.SentenceTransformerEmbedder",
+                    return_value=object(),
+                ),
+                patch(
+                    "parm_bench.cli.IndexRetriever",
+                    FakeRetriever,
+                ),
+            ):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "input_rag",
+                        "--retrieval-mode",
+                        "dense",
+                        "--retrieval-index",
+                        "fixture-index",
+                        "--retrieval-limit",
+                        "3",
+                        "--model",
+                        "chosen-model",
+                        "--out",
+                        str(result),
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            retriever = FakeRetriever.instances[0]
+            self.assertEqual(len(retriever.calls), 10)
+            self.assertTrue(all(call.top_k == 3 for call in retriever.calls))
+            model = FakeOpenAIModel.instances[0]
+            self.assertTrue(
+                all(
+                    call["memory_context"] == "1. Retrieved memory"
+                    for call in model.calls
+                )
+            )
+            rows = [
+                json.loads(line)
+                for line in result.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertTrue(
+                all(
+                    row["trace"]["admitted_source_ids"]
+                    == ["note/retrieved"]
+                    for row in rows
+                )
+            )
+            configuration = json.loads(
+                result.with_suffix(".config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(configuration["retrieval_mode"], "dense")
+            self.assertEqual(
+                configuration["retrieval_manifest_hash"], "manifest-hash"
+            )
+            self.assertEqual(configuration["retrieval_limit"], 3)
+            self.assertEqual(configuration["admission_policy"], "all_retrieved")
+            self.assertNotIn("memory_backend", configuration)
+
+    def test_memory_run_requires_explicit_mode_and_index(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
+            status = main(
+                [
+                    "run",
+                    str(DATASET),
+                    "--baseline",
+                    "input_rag",
+                    "--out",
+                    str(Path(tmp) / "result.jsonl"),
+                ]
+            )
+        self.assertEqual(status, 2)
+
+    def test_no_memory_rejects_retrieval_arguments(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
+            status = main(
+                [
+                    "run",
+                    str(DATASET),
+                    "--baseline",
+                    "no_memory",
+                    "--retrieval-mode",
+                    "dense",
+                    "--out",
+                    str(Path(tmp) / "result.jsonl"),
+                ]
+            )
+        self.assertEqual(status, 2)
+
+    def test_cli_loads_repo_dotenv_without_overriding_environment(self) -> None:
+        with patch("parm_bench.cli.load_dotenv") as load:
+            self.assertEqual(main(["validate", str(DATASET)]), 0)
+        load.assert_called_once()
+        self.assertFalse(load.call_args.kwargs["override"])
 
     def test_model_precedence(self) -> None:
         with patch.dict(os.environ, {}, clear=True):

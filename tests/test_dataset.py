@@ -99,6 +99,47 @@ class DatasetValidationTests(unittest.TestCase):
             validate_cases(broken)
         self.assertIn("source hash mismatch", str(context.exception))
 
+    def test_gold_source_ids_use_frozen_index_slug_convention(self) -> None:
+        # Every per-file corpus source must use the same collection prefix the
+        # frozen index derives from its directory (notes/, meetings/), so that
+        # scoring's gold-admission intersection can ever match retrieved slugs.
+        for case in load_cases(DATASET):
+            for source in case["memory"]["sources"]:
+                path = source["path"]
+                if path.endswith(".md") and "/" in path:
+                    self.assertEqual(
+                        source["source_id"].split("/", 1)[0],
+                        path.split("/", 1)[0],
+                        f"{case['case_id']}: {source['source_id']} vs {path}",
+                    )
+            for gold in case["memory"]["gold_source_ids"]:
+                self.assertIn(
+                    gold,
+                    {source["source_id"] for source in case["memory"]["sources"]},
+                )
+
+    def test_singular_source_prefix_fails_validation(self) -> None:
+        cases = load_cases(DATASET)
+        broken = copy.deepcopy(cases)
+        case = next(
+            c
+            for c in broken
+            if any(s["path"].endswith(".md") for s in c["memory"]["sources"])
+        )
+        source = next(
+            s for s in case["memory"]["sources"] if s["path"].endswith(".md")
+        )
+        old_id = source["source_id"]
+        singular = "note/" + old_id.split("/", 1)[1]
+        source["source_id"] = singular
+        case["memory"]["gold_source_ids"] = [
+            singular if gid == old_id else gid
+            for gid in case["memory"]["gold_source_ids"]
+        ]
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(broken)
+        self.assertIn("does not match corpus directory", str(context.exception))
+
     def test_positive_decision_must_change(self) -> None:
         cases = load_cases(DATASET)
         broken = copy.deepcopy(cases)

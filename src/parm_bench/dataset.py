@@ -222,3 +222,20 @@ def _validate_case(
             issues.append(
                 ValidationIssue(case_id, f"source hash mismatch {source.get('path')}")
             )
+        # A per-file corpus source must carry the frozen-index slug convention:
+        # its source_id collection prefix equals the path's top-level directory
+        # (e.g. notes/... not note/...). Bundle files map many IDs to one path
+        # and are exempt.
+        source_path = str(source.get("path", ""))
+        source_id = str(source.get("source_id", ""))
+        if source_path.endswith(".md") and "/" in source_path and "/" in source_id:
+            path_prefix = source_path.split("/", 1)[0]
+            id_prefix = source_id.split("/", 1)[0]
+            if id_prefix != path_prefix:
+                issues.append(
+                    ValidationIssue(
+                        case_id,
+                        f"source_id prefix {id_prefix!r} does not match "
+                        f"corpus directory {path_prefix!r} for {source_path}",
+                    )
+                )

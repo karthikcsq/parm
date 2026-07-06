@@ -18,7 +18,7 @@ SPECS = [
         "cue": "Session G-147 — Chen Wei, NovaMind: Edge Inference for Texas Grid Reliability Pilots. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.",
         "replacement": "Session G-147 — Priya Raman, GridScope: Edge Inference for Municipal Demand Forecasting. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.",
         "query": "Chen Wei NovaMind Texas grid reliability pilot evidence",
-        "sources": [("note/2026-04-09-novamind-followup", "notes/2026-04-09-novamind-followup.md", [])],
+        "sources": [("notes/2026-04-09-novamind-followup", "notes/2026-04-09-novamind-followup.md", [])],
         "memory_text": "Amara wants NovaMind's Texas grid pilot data before presenting an investment to the partnership.",
         "output_choice": "Session A-004 — Aurora Systems: Practical Evaluation Methods for Reliable Agent Infrastructure",
         "memory_choice": "Session G-147 — Chen Wei, NovaMind: Edge Inference for Texas Grid Reliability Pilots",
@@ -47,8 +47,8 @@ SPECS = [
         "replacement": "Episode 147 — Quiet Workflow Signals. A practical discussion of delayed standups, repeated status meetings, and working across several project boards before priorities become obvious.",
         "query": "skipped workouts desk lunches working consecutive weekends burnout",
         "sources": [
-            ("note/2026-03-22-weekly-review", "notes/2026-03-22-weekly-review.md", []),
-            ("note/2026-02-02-weekly-review", "notes/2026-02-02-weekly-review.md", ["stale-fact"]),
+            ("notes/2026-03-22-weekly-review", "notes/2026-03-22-weekly-review.md", []),
+            ("notes/2026-02-02-weekly-review", "notes/2026-02-02-weekly-review.md", ["stale-fact"]),
         ],
         "memory_text": "Recent notes say burnout does not announce itself and show missed gym sessions, repeated desk lunches, and several consecutive working Saturdays.",
         "output_choice": "The Chip Roadmap",
@@ -63,7 +63,7 @@ SPECS = [
         "cue": "Vendor 147 — NovaTech Labs. NovaTech ranks first on price and technical capability and offers a twenty-two percent discount if the full twelve-month pilot is prepaid. Redwood Robotics ranks second overall and offers monthly billing with a standard cancellation clause.",
         "replacement": "Vendor 147 — Northline Automation. Northline ranks first on price and technical capability and offers a twenty-two percent discount if the full twelve-month pilot is prepaid. Redwood Robotics ranks second overall and offers monthly billing with a standard cancellation clause.",
         "query": "NovaTech Labs runway financial risk annual prepayment",
-        "sources": [("meeting/mtg-0006", "meetings/mtg-0006.md", ["contradiction"])],
+        "sources": [("meetings/mtg-0006", "meetings/mtg-0006.md", ["contradiction"])],
         "memory_text": "NovaTech Labs' burn increased and runway fell to roughly eight months, so Amara required updated financials before a commitment.",
         "output_choice": "NovaTech Labs",
         "memory_choice": "Redwood Robotics",
@@ -78,7 +78,7 @@ SPECS = [
         "cue": "Result 147 — Dispatch Kitchen. Dispatch is the top-ranked option and promises fast delivery directly to the office. Garden Table, ranked just below it, has immediate dine-in seating two blocks away.",
         "replacement": "Result 147 — Dispatch Kitchen. Dispatch is the top-ranked option and promises fast counter service. Garden Table, ranked just below it, also has immediate counter seating two blocks away.",
         "query": "delivery directly to office versus nearby dine-in lunch break",
-        "sources": [("note/2026-03-22-weekly-review", "notes/2026-03-22-weekly-review.md", [])],
+        "sources": [("notes/2026-03-22-weekly-review", "notes/2026-03-22-weekly-review.md", [])],
         "memory_text": "Amara wrote that eating lunch at her desk repeatedly was not sustainable and that she needed to protect actual breaks.",
         "output_choice": "Dispatch Kitchen",
         "memory_choice": "Garden Table",
@@ -95,7 +95,7 @@ def file_hash(relative_path: str) -> str:
 def distractor_sources(slug: str) -> list[dict[str, object]]:
     return [
         {
-            "source_id": f"note/{slug}-distractor-market",
+            "source_id": f"notes/{slug}-distractor-market",
             "text": "A prior note mentions a similarly named company in a broad market scan but records no pending action.",
             "perturbations": [],
         },

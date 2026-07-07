@@ -8,6 +8,8 @@
 
 ## Build, Test, and Development Commands
 
+This project runs on the Anaconda interpreter at `C:\Users\karth\anaconda3\python.exe`, which has the `openai`, `numpy`, and `tiktoken` dependencies installed. The bare `python` on PATH resolves to the msys2 build, which lacks them — invoke the Anaconda interpreter explicitly (or activate its environment) when running or testing. Tests import from `src/`, so set `PYTHONPATH=src` unless the package is installed editable.
+
 Install locally before running commands:
 
 ```powershell

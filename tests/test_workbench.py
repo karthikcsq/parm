@@ -183,6 +183,67 @@ class WorkbenchServiceTests(unittest.TestCase):
         self.assertIsNone(FakeModel.calls[0]["memory_context"])
         self.assertEqual(FakeModel.calls[0]["observation_text"], "")
 
+    def test_naive_output_rag_tool_output_flow_uses_case_observation(self) -> None:
+        result = self.service.run(
+            {
+                "case_id": "parm-amara-lunch-search-positive",
+                "condition": "naive_output_rag",
+                "output_rag_flow": "tool_output_only",
+                "retrieval_mode": "dense",
+                "top_k": 2,
+            }
+        )
+
+        self.assertEqual(
+            self.retrievers[0].calls,
+            [RetrievalRequest("Result 1. Garden Table", top_k=2)],
+        )
+        self.assertEqual(result["condition"], "naive_output_rag")
+        self.assertEqual(result["output_rag_flow"], "tool_output_only")
+        self.assertEqual(result["retrieval_mode"], "dense")
+        self.assertEqual(result["retrieval"]["hits"][0]["rank"], 1)
+        self.assertEqual(result["retrieval"]["hits"][0]["slug"], "note/one")
+        self.assertEqual(
+            result["retrieval"]["trace"]["output_rag_flow"],
+            "tool_output_only",
+        )
+        self.assertEqual(
+            FakeModel.calls[0]["memory_context"],
+            "1. Remember the quiet option.",
+        )
+
+    def test_naive_output_rag_model_output_flow_allows_custom_prompt(self) -> None:
+        result = self.service.run(
+            {
+                "prompt": "Choose a plan",
+                "condition": "naive_output_rag",
+                "output_rag_flow": "model_output_only",
+                "retrieval_mode": "hybrid",
+                "top_k": 1,
+            }
+        )
+
+        self.assertEqual(len(FakeModel.calls), 2)
+        self.assertEqual(
+            self.retrievers[0].calls,
+            [RetrievalRequest("Workbench answer", top_k=1)],
+        )
+        self.assertEqual(result["output_rag_flow"], "model_output_only")
+        self.assertEqual(result["retrieval_mode"], "hybrid")
+
+    def test_naive_output_rag_requires_case_for_tool_output_flows(self) -> None:
+        with self.assertRaisesRegex(
+            WorkbenchRequestError, "Choose a benchmark case"
+        ):
+            self.service.run(
+                {
+                    "prompt": "Custom text has no observation.",
+                    "condition": "naive_output_rag",
+                    "output_rag_flow": "tool_then_model_output",
+                    "retrieval_mode": "dense",
+                }
+            )
+
     def test_case_selection_uses_canonical_prompt_and_observation(self) -> None:
         result = self.service.run(
             {
@@ -347,11 +408,21 @@ class WorkbenchHttpTests(unittest.TestCase):
         self.assertIn("PARM Retrieval Workbench", html)
         self.assertIn("No memory", html)
         self.assertIn("Input RAG", html)
+        self.assertIn("Output RAG", html)
 
         with urllib.request.urlopen(self.base_url + "/api/config") as response:
             configuration = json.load(response)
         self.assertEqual(
-            configuration["conditions"], ["no_memory", "input_rag"]
+            configuration["conditions"],
+            ["no_memory", "input_rag", "naive_output_rag"],
+        )
+        self.assertEqual(
+            configuration["output_rag_flows"],
+            [
+                "tool_output_only",
+                "model_output_only",
+                "tool_then_model_output",
+            ],
         )
         self.assertEqual(
             configuration["retrieval_modes"],

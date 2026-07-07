@@ -70,7 +70,7 @@ that cache.
 
 ## Baseline status
 
-Two baselines are implemented:
+Three baselines are implemented:
 
 - `no_memory` sends only the ordinary prompt and resolved observation to the
   response model. It has no retriever and emits an empty retrieval trace.
@@ -78,10 +78,16 @@ Two baselines are implemented:
   retriever, admits every top-k page, and appends each selected chunk in a
   separate retrieved-memory section. It does not retrieve from the later
   observation.
+- `naive_output_rag` retrieves from output text without cue selection. Use
+  `--output-rag-flow` to choose where output-triggered retrieval runs:
+  `tool_output_only`, `model_output_only`, or `tool_then_model_output`.
 
 Retrieval condition and retrieval mode are separate experiment axes. Every
 memory-using condition must explicitly choose `dense`, `hybrid`, or `enhanced`
 and use the same frozen index for mode-matched comparisons.
+For `naive_output_rag`, `--output-rag-flow` is the separate axis for where
+output-triggered retrieval happens; `--retrieval-mode` still controls how
+memories are ranked.
 
 Run the five positive/control pairs and score them:
 
@@ -108,6 +114,19 @@ parm-bench run data/benchmark_v1 `
   --out data/benchmark-results/input-rag-gpt-5-mini.jsonl
 ```
 
+Run naive output-RAG with retrieval on the observed tool/output text:
+
+```powershell
+parm-bench run data/benchmark_v1 `
+  --baseline naive_output_rag `
+  --output-rag-flow tool_output_only `
+  --retrieval-mode dense `
+  --retrieval-index data\retrieval-indexes\amara-life-v1 `
+  --retrieval-limit 5 `
+  --model gpt-5-mini `
+  --out data/benchmark-results/naive-output-rag-tool-output-gpt-5-mini.jsonl
+```
+
 The CLI automatically loads the ignored repo-root `.env` without overriding
 variables already set in the process. Start from `.env.example`; set
 `OPENAI_API_KEY`, and override `GBRAIN_HOME`, `PARM_GBRAIN_CWD`, or
@@ -115,8 +134,9 @@ variables already set in the process. Start from `.env.example`; set
 index-export command, never during a canonical benchmark run.
 
 Every run writes the common prediction JSONL plus a sibling `.config.json`
-recording its baseline, retrieval mode, fixed ranking constants, dependency
-versions, index-manifest hash, and expansion-cache hash where applicable.
+recording its baseline, output-RAG flow where applicable, retrieval mode, fixed
+ranking constants, dependency versions, index-manifest hash, and
+expansion-cache hash where applicable.
 Input-RAG traces retain complete ranking diagnostics and perturbation labels,
 but labels and IDs are not shown to the response model.
 

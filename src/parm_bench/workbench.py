@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import time
 import webbrowser
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from enum import Enum
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -11,7 +11,12 @@ from importlib.resources import files
 from pathlib import Path
 from typing import Any, Callable, Protocol
 
-from .baselines import INPUT_RAG_INSTRUCTIONS
+from .baselines import (
+    INPUT_RAG_INSTRUCTIONS,
+    BenchmarkInput,
+    NaiveOutputRagBaseline,
+    OutputRagFlow,
+)
 from .choice_matching import matches_choice
 from .dataset import load_cases, validate_cases
 from .models import (
@@ -47,6 +52,7 @@ MAX_PROMPT_CHARACTERS = 100_000
 class RetrievalCondition(str, Enum):
     NO_MEMORY = "no_memory"
     INPUT_RAG = "input_rag"
+    NAIVE_OUTPUT_RAG = "naive_output_rag"
 
 
 class WorkbenchRequestError(ValueError):
@@ -98,6 +104,7 @@ class WorkbenchService:
     def configuration(self) -> dict[str, Any]:
         return {
             "conditions": [condition.value for condition in RetrievalCondition],
+            "output_rag_flows": [flow.value for flow in OutputRagFlow],
             "retrieval_modes": [mode.value for mode in RetrievalMode],
             "enhanced_available": self.expansion_cache is not None,
             "expansion_policy": self.expansion_policy.value,
@@ -165,8 +172,11 @@ class WorkbenchService:
 
         started = time.perf_counter()
         retrieval: RetrievalResult | None = None
+        captured_retrievals: list[RetrievalResult] = []
         retrieval_mode: RetrievalMode | None = None
-        if condition is RetrievalCondition.INPUT_RAG:
+        output_rag_flow: OutputRagFlow | None = None
+        memory_condition = condition is not RetrievalCondition.NO_MEMORY
+        if memory_condition:
             try:
                 retrieval_mode = RetrievalMode(
                     payload.get("retrieval_mode", RetrievalMode.DENSE.value)
@@ -181,16 +191,6 @@ class WorkbenchService:
                     "Enhanced retrieval is unavailable. Restart the server "
                     "with --expansion-cache."
                 )
-            try:
-                retrieval = self._retriever(retrieval_mode).retrieve(
-                    RetrievalRequest(prompt, top_k=top_k)
-                )
-            except (ExpansionCacheMissError, RetrievalValidationError):
-                raise
-            except Exception as exc:
-                raise WorkbenchRunError("retrieval", exc) from exc
-
-        memory_context = _memory_context(retrieval)
         model = self.model_factory(model_name.strip())
         observation_kind = (
             str(selected_case["observation"]["kind"])
@@ -202,24 +202,98 @@ class WorkbenchService:
             if selected_case is not None
             else ""
         )
-        try:
-            response = model.generate(
-                prompt=prompt,
-                observation_kind=observation_kind,
-                observation_text=observation_text,
-                instructions=(
-                    (
+        row: dict[str, Any] | None = None
+        if condition is RetrievalCondition.INPUT_RAG:
+            assert retrieval_mode is not None
+            try:
+                retrieval = self._retriever(retrieval_mode).retrieve(
+                    RetrievalRequest(prompt, top_k=top_k)
+                )
+            except (ExpansionCacheMissError, RetrievalValidationError):
+                raise
+            except Exception as exc:
+                raise WorkbenchRunError("retrieval", exc) from exc
+            memory_context = _memory_context(retrieval)
+            try:
+                response = model.generate(
+                    prompt=prompt,
+                    observation_kind=observation_kind,
+                    observation_text=observation_text,
+                    instructions=(
                         INPUT_RAG_INSTRUCTIONS
-                        if condition is RetrievalCondition.INPUT_RAG
-                        else FINAL_ANSWER_INSTRUCTIONS
+                        if selected_case is not None
+                        else WORKBENCH_INSTRUCTIONS
+                    ),
+                    memory_context=memory_context,
+                )
+            except Exception as exc:
+                raise WorkbenchRunError("model generation", exc) from exc
+        elif condition is RetrievalCondition.NAIVE_OUTPUT_RAG:
+            try:
+                output_rag_flow = OutputRagFlow(
+                    payload.get(
+                        "output_rag_flow",
+                        OutputRagFlow.TOOL_THEN_MODEL_OUTPUT.value,
                     )
-                    if selected_case is not None
-                    else WORKBENCH_INSTRUCTIONS
-                ),
-                memory_context=memory_context,
+                )
+            except ValueError as exc:
+                raise WorkbenchRequestError("Unknown output-RAG flow.") from exc
+            if (
+                selected_case is None
+                and output_rag_flow is not OutputRagFlow.MODEL_OUTPUT_ONLY
+            ):
+                raise WorkbenchRequestError(
+                    "Choose a benchmark case for output-RAG flows that retrieve "
+                    "from observed tool/output text."
+                )
+            assert retrieval_mode is not None
+            retriever = _CapturingRetriever(self._retriever(retrieval_mode))
+            baseline = NaiveOutputRagBaseline(
+                retrieval_limit=top_k,
+                output_rag_flow=output_rag_flow,
             )
-        except Exception as exc:
-            raise WorkbenchRunError("model generation", exc) from exc
+            try:
+                row = baseline.run(
+                    BenchmarkInput(
+                        case_id=(
+                            str(selected_case["case_id"])
+                            if selected_case is not None
+                            else "custom"
+                        ),
+                        prompt=prompt,
+                        observation_kind=observation_kind,
+                        observation_text=observation_text,
+                    ),
+                    model,
+                    retriever,
+                )
+            except (ExpansionCacheMissError, RetrievalValidationError):
+                raise
+            except Exception as exc:
+                stage = (
+                    "retrieval"
+                    if retriever.failed_during_retrieval
+                    else "model generation"
+                )
+                raise WorkbenchRunError(stage, exc) from exc
+            captured_retrievals = retriever.results
+            retrieval = _merge_retrievals(captured_retrievals, row["trace"])
+            response = _RowResponse(row)
+        else:
+            try:
+                response = model.generate(
+                    prompt=prompt,
+                    observation_kind=observation_kind,
+                    observation_text=observation_text,
+                    instructions=(
+                        FINAL_ANSWER_INSTRUCTIONS
+                        if selected_case is not None
+                        else WORKBENCH_INSTRUCTIONS
+                    ),
+                    memory_context=None,
+                )
+            except Exception as exc:
+                raise WorkbenchRunError("model generation", exc) from exc
         elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
         return {
             "prompt": prompt,
@@ -235,10 +309,13 @@ class WorkbenchService:
                 else None
             ),
             "condition": condition.value,
+            "output_rag_flow": (
+                output_rag_flow.value if output_rag_flow is not None else None
+            ),
             "retrieval_mode": (
                 retrieval_mode.value if retrieval_mode is not None else None
             ),
-            "top_k": top_k if retrieval is not None else None,
+            "top_k": top_k if memory_condition else None,
             "response_text": response.text,
             "elapsed_ms": elapsed_ms,
             "model": {
@@ -338,6 +415,47 @@ def create_workbench_server(
 
 class WorkbenchHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
+
+
+class _CapturingRetriever:
+    def __init__(self, retriever: IndexRetriever):
+        self._retriever = retriever
+        self.mode = retriever.mode
+        self.results: list[RetrievalResult] = []
+        self.failed_during_retrieval = False
+
+    def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
+        try:
+            result = self._retriever.retrieve(request)
+        except Exception:
+            self.failed_during_retrieval = True
+            raise
+        self.results.append(result)
+        return result
+
+
+class _RowResponse:
+    def __init__(self, row: dict[str, Any]):
+        self.text = str(row["response_text"])
+        self.response_id = row["provider_response_id"]
+        self.resolved_model = row["resolved_model"]
+        self.usage = row["usage"]
+
+
+def _merge_retrievals(
+    retrievals: list[RetrievalResult],
+    trace: dict[str, Any],
+) -> RetrievalResult:
+    hits = []
+    admitted = set(trace.get("admitted_source_ids", []))
+    seen = set()
+    for retrieval in retrievals:
+        for hit in retrieval.hits:
+            if hit.slug in seen or (admitted and hit.slug not in admitted):
+                continue
+            seen.add(hit.slug)
+            hits.append(replace(hit, rank=len(hits) + 1))
+    return RetrievalResult(tuple(hits), trace)
 
 
 class WorkbenchRequestHandler(BaseHTTPRequestHandler):
@@ -496,7 +614,7 @@ def _evaluate_case(
     decisions = case["decisions"]
     expected_basis = (
         "memory-conditioned"
-        if condition is RetrievalCondition.INPUT_RAG
+        if condition is not RetrievalCondition.NO_MEMORY
         else "output-only"
     )
     expected_choice = str(decisions[expected_basis.replace("-", "_")]["choice"])

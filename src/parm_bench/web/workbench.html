@@ -178,7 +178,9 @@
       border: 1px solid #aebbc8;
     }
 
+    .choice-grid.condition-grid,
     .choice-grid.mode-grid { grid-template-columns: repeat(3, 1fr); }
+    .choice-grid.flow-grid { grid-template-columns: 1fr; }
     .choice-grid input { position: absolute; opacity: 0; pointer-events: none; }
 
     .choice-grid label {
@@ -616,11 +618,25 @@
 
         <fieldset class="field" style="border:0;padding:0;margin-inline:0">
           <legend class="field-label">Memory condition</legend>
-          <div class="choice-grid">
+          <div class="choice-grid condition-grid">
             <input type="radio" id="condition-none" name="condition" value="no_memory">
             <label for="condition-none">No memory</label>
             <input type="radio" id="condition-rag" name="condition" value="input_rag" checked>
             <label for="condition-rag">Input RAG</label>
+            <input type="radio" id="condition-output-rag" name="condition" value="naive_output_rag">
+            <label for="condition-output-rag">Output RAG</label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field" id="flow-fieldset" style="border:0;padding:0;margin-inline:0" hidden>
+          <legend class="field-label">Output-RAG flow</legend>
+          <div class="choice-grid flow-grid">
+            <input type="radio" id="flow-tool" name="output_rag_flow" value="tool_output_only" checked>
+            <label for="flow-tool">Tool output only</label>
+            <input type="radio" id="flow-model" name="output_rag_flow" value="model_output_only">
+            <label for="flow-model">Model output only</label>
+            <input type="radio" id="flow-tool-model" name="output_rag_flow" value="tool_then_model_output">
+            <label for="flow-tool-model">Tool then model output</label>
           </div>
         </fieldset>
 
@@ -708,6 +724,7 @@
     const modelInput = document.querySelector("#model");
     const topKInput = document.querySelector("#top-k");
     const conditionInputs = [...document.querySelectorAll("[name='condition']")];
+    const flowFieldset = document.querySelector("#flow-fieldset");
     const modeFieldset = document.querySelector("#mode-fieldset");
     const conditionNote = document.querySelector("#condition-note");
     const runButton = document.querySelector("#run-button");
@@ -732,12 +749,20 @@
     }
 
     function syncCondition() {
-      const hasMemory = selected("condition") === "input_rag";
+      const condition = selected("condition");
+      const hasMemory = condition !== "no_memory";
+      const isOutputRag = condition === "naive_output_rag";
+      flowFieldset.hidden = !isOutputRag;
+      flowFieldset.disabled = !isOutputRag;
       modeFieldset.disabled = !hasMemory;
       topKInput.disabled = !hasMemory;
-      conditionNote.textContent = hasMemory
-        ? "The prompt becomes the retrieval query. Selected chunks are passed to the model."
-        : "Retrieval is skipped. The prompt goes directly to the response model.";
+      if (!hasMemory) {
+        conditionNote.textContent = "Retrieval is skipped. The prompt goes directly to the response model.";
+      } else if (isOutputRag) {
+        conditionNote.textContent = "The selected flow controls where output-triggered retrieval runs. Retrieval mode still controls how memories are ranked.";
+      } else {
+        conditionNote.textContent = "The prompt becomes the retrieval query. Selected chunks are passed to the model.";
+      }
     }
 
     function syncPromptSource() {
@@ -851,6 +876,7 @@
       dot.setAttribute("aria-hidden", "true");
       meta.append(dot);
       addMeta(meta, "condition", result.condition);
+      if (result.output_rag_flow) addMeta(meta, "flow", result.output_rag_flow);
       addMeta(meta, "mode", result.retrieval_mode || "none");
       if (result.case) addMeta(meta, "case", result.case.label);
       addMeta(meta, "time", `${result.elapsed_ms} ms`);
@@ -970,6 +996,7 @@
         case_id: promptSource.value || null,
         prompt: promptInput.value,
         condition: selected("condition"),
+        output_rag_flow: selected("output_rag_flow"),
         retrieval_mode: selected("retrieval_mode"),
         top_k: Number(topKInput.value),
         model: modelInput.value

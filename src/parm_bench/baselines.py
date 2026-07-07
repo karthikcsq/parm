@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any, Callable, Protocol
 
-from .models import FINAL_ANSWER_INSTRUCTIONS, LanguageModel
+from .models import FINAL_ANSWER_INSTRUCTIONS, LanguageModel, ModelResponse
 from .retrieval import RetrievalRequest, Retriever
 
 
@@ -36,6 +37,12 @@ INPUT_RAG_INSTRUCTIONS = (
     "personal memory. Return exactly one requested label or name and no "
     "explanation."
 )
+
+
+class OutputRagFlow(str, Enum):
+    TOOL_OUTPUT_ONLY = "tool_output_only"
+    MODEL_OUTPUT_ONLY = "model_output_only"
+    TOOL_THEN_MODEL_OUTPUT = "tool_then_model_output"
 
 
 class NoMemoryBaseline:
@@ -133,6 +140,151 @@ class InputRagBaseline:
 
 
 @dataclass(frozen=True)
+class NaiveOutputRagBaseline:
+    retrieval_limit: int = 5
+    output_rag_flow: OutputRagFlow = OutputRagFlow.TOOL_THEN_MODEL_OUTPUT
+    name = "naive_output_rag"
+    requires_memory = True
+
+    def __post_init__(self) -> None:
+        if self.retrieval_limit < 1:
+            raise ValueError("retrieval_limit must be at least 1")
+        object.__setattr__(
+            self,
+            "output_rag_flow",
+            OutputRagFlow(self.output_rag_flow),
+        )
+
+    def run(
+        self,
+        case: BenchmarkInput,
+        model: LanguageModel,
+        retriever: Retriever | None,
+    ) -> dict[str, Any]:
+        if retriever is None:
+            raise ValueError("naive_output_rag baseline requires a retriever")
+
+        retrievals = []
+        model_passes = []
+        admitted_hits = []
+        final_instructions = FINAL_ANSWER_INSTRUCTIONS
+
+        if self.output_rag_flow is OutputRagFlow.TOOL_OUTPUT_ONLY:
+            tool_retrieval = _retrieve_phase(
+                retriever,
+                "tool_output",
+                case.observation_text,
+                self.retrieval_limit,
+            )
+            retrievals.append(tool_retrieval)
+            admitted_hits.extend(tool_retrieval["hits"])
+        elif self.output_rag_flow is OutputRagFlow.MODEL_OUTPUT_ONLY:
+            first_response = model.generate(
+                prompt=case.prompt,
+                observation_kind=case.observation_kind,
+                observation_text=case.observation_text,
+                instructions=FINAL_ANSWER_INSTRUCTIONS,
+            )
+            model_passes.append(_model_pass_trace("first_model", first_response))
+            model_retrieval = _retrieve_phase(
+                retriever,
+                "model_output",
+                first_response.text,
+                self.retrieval_limit,
+            )
+            retrievals.append(model_retrieval)
+            admitted_hits.extend(model_retrieval["hits"])
+        else:
+            tool_retrieval = _retrieve_phase(
+                retriever,
+                "tool_output",
+                case.observation_text,
+                self.retrieval_limit,
+            )
+            retrievals.append(tool_retrieval)
+            tool_hits = tool_retrieval["hits"]
+            intermediate_context = _memory_context(tool_hits)
+            intermediate_response = model.generate(
+                prompt=case.prompt,
+                observation_kind=case.observation_kind,
+                observation_text=case.observation_text,
+                instructions=(
+                    INPUT_RAG_INSTRUCTIONS
+                    if intermediate_context
+                    else FINAL_ANSWER_INSTRUCTIONS
+                ),
+                memory_context=intermediate_context or None,
+            )
+            model_passes.append(
+                _model_pass_trace("intermediate_model", intermediate_response)
+            )
+            model_retrieval = _retrieve_phase(
+                retriever,
+                "model_output",
+                intermediate_response.text,
+                self.retrieval_limit,
+            )
+            retrievals.append(model_retrieval)
+            admitted_hits.extend(tool_hits)
+            admitted_hits.extend(model_retrieval["hits"])
+
+        deduped_hits = _dedupe_hits_by_source(admitted_hits)
+        memory_context = _memory_context(deduped_hits)
+        if memory_context:
+            final_instructions = INPUT_RAG_INSTRUCTIONS
+        response = model.generate(
+            prompt=case.prompt,
+            observation_kind=case.observation_kind,
+            observation_text=case.observation_text,
+            instructions=final_instructions,
+            memory_context=memory_context or None,
+        )
+        source_ids = [hit.slug for hit in deduped_hits]
+        page_ids = [hit.page_id for hit in deduped_hits]
+        return {
+            "case_id": case.case_id,
+            "response_text": response.text,
+            "requested_model": model.model_name,
+            "resolved_model": response.resolved_model,
+            "provider_response_id": response.response_id,
+            "usage": response.usage,
+            "trace": {
+                "detected_cues": [],
+                "output_rag_flow": self.output_rag_flow.value,
+                "model_passes": model_passes,
+                "retrieval_queries": [
+                    retrieval["query"] for retrieval in retrievals
+                ],
+                "retrievals": [
+                    {
+                        "phase": retrieval["phase"],
+                        "query": retrieval["query"],
+                        "trace": retrieval["trace"],
+                    }
+                    for retrieval in retrievals
+                ],
+                "retrieved_page_ids": [
+                    hit.page_id
+                    for retrieval in retrievals
+                    for hit in retrieval["hits"]
+                ],
+                "retrieved_source_ids": [
+                    hit.slug
+                    for retrieval in retrievals
+                    for hit in retrieval["hits"]
+                ],
+                "admitted_page_ids": page_ids,
+                "admitted_source_ids": source_ids,
+                "admitted_perturbations": {
+                    hit.slug: list(hit.perturbations)
+                    for hit in deduped_hits
+                    if hit.perturbations
+                },
+            },
+        }
+
+
+@dataclass(frozen=True)
 class PlannedBaseline:
     """Design inventory only. A planned baseline is not executable."""
 
@@ -174,6 +326,7 @@ PLANNED_BASELINES = (
 @dataclass(frozen=True)
 class BaselineConfiguration:
     retrieval_limit: int = 5
+    output_rag_flow: OutputRagFlow = OutputRagFlow.TOOL_THEN_MODEL_OUTPUT
 
 
 BaselineBuilder = Callable[[BaselineConfiguration], Baseline]
@@ -224,3 +377,54 @@ register_baseline(
     "input_rag",
     lambda configuration: InputRagBaseline(configuration.retrieval_limit),
 )
+register_baseline(
+    "naive_output_rag",
+    lambda configuration: NaiveOutputRagBaseline(
+        configuration.retrieval_limit,
+        configuration.output_rag_flow,
+    ),
+)
+
+
+def _retrieve_phase(
+    retriever: Retriever,
+    phase: str,
+    query: str,
+    retrieval_limit: int,
+) -> dict[str, Any]:
+    retrieval = retriever.retrieve(
+        RetrievalRequest(query, top_k=retrieval_limit)
+    )
+    return {
+        "phase": phase,
+        "query": query,
+        "hits": list(retrieval.hits),
+        "trace": retrieval.trace,
+    }
+
+
+def _memory_context(hits: list[Any]) -> str:
+    return "\n\n".join(
+        f"{index}. {hit.text}" for index, hit in enumerate(hits, start=1)
+    )
+
+
+def _dedupe_hits_by_source(hits: list[Any]) -> list[Any]:
+    seen = set()
+    deduped = []
+    for hit in hits:
+        if hit.slug in seen:
+            continue
+        seen.add(hit.slug)
+        deduped.append(hit)
+    return deduped
+
+
+def _model_pass_trace(phase: str, response: ModelResponse) -> dict[str, Any]:
+    return {
+        "phase": phase,
+        "response_text": response.text,
+        "provider_response_id": response.response_id,
+        "resolved_model": response.resolved_model,
+        "usage": response.usage,
+    }

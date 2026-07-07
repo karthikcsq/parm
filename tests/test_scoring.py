@@ -101,6 +101,37 @@ class ScoringTests(unittest.TestCase):
         metrics = score_predictions([case], [row])
         self.assertEqual(metrics["correct_memory_conditioned_decision_rate"], 1.0)
 
+    def test_structured_choice_accepts_title_or_unique_locator(self) -> None:
+        case = next(
+            case
+            for case in CASES
+            if case["case_id"] == "parm-amara-ai-news-digest-positive"
+        )
+        for response in (
+            "CoreWeave Reserved-GPU Pricing Revision",
+            "Item 147",
+        ):
+            with self.subTest(response=response):
+                row = prediction(case, None, response_text=response)
+                metrics = score_predictions([case], [row])
+                self.assertEqual(
+                    metrics["correct_memory_conditioned_decision_rate"], 1.0
+                )
+
+    def test_generic_listing_prefix_is_not_a_choice(self) -> None:
+        case = next(
+            case
+            for case in CASES
+            if case["case_id"] == "parm-amara-ai-news-digest-positive"
+        )
+        row = prediction(case, None, response_text="Lead Story")
+        metrics = score_predictions([case], [row])
+        self.assertEqual(metrics["rows"][0]["matched_choices"], [])
+
+        row = prediction(case, None, response_text="Item 1470")
+        metrics = score_predictions([case], [row])
+        self.assertEqual(metrics["rows"][0]["matched_choices"], [])
+
     def test_naming_both_choices_is_not_a_single_final_choice(self) -> None:
         case = next(case for case in CASES if case["variant"] == "positive")
         output_choice = case["decisions"]["output_only"]["choice"]

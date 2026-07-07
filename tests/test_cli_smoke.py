@@ -210,7 +210,7 @@ class CliSmokeTests(unittest.TestCase):
                     return_value=FakeIndex(),
                 ),
                 patch(
-                    "parm_bench.cli.SentenceTransformerEmbedder",
+                    "parm_bench.cli.OpenAIEmbedder",
                     return_value=object(),
                 ),
                 patch(
@@ -305,6 +305,37 @@ class CliSmokeTests(unittest.TestCase):
             self.assertEqual(main(["validate", str(DATASET)]), 0)
         load.assert_called_once()
         self.assertFalse(load.call_args.kwargs["override"])
+
+    def test_serve_workbench_delegates_configuration(self) -> None:
+        with patch("parm_bench.cli.serve_workbench") as serve:
+            status = main(
+                [
+                    "serve-workbench",
+                    "--retrieval-index",
+                    "fixture-index",
+                    "--port",
+                    "9876",
+                    "--model",
+                    "chosen-model",
+                    "--expansion-cache",
+                    "fixture-cache",
+                    "--expansion-policy",
+                    "populate",
+                    "--no-open",
+                ]
+            )
+
+        self.assertEqual(status, 0)
+        serve.assert_called_once_with(
+            retrieval_index="fixture-index",
+            dataset_dir=DATASET.resolve(),
+            host="127.0.0.1",
+            port=9876,
+            model_name="chosen-model",
+            expansion_cache="fixture-cache",
+            expansion_policy="populate",
+            open_browser=False,
+        )
 
     def test_model_precedence(self) -> None:
         with patch.dict(os.environ, {}, clear=True):

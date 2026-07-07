@@ -26,7 +26,7 @@ class GBrainBackend:
     """Adapter for the pinned repo-local GBrain CLI."""
 
     corpus_id = "amara-life-v1"
-    embedding_model = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model = "openai:text-embedding-3-small"
 
     def __init__(
         self,

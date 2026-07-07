@@ -20,8 +20,8 @@ models, and caches remain under ignored `.gbrain-local/`.
 From the repo root:
 
 ```powershell
-$env:PYTHONPATH='src'
-python -m parm_bench.cli prepare-amara
+python -m pip install -e .
+parm-bench prepare-amara
 ```
 
 This converts the mixed source formats into Markdown, canonicalizes links,
@@ -49,54 +49,69 @@ Expected prepared count:
 ## Initialize GBrain
 
 Keep `GBRAIN_HOME`, database state, model caches, and the embedding endpoint
-inside `.gbrain-local`. The current verified configuration uses:
+inside `.gbrain-local`. The canonical configuration uses:
 
 - PGLite;
-- `sentence-transformers/all-MiniLM-L6-v2`;
-- 384-dimensional embeddings;
+- `openai:text-embedding-3-small`;
+- 512-dimensional embeddings;
 - hosted reranking disabled;
 - self-upgrade disabled; and
 - MCP skill publication disabled.
 
-Import and extract:
+Switch an existing PGLite brain to the canonical model. GBrain preserves the
+old database as `.gbrain-local\db.bak`; `--no-sync` keeps reinitialization
+separate from the explicit corpus import:
 
 ```powershell
 $repo = (Resolve-Path '.').Path
+$env:OPENAI_API_KEY = python -c "from dotenv import dotenv_values; print(dotenv_values('.env')['OPENAI_API_KEY'])"
 $env:GBRAIN_HOME = "$repo\.gbrain-local\home"
 $env:GBRAIN_LOCAL_FS_WALK = 'true'
 
 Set-Location .gbrain-local\runtime\gbrain
+bun run src\cli.ts reinit-pglite `
+  --embedding-model openai:text-embedding-3-small `
+  --embedding-dimensions 512 `
+  --no-sync `
+  --yes
 bun run src\cli.ts import "$repo\.gbrain-local\corpus\amara-life-v1" --no-embed --workers 4 --json
-bun run src\cli.ts embed --stale --json
+bun run src\cli.ts embed --all --json
 bun run src\cli.ts extract links --source db --include-frontmatter --json
 bun run src\cli.ts extract timeline --from-meetings --source db --json
 Set-Location $repo
 ```
 
-The previously verified local state contained 600 pages, 600 chunks, 407 graph
-edges, and 55 timeline entries. Those counts describe the pinned setup, not a
-guarantee for later GBrain versions.
+`OPENAI_API_KEY` must be present in the shell that runs GBrain; unlike
+`parm-bench`, GBrain does not load the repo-root `.env`. GBrain `0.42.53.0`
+accepts 512 as an OpenAI embedding width but rejects 384 during provider
+preflight. The expected shape is 600 pages and 600 chunks; graph and timeline
+counts should be verified after rebuilding because they can vary with the
+pinned GBrain version. The OpenAI migration recorded here produced 600 embedded
+chunks, 407 links, and 55 timeline entries.
 
 ## Freeze the retrieval artifact
 
 Canonical runs never invoke `gbrain search`. Export the neutral database state:
 
 ```powershell
-$env:PYTHONPATH='src'
-python -m parm_bench.cli export-retrieval-index `
+parm-bench export-retrieval-index `
   --out .gbrain-local\indexes\amara-life-v1 `
   --chunker-version gbrain-0.42.53.0-default
 ```
 
 The exporter reads `pages`, `content_chunks`, and `links`, verifies that every
-stored vector uses the configured 384-dimensional MiniLM model, attaches
+stored vector uses the configured 512-dimensional OpenAI model, attaches
 benchmark perturbation labels, and writes hashed pages, chunks, embeddings,
 links, and manifest files. The PARM loader revalidates hashes, IDs, references,
 counts, model identity, and dimensions before ranking.
 
-The current local database may contain vectors created by an earlier model even
-when the active GBrain config names MiniLM. The exporter fails loudly in that
-state; rerun GBrain embedding before freezing the artifact.
+GBrain may leave a legacy value in `content_chunks.model` after `embed --all`.
+The exporter therefore validates the newer per-page `embedding_signature`
+first and uses the chunk model only as a fallback for older databases.
+
+The local database may contain vectors created by an earlier model. The
+exporter fails loudly in that state; reinitialize and rebuild the PGLite brain
+before freezing the artifact.
 
 ## What this setup proves
 

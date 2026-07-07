@@ -16,6 +16,7 @@ from parm_bench.retrieval import (
     ExpansionCacheMissError,
     ExpansionPolicy,
     IndexRetriever,
+    OpenAIEmbedder,
     RetrievalIndex,
     RetrievalMode,
     RetrievalRequest,
@@ -51,6 +52,40 @@ class FakeExpander:
 
     def expand(self, query: str) -> tuple[str, str, str]:
         return ("alpha alternate", "alpha memory", "alpha personal")
+
+
+class OpenAIEmbedderTests(unittest.TestCase):
+    def test_requests_canonical_model_and_dimensions(self) -> None:
+        calls: list[dict[str, object]] = []
+
+        def create(**kwargs: object) -> SimpleNamespace:
+            calls.append(kwargs)
+            return SimpleNamespace(
+                data=[
+                    SimpleNamespace(index=1, embedding=vector(0.0, 1.0)),
+                    SimpleNamespace(index=0, embedding=vector(1.0)),
+                ]
+            )
+
+        client = SimpleNamespace(
+            embeddings=SimpleNamespace(create=create)
+        )
+        result = OpenAIEmbedder(client).embed(["first", "second"])
+
+        self.assertEqual(result.shape, (2, EMBEDDING_DIMENSIONS))
+        self.assertEqual(result.dtype, np.float32)
+        self.assertEqual(result[0, 0], 1.0)
+        self.assertEqual(
+            calls,
+            [
+                {
+                    "model": "text-embedding-3-small",
+                    "input": ["first", "second"],
+                    "dimensions": EMBEDDING_DIMENSIONS,
+                    "encoding_format": "float",
+                }
+            ],
+        )
 
 
 def build_index(

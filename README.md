@@ -32,12 +32,39 @@ retrieval timing, admission, and decision evaluation.
 
 ## Run
 
+Install the repository once in editable mode:
+
 ```powershell
-$env:PYTHONPATH='src'
-python -m parm_bench.cli validate data/benchmark_v1
-python -m parm_bench.cli inspect data/benchmark_v1 --case parm-amara-conference-agenda-positive
+python -m pip install -e .
+```
+
+Then use the installed command without setting `PYTHONPATH`:
+
+```powershell
+parm-bench validate data/benchmark_v1
+parm-bench inspect data/benchmark_v1 --case parm-amara-conference-agenda-positive
 python -m unittest discover -s tests
 ```
+
+### Inspect one prompt in the browser
+
+Start the local retrieval workbench with a validated frozen index:
+
+```powershell
+parm-bench serve-workbench `
+  --retrieval-index .gbrain-local\indexes\amara-life-v1
+```
+
+The browser opens automatically. Choose one of the ten benchmark cases or
+enter a custom prompt, compare `no_memory` with `input_rag`, and choose
+`dense`, `hybrid`, or `enhanced` ranking for input-RAG. A selected case runs
+with its complete observation. The result leads with the generated response,
+then reports decision pass/fail against the condition-appropriate expected
+choice separately from gold-memory retrieval status. Ordered memories,
+selected chunks, score diagnostics, and complete run JSON remain available
+below. Enhanced mode is enabled when the server is started with
+`--expansion-cache PATH`; add `--expansion-policy populate` while building
+that cache, then use the default frozen policy for replay.
 
 ## Baseline status
 
@@ -57,12 +84,11 @@ and use the same frozen index for mode-matched comparisons.
 Run the five positive/control pairs and score them:
 
 ```powershell
-$env:PYTHONPATH='src'
-python -m parm_bench.cli run data/benchmark_v1 `
+parm-bench run data/benchmark_v1 `
   --baseline no_memory `
   --model gpt-5-mini `
   --out .Codex/benchmark-results/no-memory-gpt-5-mini.jsonl
-python -m parm_bench.cli score `
+parm-bench score `
   .Codex/benchmark-results/no-memory-gpt-5-mini.jsonl `
   --gold data/benchmark_v1 `
   --out .Codex/benchmark-results/no-memory-gpt-5-mini.metrics.json
@@ -71,7 +97,7 @@ python -m parm_bench.cli score `
 Run input-RAG over the same cases:
 
 ```powershell
-python -m parm_bench.cli run data/benchmark_v1 `
+parm-bench run data/benchmark_v1 `
   --baseline input_rag `
   --retrieval-mode dense `
   --retrieval-index .gbrain-local\indexes\amara-life-v1 `
@@ -95,15 +121,16 @@ but labels and IDs are not shown to the response model.
 Prepare the repo-local GBrain corpus before running a memory baseline:
 
 ```powershell
-python -m parm_bench.cli prepare-amara
-python -m parm_bench.cli export-retrieval-index `
+parm-bench prepare-amara
+parm-bench export-retrieval-index `
   --out .gbrain-local\indexes\amara-life-v1 `
   --chunker-version gbrain-0.42.53.0-default
 ```
 
-The exporter rejects a brain whose stored vectors are not 384-dimensional
-MiniLM embeddings. Enhanced runs additionally require `--expansion-cache`;
-official runs use `--expansion-policy frozen`.
+The exporter rejects a brain whose stored vectors are not 512-dimensional
+`openai:text-embedding-3-small` embeddings. Query embeddings use the same
+model and dimensions through the OpenAI API. Enhanced runs additionally
+require `--expansion-cache`; official runs use `--expansion-policy frozen`.
 
 Later baselines will be developed and reviewed one at a time.
 

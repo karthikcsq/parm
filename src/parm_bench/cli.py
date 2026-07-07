@@ -34,13 +34,14 @@ from .retrieval import (
     ExpansionCacheMissError,
     ExpansionPolicy,
     IndexRetriever,
+    OpenAIEmbedder,
     RetrievalIndex,
     RetrievalMode,
     RetrievalValidationError,
-    SentenceTransformerEmbedder,
 )
 from .retrieval_export import export_gbrain_index
 from .scoring import score_predictions
+from .workbench import serve_workbench
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -95,6 +96,20 @@ def main(argv: list[str] | None = None) -> int:
     score.add_argument("--gold", required=True)
     score.add_argument("--out")
 
+    workbench = commands.add_parser("serve-workbench")
+    workbench.add_argument("--retrieval-index", required=True)
+    workbench.add_argument("--dataset", default="data/benchmark_v1")
+    workbench.add_argument("--host", default="127.0.0.1")
+    workbench.add_argument("--port", type=_port, default=8765)
+    workbench.add_argument("--model")
+    workbench.add_argument("--expansion-cache")
+    workbench.add_argument(
+        "--expansion-policy",
+        choices=tuple(policy.value for policy in ExpansionPolicy),
+        default=ExpansionPolicy.FROZEN.value,
+    )
+    workbench.add_argument("--no-open", action="store_true")
+
     args = parser.parse_args(argv)
     try:
         if args.command == "prepare-amara":
@@ -144,6 +159,18 @@ def main(argv: list[str] | None = None) -> int:
             )
         if args.command == "score":
             return _score(args.results_jsonl, args.gold, args.out)
+        if args.command == "serve-workbench":
+            serve_workbench(
+                retrieval_index=args.retrieval_index,
+                dataset_dir=_from_repo_root(args.dataset),
+                host=args.host,
+                port=args.port,
+                model_name=_resolve_model(args.model),
+                expansion_cache=args.expansion_cache,
+                expansion_policy=args.expansion_policy,
+                open_browser=not args.no_open,
+            )
+            return 0
     except DatasetValidationError as exc:
         for issue in exc.issues:
             print(issue, file=sys.stderr)
@@ -209,7 +236,7 @@ def _run(
         retriever = IndexRetriever(
             index,
             mode,
-            SentenceTransformerEmbedder(),
+            OpenAIEmbedder(),
             expander=expander,
         )
     model = OpenAIResponsesModel(_resolve_model(model_name))
@@ -261,6 +288,13 @@ def _positive_int(value: str) -> int:
     parsed = int(value)
     if parsed < 1:
         raise argparse.ArgumentTypeError("must be at least 1")
+    return parsed
+
+
+def _port(value: str) -> int:
+    parsed = int(value)
+    if not 1 <= parsed <= 65_535:
+        raise argparse.ArgumentTypeError("must be between 1 and 65535")
     return parsed
 
 
@@ -394,7 +428,7 @@ def _validate_retrieval_args(args: argparse.Namespace) -> None:
 
 def _dependency_versions() -> dict[str, str]:
     versions = {}
-    for distribution in ("numpy", "sentence-transformers"):
+    for distribution in ("numpy", "openai"):
         try:
             versions[distribution] = importlib.metadata.version(distribution)
         except importlib.metadata.PackageNotFoundError:

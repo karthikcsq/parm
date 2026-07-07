@@ -104,11 +104,18 @@ def write_retrieval_index(
     )
     chunk_rows: list[dict[str, Any]] = []
     vectors: list[list[float]] = []
+    expected_signature = f"{EMBEDDING_MODEL}:{EMBEDDING_DIMENSIONS}"
     for chunk in ordered_chunks:
         page_id = stable_page_ids.get(int(chunk["page_id"]))
         if page_id is None:
             raise ValueError(f"chunk references missing page: {chunk['page_id']}")
-        if _canonical_model(chunk.get("model")) != EMBEDDING_MODEL:
+        signature = chunk.get("embedding_signature")
+        if signature is not None:
+            if signature != expected_signature:
+                raise ValueError(
+                    f"chunk {chunk['id']} uses an unexpected embedding signature"
+                )
+        elif _canonical_model(chunk.get("model")) != EMBEDDING_MODEL:
             raise ValueError(f"chunk {chunk['id']} uses an unexpected model")
         vector = [float(value) for value in chunk["embedding"]]
         if len(vector) != EMBEDDING_DIMENSIONS:

@@ -74,8 +74,10 @@ def _render_input(
     observation_text: str,
     memory_context: str | None = None,
 ) -> str:
-    label = observation_kind.replace("_", " ")
-    rendered = f"Task:\n{prompt}\n\nObserved {label}:\n{observation_text}"
+    rendered = f"Task:\n{prompt}"
+    if observation_text:
+        label = observation_kind.replace("_", " ")
+        rendered += f"\n\nObserved {label}:\n{observation_text}"
     if memory_context:
         rendered += f"\n\nRetrieved personal memory:\n{memory_context}"
     return rendered

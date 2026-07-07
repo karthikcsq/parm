@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PARM Retrieval Workbench</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #edf2f4;
+      --surface: #f8fafb;
+      --white: #ffffff;
+      --ink: #14213d;
+      --muted: #607087;
+      --rule: #cbd5df;
+      --blue: #315cfd;
+      --blue-dark: #1739b7;
+      --amber: #f5b700;
+      --danger: #b42318;
+      --shadow: 0 18px 50px rgba(20, 33, 61, 0.1);
+      --display: Bahnschrift, "Arial Narrow", sans-serif;
+      --body: Aptos, "Segoe UI", sans-serif;
+      --mono: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(var(--rule) 1px, transparent 1px),
+        var(--paper);
+      background-size: 100% 32px;
+      font-family: var(--body);
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid rgba(49, 92, 253, 0.35);
+      outline-offset: 2px;
+    }
+
+    .shell {
+      width: min(1480px, calc(100% - 32px));
+      margin: 24px auto 56px;
+      background: rgba(248, 250, 251, 0.97);
+      border: 1px solid var(--rule);
+      box-shadow: var(--shadow);
+    }
+
+    .masthead {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: end;
+      padding: 26px 30px 22px;
+      border-bottom: 3px solid var(--ink);
+      background: var(--surface);
+    }
+
+    .eyebrow,
+    .field-label,
+    .meta-label,
+    .hit-kicker {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 650;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow { color: var(--blue-dark); }
+
+    h1 {
+      margin: 7px 0 0;
+      font-family: var(--display);
+      font-size: clamp(2rem, 5vw, 4.6rem);
+      font-stretch: condensed;
+      font-weight: 650;
+      letter-spacing: -0.055em;
+      line-height: 0.88;
+    }
+
+    .index-readout {
+      max-width: 390px;
+      text-align: right;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      line-height: 1.6;
+    }
+
+    .index-readout strong { color: var(--ink); }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(310px, 0.72fr) minmax(0, 1.75fr);
+      min-height: 680px;
+    }
+
+    .controls {
+      padding: 28px;
+      border-right: 1px solid var(--rule);
+      background: var(--white);
+    }
+
+    .results {
+      padding: 28px 30px 46px;
+      min-width: 0;
+    }
+
+    .field { margin-bottom: 24px; }
+    .field-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 9px;
+      color: var(--muted);
+    }
+
+    .field-label span { color: var(--blue-dark); }
+
+    .source-note {
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+    }
+
+    textarea[readonly] {
+      background:
+        linear-gradient(135deg, rgba(49, 92, 253, 0.045) 25%, transparent 25%) 0 0 / 12px 12px,
+        #f7f9fc;
+      color: #314158;
+      cursor: default;
+    }
+
+    textarea,
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      border: 1px solid #aebbc8;
+      border-radius: 0;
+      background: #fbfcfd;
+      color: var(--ink);
+      transition: border-color 140ms ease, box-shadow 140ms ease;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: inset 4px 0 var(--blue);
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      padding: 14px;
+      line-height: 1.5;
+    }
+
+    input[type="text"], input[type="number"], select {
+      height: 44px;
+      padding: 0 11px;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      border: 1px solid #aebbc8;
+    }
+
+    .choice-grid.mode-grid { grid-template-columns: repeat(3, 1fr); }
+    .choice-grid input { position: absolute; opacity: 0; pointer-events: none; }
+
+    .choice-grid label {
+      min-height: 48px;
+      display: grid;
+      place-items: center;
+      padding: 8px;
+      border-right: 1px solid #aebbc8;
+      background: #fbfcfd;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      font-weight: 650;
+      text-align: center;
+      text-transform: uppercase;
+      transition: background 140ms ease, color 140ms ease;
+    }
+
+    .choice-grid label:last-child { border-right: 0; }
+    .choice-grid input:checked + label {
+      background: var(--ink);
+      color: white;
+    }
+    .choice-grid input:focus-visible + label {
+      outline: 3px solid rgba(49, 92, 253, 0.35);
+      outline-offset: -3px;
+    }
+    .choice-grid input:disabled + label {
+      color: #9aa7b5;
+      background: #eef2f5;
+      cursor: not-allowed;
+    }
+
+    .inline-fields {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      gap: 12px;
+    }
+
+    .context-note {
+      margin: -12px 0 24px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+    }
+
+    .run-button {
+      width: 100%;
+      min-height: 56px;
+      border: 0;
+      background: var(--blue);
+      color: white;
+      cursor: pointer;
+      font-family: var(--display);
+      font-size: 1.1rem;
+      font-weight: 650;
+      letter-spacing: -0.01em;
+      transition: background 140ms ease, transform 140ms ease;
+    }
+
+    .run-button:hover { background: var(--blue-dark); }
+    .run-button:active { transform: translateY(1px); }
+    .run-button:disabled { cursor: wait; opacity: 0.66; }
+
+    .error {
+      display: none;
+      margin: 18px 0 0;
+      padding: 12px 14px;
+      border-left: 4px solid var(--danger);
+      background: #fff0ee;
+      color: #7a271a;
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .error.visible { display: block; }
+
+    .empty-state {
+      min-height: 460px;
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      max-width: 570px;
+    }
+    .empty-state[hidden] { display: none; }
+
+    .empty-mark {
+      width: 86px;
+      height: 12px;
+      margin-bottom: 25px;
+      background: var(--amber);
+      box-shadow: 24px 16px 0 var(--blue), 48px 32px 0 var(--ink);
+    }
+
+    .empty-state h2 {
+      margin: 28px 0 8px;
+      font-family: var(--display);
+      font-size: clamp(1.8rem, 4vw, 3.3rem);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .empty-state p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .run-output[hidden] { display: none; }
+
+    .run-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--rule);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .run-meta strong { color: var(--ink); }
+    .run-meta .live-dot {
+      width: 9px;
+      height: 9px;
+      background: #16a36a;
+      border-radius: 50%;
+    }
+
+    .answer-block {
+      margin: 26px 0 34px;
+      border: 1px solid #9eafc0;
+      border-left: 8px solid var(--amber);
+      background: var(--white);
+      box-shadow: 8px 8px 0 #dfe6ef;
+    }
+    .answer-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--rule);
+      background: #f5f7fa;
+    }
+    .answer-block h2,
+    .section-heading h2 {
+      margin: 0;
+      font-family: var(--display);
+      letter-spacing: -0.035em;
+    }
+    .answer-block h2 { font-size: 1.25rem; color: var(--blue-dark); }
+    .model-answer {
+      min-height: 92px;
+      margin: 0;
+      padding: 24px 22px 26px;
+      white-space: pre-wrap;
+      font-family: var(--body);
+      font-size: clamp(1.25rem, 2.4vw, 2rem);
+      font-weight: 520;
+      line-height: 1.35;
+    }
+    .answer-foot {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      padding: 10px 18px;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+    }
+    .answer-copy {
+      border: 1px solid #8b9aae;
+      background: white;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 6px 10px;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+    }
+
+    .evaluation {
+      display: grid;
+      grid-template-columns: 132px minmax(0, 1fr);
+      margin: -8px 0 34px;
+      border: 1px solid var(--rule);
+      background: var(--white);
+    }
+    .evaluation[hidden] { display: none; }
+    .verdict {
+      display: grid;
+      place-items: center;
+      padding: 18px 12px;
+      color: white;
+      font-family: var(--display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    .evaluation.pass .verdict { background: #117553; }
+    .evaluation.fail .verdict { background: var(--danger); }
+    .evaluation-body { padding: 16px 18px 18px; }
+    .evaluation-body h3 {
+      margin: 0 0 7px;
+      font-family: var(--display);
+      font-size: 1.05rem;
+    }
+    .evaluation-body p {
+      margin: 0;
+      color: #314158;
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+    .expected-choice {
+      margin-top: 10px !important;
+      color: var(--muted) !important;
+      font-family: var(--mono);
+      font-size: 0.72rem !important;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      align-items: baseline;
+      padding: 18px 0 12px;
+      border-top: 3px solid var(--ink);
+    }
+
+    .section-heading h2 { font-size: 1.45rem; }
+    .section-heading span {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+    }
+
+    .hits { display: grid; gap: 10px; }
+
+    .hit {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      border: 1px solid var(--rule);
+      background: var(--white);
+    }
+
+    .hit-rank {
+      padding: 14px 8px;
+      border-right: 1px solid var(--rule);
+      color: var(--blue-dark);
+      font-family: var(--display);
+      font-size: 1.45rem;
+      font-weight: 650;
+      text-align: center;
+    }
+
+    .hit-body { min-width: 0; padding: 14px 16px 16px; }
+    .signal-track {
+      height: 4px;
+      margin: -14px -16px 13px;
+      background: #e4eaf0;
+    }
+    .signal-bar {
+      height: 100%;
+      min-width: 5px;
+      background: var(--blue);
+      transform-origin: left;
+      animation: signal-in 360ms ease-out both;
+    }
+
+    .hit-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .hit h3 {
+      margin: 4px 0 0;
+      overflow-wrap: anywhere;
+      font-size: 1rem;
+      line-height: 1.3;
+    }
+
+    .hit-score {
+      flex: 0 0 auto;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      font-weight: 650;
+    }
+
+    .diagnostics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    .chip {
+      padding: 4px 7px;
+      background: #eaf0ff;
+      color: #2442a0;
+      font-family: var(--mono);
+      font-size: 0.67rem;
+    }
+    .chip.graph { background: #fff3c4; color: #6d5100; }
+    .chip.perturbation { background: #ffe5e1; color: #8a2b1f; }
+
+    details { border-top: 1px solid #e1e6eb; }
+    details summary {
+      padding: 10px 0 2px;
+      color: var(--blue-dark);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 650;
+    }
+    .chunk-text {
+      margin: 10px 0 2px;
+      white-space: pre-wrap;
+      color: #314158;
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .no-hits {
+      padding: 22px;
+      border: 1px dashed #9caaba;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .trace-panel {
+      margin-top: 26px;
+      border: 1px solid var(--rule);
+      background: #101a31;
+      color: #dbe6ff;
+    }
+    .trace-panel summary {
+      padding: 14px 16px;
+      color: white;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+    .trace-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 12px 8px;
+    }
+    .copy-button {
+      border: 1px solid #66789d;
+      background: transparent;
+      color: #dbe6ff;
+      cursor: pointer;
+      padding: 5px 9px;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+    }
+    .trace {
+      max-height: 420px;
+      overflow: auto;
+      margin: 0;
+      padding: 16px;
+      border-top: 1px solid #34415f;
+      white-space: pre-wrap;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+
+    @keyframes signal-in {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    @media (max-width: 900px) {
+      .shell { width: min(100% - 16px, 720px); margin-top: 8px; }
+      .masthead { grid-template-columns: 1fr; }
+      .index-readout { text-align: left; }
+      .workspace { grid-template-columns: 1fr; }
+      .controls { border-right: 0; border-bottom: 1px solid var(--rule); }
+      .empty-state { min-height: 280px; }
+    }
+
+    @media (max-width: 520px) {
+      .evaluation { grid-template-columns: 1fr; }
+      .verdict { justify-items: start; min-height: 52px; }
+      .masthead, .controls, .results { padding-left: 18px; padding-right: 18px; }
+      .choice-grid.mode-grid { grid-template-columns: 1fr; }
+      .choice-grid.mode-grid label { border-right: 0; border-bottom: 1px solid #aebbc8; }
+      .choice-grid.mode-grid label:last-child { border-bottom: 0; }
+      .inline-fields { grid-template-columns: 78px 1fr; }
+      .hit { grid-template-columns: 38px minmax(0, 1fr); }
+      .hit-head { display: block; }
+      .hit-score { margin-top: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div>
+        <div class="eyebrow">PARM · one-run inspector</div>
+        <h1>Retrieval<br>workbench</h1>
+      </div>
+      <div class="index-readout" id="index-readout">Loading retrieval index…</div>
+    </header>
+
+    <div class="workspace">
+      <form class="controls" id="run-form">
+        <div class="field">
+          <label class="field-label" for="prompt-source">Prompt source</label>
+          <select id="prompt-source" name="case_id">
+            <option value="">Custom prompt</option>
+          </select>
+          <p class="source-note" id="source-note">Write any prompt below.</p>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="prompt">Prompt <span>required</span></label>
+          <textarea id="prompt" name="prompt" required placeholder="What should I prioritize for the next quarter?"></textarea>
+        </div>
+
+        <fieldset class="field" style="border:0;padding:0;margin-inline:0">
+          <legend class="field-label">Memory condition</legend>
+          <div class="choice-grid">
+            <input type="radio" id="condition-none" name="condition" value="no_memory">
+            <label for="condition-none">No memory</label>
+            <input type="radio" id="condition-rag" name="condition" value="input_rag" checked>
+            <label for="condition-rag">Input RAG</label>
+          </div>
+        </fieldset>
+
+        <fieldset class="field" id="mode-fieldset" style="border:0;padding:0;margin-inline:0">
+          <legend class="field-label">Retrieval mode</legend>
+          <div class="choice-grid mode-grid">
+            <input type="radio" id="mode-dense" name="retrieval_mode" value="dense" checked>
+            <label for="mode-dense">Dense</label>
+            <input type="radio" id="mode-hybrid" name="retrieval_mode" value="hybrid">
+            <label for="mode-hybrid">Hybrid</label>
+            <input type="radio" id="mode-enhanced" name="retrieval_mode" value="enhanced">
+            <label for="mode-enhanced">Enhanced</label>
+          </div>
+        </fieldset>
+        <p class="context-note" id="condition-note">The prompt becomes the retrieval query. Selected chunks are passed to the model.</p>
+
+        <div class="inline-fields">
+          <div class="field">
+            <label class="field-label" for="top-k">Top-k</label>
+            <input id="top-k" name="top_k" type="number" min="1" max="20" value="5">
+          </div>
+          <div class="field">
+            <label class="field-label" for="model">Response model</label>
+            <input id="model" name="model" type="text" autocomplete="off">
+          </div>
+        </div>
+
+        <button class="run-button" id="run-button" type="submit">Run prompt</button>
+        <div class="error" id="error" role="alert"></div>
+      </form>
+
+      <section class="results" aria-live="polite">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-mark" aria-hidden="true"></div>
+          <h2>See the answer<br>and its evidence.</h2>
+          <p>Run a prompt to inspect the model response, ranked memories, selected chunks, and the exact retrieval trace.</p>
+        </div>
+
+        <div class="run-output" id="run-output" hidden>
+          <div class="run-meta" id="run-meta"></div>
+          <section class="answer-block">
+            <div class="answer-head">
+              <h2>Generated response</h2>
+              <button class="answer-copy" id="copy-answer" type="button">Copy response</button>
+            </div>
+            <div class="model-answer" id="model-answer"></div>
+            <div class="answer-foot" id="answer-foot"></div>
+          </section>
+
+          <section class="evaluation" id="evaluation" hidden>
+            <div class="verdict" id="verdict"></div>
+            <div class="evaluation-body">
+              <h3 id="evaluation-title"></h3>
+              <p id="evaluation-reason"></p>
+              <p class="expected-choice" id="expected-choice"></p>
+              <p class="expected-choice" id="retrieval-check"></p>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-heading">
+              <h2>Retrieved evidence</h2>
+              <span id="hit-count"></span>
+            </div>
+            <div class="hits" id="hits"></div>
+          </section>
+
+          <details class="trace-panel">
+            <summary>Full run JSON</summary>
+            <div class="trace-toolbar">
+              <button class="copy-button" id="copy-trace" type="button">Copy JSON</button>
+            </div>
+            <pre class="trace" id="trace"></pre>
+          </details>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const form = document.querySelector("#run-form");
+    const promptSource = document.querySelector("#prompt-source");
+    const sourceNote = document.querySelector("#source-note");
+    const promptInput = document.querySelector("#prompt");
+    const modelInput = document.querySelector("#model");
+    const topKInput = document.querySelector("#top-k");
+    const conditionInputs = [...document.querySelectorAll("[name='condition']")];
+    const modeFieldset = document.querySelector("#mode-fieldset");
+    const conditionNote = document.querySelector("#condition-note");
+    const runButton = document.querySelector("#run-button");
+    const errorBox = document.querySelector("#error");
+    const emptyState = document.querySelector("#empty-state");
+    const runOutput = document.querySelector("#run-output");
+    const traceElement = document.querySelector("#trace");
+    let latestResult = null;
+    let config = null;
+    let customPromptDraft = "";
+
+    const formatNumber = (value, digits = 4) =>
+      value === null || value === undefined ? "—" : Number(value).toFixed(digits);
+
+    function selected(name) {
+      return document.querySelector(`[name="${name}"]:checked`)?.value;
+    }
+
+    function setError(message = "") {
+      errorBox.textContent = message;
+      errorBox.classList.toggle("visible", Boolean(message));
+    }
+
+    function syncCondition() {
+      const hasMemory = selected("condition") === "input_rag";
+      modeFieldset.disabled = !hasMemory;
+      topKInput.disabled = !hasMemory;
+      conditionNote.textContent = hasMemory
+        ? "The prompt becomes the retrieval query. Selected chunks are passed to the model."
+        : "Retrieval is skipped. The prompt goes directly to the response model.";
+    }
+
+    function syncPromptSource() {
+      if (!config) return;
+      const caseId = promptSource.value;
+      const selectedCase = config.cases.find(item => item.case_id === caseId);
+      if (!selectedCase) {
+        promptInput.readOnly = false;
+        promptInput.value = customPromptDraft;
+        sourceNote.textContent = "Write any prompt below.";
+        return;
+      }
+      promptInput.readOnly = true;
+      promptInput.value = selectedCase.prompt;
+      const observation = selectedCase.observation_kind.replace("_", " ");
+      sourceNote.textContent =
+        `${selectedCase.variant.replace("-", " ")} · includes the full ${observation} from the benchmark case.`;
+    }
+
+    function addMeta(container, label, value) {
+      const item = document.createElement("span");
+      const name = document.createElement("span");
+      name.className = "meta-label";
+      name.textContent = label;
+      const strong = document.createElement("strong");
+      strong.textContent = value;
+      item.append(name, " ", strong);
+      container.append(item);
+    }
+
+    function chip(text, className = "") {
+      const element = document.createElement("span");
+      element.className = `chip ${className}`.trim();
+      element.textContent = text;
+      return element;
+    }
+
+    function renderHit(hit, maxScore) {
+      const article = document.createElement("article");
+      article.className = "hit";
+
+      const rank = document.createElement("div");
+      rank.className = "hit-rank";
+      rank.textContent = String(hit.rank).padStart(2, "0");
+
+      const body = document.createElement("div");
+      body.className = "hit-body";
+
+      const track = document.createElement("div");
+      track.className = "signal-track";
+      const bar = document.createElement("div");
+      bar.className = "signal-bar";
+      const width = maxScore > 0 ? Math.max(5, (Math.max(0, hit.score) / maxScore) * 100) : 5;
+      bar.style.width = `${Math.min(100, width)}%`;
+      track.append(bar);
+
+      const head = document.createElement("div");
+      head.className = "hit-head";
+      const identity = document.createElement("div");
+      const kicker = document.createElement("div");
+      kicker.className = "hit-kicker";
+      kicker.textContent = hit.slug;
+      const title = document.createElement("h3");
+      title.textContent = hit.title;
+      identity.append(kicker, title);
+      const score = document.createElement("div");
+      score.className = "hit-score";
+      score.textContent = formatNumber(hit.score);
+      head.append(identity, score);
+
+      const diagnostics = document.createElement("div");
+      diagnostics.className = "diagnostics";
+      diagnostics.append(
+        chip(`cos ${formatNumber(hit.diagnostics.original_query_cosine)}`),
+        chip(`rrf ${formatNumber(hit.diagnostics.normalized_rrf)}`)
+      );
+      if (hit.diagnostics.graph_multiplier > 1) {
+        diagnostics.append(
+          chip(
+            `graph ×${formatNumber(hit.diagnostics.graph_multiplier, 2)} · ${hit.diagnostics.graph_inbound_count} inbound`,
+            "graph"
+          )
+        );
+      }
+      for (const perturbation of hit.perturbations || []) {
+        diagnostics.append(chip(perturbation, "perturbation"));
+      }
+
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = `Selected chunk · ${hit.chunk_id}`;
+      const text = document.createElement("p");
+      text.className = "chunk-text";
+      text.textContent = hit.text;
+      details.append(summary, text);
+
+      body.append(track, head, diagnostics, details);
+      article.append(rank, body);
+      return article;
+    }
+
+    function renderResult(result) {
+      latestResult = result;
+      emptyState.hidden = true;
+      runOutput.hidden = false;
+
+      const meta = document.querySelector("#run-meta");
+      meta.replaceChildren();
+      const dot = document.createElement("span");
+      dot.className = "live-dot";
+      dot.setAttribute("aria-hidden", "true");
+      meta.append(dot);
+      addMeta(meta, "condition", result.condition);
+      addMeta(meta, "mode", result.retrieval_mode || "none");
+      if (result.case) addMeta(meta, "case", result.case.label);
+      addMeta(meta, "time", `${result.elapsed_ms} ms`);
+      addMeta(meta, "model", result.model.resolved_model);
+
+      document.querySelector("#model-answer").textContent =
+        result.model.text || "The model returned an empty response.";
+      const answerFoot = document.querySelector("#answer-foot");
+      answerFoot.replaceChildren();
+      addMeta(answerFoot, "response", result.model.response_id || "unavailable");
+      const usage = result.model.usage || {};
+      if (usage.input_tokens !== undefined) {
+        addMeta(answerFoot, "input", `${usage.input_tokens} tokens`);
+      }
+      if (usage.output_tokens !== undefined) {
+        addMeta(answerFoot, "output", `${usage.output_tokens} tokens`);
+      }
+      const evaluation = document.querySelector("#evaluation");
+      if (result.evaluation) {
+        evaluation.hidden = false;
+        evaluation.classList.toggle("pass", result.evaluation.successful);
+        evaluation.classList.toggle("fail", !result.evaluation.successful);
+        document.querySelector("#verdict").textContent =
+          result.evaluation.successful ? "Decision pass" : "Decision fail";
+        const retrievalMissed =
+          ["miss", "partial"].includes(result.evaluation.retrieval_status);
+        document.querySelector("#evaluation-title").textContent =
+          result.evaluation.successful && retrievalMissed
+            ? "Correct decision; retrieval missed required evidence"
+            : result.evaluation.successful
+              ? "The run made the expected decision"
+              : "The run missed the expected decision";
+        document.querySelector("#evaluation-reason").textContent =
+          result.evaluation.reason;
+        document.querySelector("#expected-choice").textContent =
+          `Expected (${result.evaluation.expected_basis}): ${result.evaluation.expected_choice}`;
+        const retrievalLabels = {
+          "complete": "complete",
+          "partial": "partial",
+          "miss": "miss",
+          "control": "control case",
+          "not-run": "not run"
+        };
+        document.querySelector("#retrieval-check").textContent =
+          `Gold-memory retrieval: ${retrievalLabels[result.evaluation.retrieval_status]} · ` +
+          `${result.evaluation.retrieved_gold_count}/${result.evaluation.gold_source_count} sources`;
+      } else {
+        evaluation.hidden = true;
+        evaluation.classList.remove("pass", "fail");
+      }
+      const hits = result.retrieval.hits || [];
+      document.querySelector("#hit-count").textContent =
+        `${hits.length} ${hits.length === 1 ? "memory" : "memories"}`;
+      const hitContainer = document.querySelector("#hits");
+      hitContainer.replaceChildren();
+      if (!hits.length) {
+        const empty = document.createElement("div");
+        empty.className = "no-hits";
+        empty.textContent = result.condition === "no_memory"
+          ? "No retrieval ran for this condition."
+          : "The retriever returned no memories.";
+        hitContainer.append(empty);
+      } else {
+        const maxScore = Math.max(...hits.map(hit => Math.max(0, hit.score)));
+        for (const hit of hits) hitContainer.append(renderHit(hit, maxScore));
+      }
+
+      traceElement.textContent = JSON.stringify(result, null, 2);
+      runOutput.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function loadConfiguration() {
+      const response = await fetch("/api/config");
+      if (!response.ok) throw new Error("Could not load workbench configuration.");
+      config = await response.json();
+      modelInput.value = config.default_model;
+      topKInput.max = config.max_top_k;
+      topKInput.value = config.default_top_k;
+      const index = config.index;
+      const readout = document.querySelector("#index-readout");
+      const corpus = document.createElement("strong");
+      corpus.textContent = index.corpus_id;
+      readout.replaceChildren(
+        corpus,
+        document.createElement("br"),
+        `${index.pages.toLocaleString()} pages · ${index.chunks.toLocaleString()} chunks`,
+        document.createElement("br"),
+        `manifest ${index.manifest_hash.slice(0, 12)}…`
+      );
+      if (!config.enhanced_available) {
+        const enhanced = document.querySelector("#mode-enhanced");
+        enhanced.disabled = true;
+        enhanced.nextElementSibling.title = "Restart with --expansion-cache to enable enhanced retrieval.";
+      }
+      for (const item of config.cases || []) {
+        const option = document.createElement("option");
+        option.value = item.case_id;
+        option.textContent = item.label;
+        promptSource.append(option);
+      }
+      syncPromptSource();
+    }
+
+    conditionInputs.forEach(input => input.addEventListener("change", syncCondition));
+    promptInput.addEventListener("input", () => {
+      if (!promptInput.readOnly) customPromptDraft = promptInput.value;
+    });
+    promptSource.addEventListener("change", syncPromptSource);
+    syncCondition();
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      setError();
+      runButton.disabled = true;
+      runButton.textContent = "Running…";
+      const payload = {
+        case_id: promptSource.value || null,
+        prompt: promptInput.value,
+        condition: selected("condition"),
+        retrieval_mode: selected("retrieval_mode"),
+        top_k: Number(topKInput.value),
+        model: modelInput.value
+      };
+      try {
+        const response = await fetch("/api/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The run failed.");
+        renderResult(result);
+      } catch (error) {
+        setError(error.message || "The run failed.");
+      } finally {
+        runButton.disabled = false;
+        runButton.textContent = "Run prompt";
+      }
+    });
+
+    document.querySelector("#copy-trace").addEventListener("click", async event => {
+      if (!latestResult) return;
+      await navigator.clipboard.writeText(JSON.stringify(latestResult, null, 2));
+      const button = event.currentTarget;
+      button.textContent = "Copied";
+      setTimeout(() => { button.textContent = "Copy JSON"; }, 1200);
+    });
+
+    document.querySelector("#copy-answer").addEventListener("click", async event => {
+      if (!latestResult) return;
+      await navigator.clipboard.writeText(latestResult.model.text || "");
+      const button = event.currentTarget;
+      button.textContent = "Copied";
+      setTimeout(() => { button.textContent = "Copy response"; }, 1200);
+    });
+
+    loadConfiguration().catch(error => setError(error.message));
+  </script>
+</body>
+</html>

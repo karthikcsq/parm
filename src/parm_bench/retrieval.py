@@ -13,8 +13,9 @@ from typing import Any, Protocol, Sequence
 import numpy as np
 
 
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-EMBEDDING_DIMENSIONS = 384
+EMBEDDING_MODEL = "openai:text-embedding-3-small"
+EMBEDDING_API_MODEL = "text-embedding-3-small"
+EMBEDDING_DIMENSIONS = 512
 CANDIDATE_DEPTH = 20
 OFFICIAL_TOP_K = 5
 RRF_K = 60
@@ -279,28 +280,30 @@ class RetrievalIndex:
         )
 
 
-class SentenceTransformerEmbedder:
+class OpenAIEmbedder:
     model_name = EMBEDDING_MODEL
     dimensions = EMBEDDING_DIMENSIONS
 
-    def __init__(self, model: Any | None = None):
-        if model is None:
-            try:
-                from sentence_transformers import SentenceTransformer
-            except ImportError as exc:
-                raise RuntimeError(
-                    "sentence-transformers is required for canonical retrieval"
-                ) from exc
-            model = SentenceTransformer(self.model_name)
-        self._model = model
+    def __init__(self, client: Any | None = None):
+        if client is None:
+            from openai import OpenAI
+
+            client = OpenAI()
+        self._client = client
 
     def embed(self, texts: Sequence[str]) -> np.ndarray:
-        vectors = self._model.encode(
-            list(texts),
-            convert_to_numpy=True,
-            normalize_embeddings=True,
+        if not texts:
+            return np.empty((0, self.dimensions), dtype=np.float32)
+        response = self._client.embeddings.create(
+            model=EMBEDDING_API_MODEL,
+            input=list(texts),
+            dimensions=self.dimensions,
+            encoding_format="float",
         )
-        result = np.asarray(vectors, dtype=np.float32)
+        ordered = sorted(response.data, key=lambda item: item.index)
+        result = np.asarray(
+            [item.embedding for item in ordered], dtype=np.float32
+        )
         if result.shape != (len(texts), self.dimensions):
             raise ValueError(
                 f"embedder returned {result.shape}, expected "

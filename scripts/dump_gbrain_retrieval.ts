@@ -8,6 +8,30 @@ function argument(name: string): string {
   return value;
 }
 
+function vectorToArray(value: unknown): number[] {
+  if (Array.isArray(value)) {
+    return value.map(Number);
+  }
+  if (ArrayBuffer.isView(value)) {
+    return Array.from(value as unknown as Iterable<number>, Number);
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    const body =
+      (trimmed.startsWith("[") && trimmed.endsWith("]")) ||
+      (trimmed.startsWith("(") && trimmed.endsWith(")"))
+        ? trimmed.slice(1, -1)
+        : trimmed;
+    if (!body.trim()) return [];
+    const vector = body.split(",").map((item) => Number(item.trim()));
+    if (vector.some((item) => !Number.isFinite(item))) {
+      throw new Error("PGLite returned an invalid vector string");
+    }
+    return vector;
+  }
+  throw new Error(`Unsupported embedding value: ${typeof value}`);
+}
+
 const runtime = resolve(argument("--runtime"));
 const configModule = await import(
   pathToFileURL(resolve(runtime, "src/core/config.ts")).href
@@ -30,7 +54,8 @@ try {
     ORDER BY source_id, slug
   `);
   const chunks = await engine.executeRaw(`
-    SELECT c.id, c.page_id, c.chunk_index, c.chunk_text, c.embedding, c.model
+    SELECT c.id, c.page_id, c.chunk_index, c.chunk_text, c.embedding, c.model,
+           p.embedding_signature
     FROM content_chunks c
     JOIN pages p ON p.id = c.page_id
     WHERE p.deleted_at IS NULL
@@ -48,7 +73,7 @@ try {
   `);
   const normalizedChunks = chunks.map((chunk: Record<string, unknown>) => ({
     ...chunk,
-    embedding: Array.from(chunk.embedding as Iterable<number>),
+    embedding: vectorToArray(chunk.embedding),
   }));
   process.stdout.write(
     JSON.stringify({

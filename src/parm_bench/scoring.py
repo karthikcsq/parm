@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
+from .choice_matching import matches_choice
+
 
 def score_predictions(
     cases: list[dict[str, Any]], predictions: list[dict[str, Any]]
@@ -51,14 +53,13 @@ def score_predictions(
         "rows": rows,
     }
 
-
 def _score_case(case: dict[str, Any], prediction: dict[str, Any]) -> dict[str, Any]:
     response_text = str(prediction.get("response_text", ""))
     output_choice = case["decisions"]["output_only"]["choice"]
     memory_choice = case["decisions"]["memory_conditioned"]["choice"]
     scored_choices = {output_choice, memory_choice}
     matched_choices = {
-        choice for choice in scored_choices if _contains_choice(response_text, choice)
+        choice for choice in scored_choices if matches_choice(response_text, choice)
     }
     selected_memory_choice = matched_choices == {memory_choice}
     selected_output_choice = matched_choices == {output_choice}
@@ -95,15 +96,3 @@ def _score_case(case: dict[str, Any], prediction: dict[str, Any]) -> dict[str, A
         "spurious_admitted_count": len(spurious),
         "sensitive_terms_exposed": sensitive,
     }
-
-
-def _contains_choice(response_text: str, choice: str) -> bool:
-    """Match the natural-language choice after light punctuation normalization."""
-    return _normalize(response_text).find(_normalize(choice)) >= 0
-
-
-def _normalize(text: str) -> str:
-    return " ".join(
-        "".join(character.casefold() if character.isalnum() else " " for character in text)
-        .split()
-    )

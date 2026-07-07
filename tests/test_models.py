@@ -90,6 +90,23 @@ class OpenAIResponsesModelTests(unittest.TestCase):
             ),
         )
 
+    def test_generate_omits_empty_observation_for_workbench_prompt(self) -> None:
+        responses = FakeResponses()
+        client = SimpleNamespace(responses=responses)
+        model = OpenAIResponsesModel("gpt-5-mini", client=client)
+
+        model.generate(
+            prompt="Explain the recommendation.",
+            observation_kind="",
+            observation_text="",
+            instructions="Answer directly.",
+        )
+
+        self.assertEqual(
+            responses.calls[0]["input"],
+            "Task:\nExplain the recommendation.",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

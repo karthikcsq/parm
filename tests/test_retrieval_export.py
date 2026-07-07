@@ -24,7 +24,7 @@ class RetrievalExportTests(unittest.TestCase):
                 "chunk_index": 0,
                 "chunk_text": "Memory",
                 "embedding": [0.0] * EMBEDDING_DIMENSIONS,
-                "model": f"llama-server:{EMBEDDING_MODEL}",
+                "model": EMBEDDING_MODEL,
             }
         ]
         with tempfile.TemporaryDirectory() as tmp:
@@ -37,13 +37,43 @@ class RetrievalExportTests(unittest.TestCase):
                 corpus_id="amara-life-v1",
                 gbrain_version="test",
                 chunker_version="test",
-                configured_model=f"llama-server:{EMBEDDING_MODEL}",
+                configured_model=EMBEDDING_MODEL,
             )
             loaded = RetrievalIndex.load(root)
 
         self.assertEqual(manifest["counts"]["vectors"], 1)
         self.assertEqual(loaded.pages[0].page_id, "amara:note/a")
         self.assertEqual(loaded.chunks[0].chunk_id, "amara:note/a:0")
+
+    def test_page_signature_overrides_stale_legacy_chunk_model(self) -> None:
+        pages = [
+            {"id": 9, "source_id": "amara", "slug": "note/a", "title": "A"}
+        ]
+        chunks = [
+            {
+                "id": 20,
+                "page_id": 9,
+                "chunk_index": 0,
+                "chunk_text": "Memory",
+                "embedding": [0.0] * EMBEDDING_DIMENSIONS,
+                "model": "zeroentropyai:zembed-1",
+                "embedding_signature": (
+                    f"{EMBEDDING_MODEL}:{EMBEDDING_DIMENSIONS}"
+                ),
+            }
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest = write_retrieval_index(
+                Path(tmp) / "index",
+                pages=pages,
+                chunks=chunks,
+                links=[],
+                corpus_id="amara-life-v1",
+                gbrain_version="test",
+                chunker_version="test",
+            )
+
+        self.assertEqual(manifest["embedding_model"], EMBEDDING_MODEL)
 
     def test_export_rejects_unexpected_vector_width(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

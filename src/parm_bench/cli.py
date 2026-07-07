@@ -20,7 +20,13 @@ from .baselines import (
     get_baseline,
 )
 from .dataset import DatasetValidationError, load_cases, validate_cases
-from .models import ModelTruncationError, OpenAIResponsesModel
+from .models import (
+    CachingLanguageModel,
+    ModelTruncationError,
+    OpenAIResponsesModel,
+    ResponseCacheMissError,
+    ResponsePolicy,
+)
 from .retrieval import (
     CANDIDATE_DEPTH,
     COSINE_WEIGHT,
@@ -93,6 +99,11 @@ def main(argv: list[str] | None = None) -> int:
         "--expansion-policy",
         choices=tuple(policy.value for policy in ExpansionPolicy),
     )
+    run.add_argument("--response-cache")
+    run.add_argument(
+        "--response-policy",
+        choices=tuple(policy.value for policy in ResponsePolicy),
+    )
     run.add_argument("--model")
     run.add_argument("--out", required=True)
 
@@ -160,6 +171,8 @@ def main(argv: list[str] | None = None) -> int:
                 args.retrieval_limit or OFFICIAL_TOP_K,
                 args.expansion_cache,
                 args.expansion_policy,
+                args.response_cache,
+                args.response_policy,
                 args.model,
                 args.out,
             )
@@ -186,6 +199,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except (
         ExpansionCacheMissError,
+        ResponseCacheMissError,
         RetrievalValidationError,
         ValueError,
     ) as exc:
@@ -218,6 +232,8 @@ def _run(
     retrieval_limit: int,
     expansion_cache: str | None,
     expansion_policy: str | None,
+    response_cache: str | None,
+    response_policy: str | None,
     model_name: str | None,
     out: str,
 ) -> int:
@@ -253,7 +269,15 @@ def _run(
             OpenAIEmbedder(),
             expander=expander,
         )
-    model = OpenAIResponsesModel(_resolve_model(model_name))
+    model: OpenAIResponsesModel | CachingLanguageModel = OpenAIResponsesModel(
+        _resolve_model(model_name)
+    )
+    if response_cache is not None:
+        model = CachingLanguageModel(
+            model,
+            response_cache,
+            ResponsePolicy(response_policy or ResponsePolicy.FROZEN),
+        )
     path = Path(out)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary_path: Path | None = None
@@ -302,6 +326,9 @@ def _run(
             retrieval_limit if implementation.requires_memory else None
         ),
         requested_model=model.model_name,
+        response_cache_hash=(
+            model.cache_hash if isinstance(model, CachingLanguageModel) else None
+        ),
     )
     print(f"Wrote {len(cases)} predictions to {path}")
     if truncated:
@@ -314,7 +341,7 @@ def _run(
 
 def _truncated_row(
     case: dict[str, Any],
-    model: OpenAIResponsesModel,
+    model: OpenAIResponsesModel | CachingLanguageModel,
     error: ModelTruncationError,
 ) -> dict[str, Any]:
     """Build a prediction row for a case whose model response was truncated.
@@ -367,9 +394,11 @@ def _write_run_configuration(
     output_rag_flow: str | None,
     retrieval_limit: int | None,
     requested_model: str,
+    response_cache_hash: str | None = None,
 ) -> None:
     payload = {
         "baseline": baseline,
+        "response_cache_hash": response_cache_hash,
         "output_rag_flow": output_rag_flow,
         "retrieval_mode": retriever.mode.value if retriever is not None else None,
         "retrieval_index": (
@@ -460,6 +489,10 @@ def _write_run_configuration(
 
 
 def _validate_retrieval_args(args: argparse.Namespace) -> None:
+    if getattr(args, "response_policy", None) and not getattr(
+        args, "response_cache", None
+    ):
+        raise ValueError("--response-policy requires --response-cache")
     uses_memory = args.baseline != "no_memory"
     retrieval_arguments = {
         "--retrieval-mode": args.retrieval_mode,

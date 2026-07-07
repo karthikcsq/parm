@@ -140,6 +140,20 @@ Support two policies:
 
 Official benchmark runs use `frozen`. Traces and config sidecars must record the expansion model, prompt version, query hash, alternatives, and cache hash. Invalid, duplicate, or incomplete expansion output is an error rather than a silent fallback.
 
+## Answer-Model Response Cache
+
+The `model_output_only` and `tool_then_model_output` output-RAG flows build the retrieval query from the answer model's own output. That output is nondeterministic, so the query text — and therefore the expansion cache key — changes between runs, and `enhanced` retrieval can never replay under `frozen`. Freezing only the expansion is not enough when the thing feeding it is not frozen, so the answer model is cached one layer up.
+
+Cache each answer-model call by a hash of:
+
+- model
+- prompt
+- observation kind and text
+- instructions
+- injected memory context
+
+Support the same `populate` / `frozen` policies as expansion. With responses frozen, the derived query is deterministic, the expansion cache hits, and enhanced replays exactly for all three output-RAG flows; the `tool_then_model_output` chain resolves because each stage's input is itself frozen. Config sidecars record the response-cache hash alongside the retrieval manifest and expansion-cache hashes. `CachingLanguageModel` implements this contract and wraps any `LanguageModel` transparently.
+
 ## Code Architecture
 
 Introduce:

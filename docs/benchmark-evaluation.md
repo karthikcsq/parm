@@ -74,6 +74,6 @@ disagreement audit.
 
 The scorer is tested with hand-authored prediction rows, independently of any
 retrieval policy. Headline evidence requires deliberately implemented
-baselines over the same prepared GBrain substrate and response model.
+baselines over the same tracked frozen retrieval index and response model.
 Mode comparisons must use the same frozen retrieval-index manifest and
 expansion cache. Condition comparisons must use the same retrieval mode.

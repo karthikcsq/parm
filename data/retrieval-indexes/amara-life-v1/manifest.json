@@ -1,0 +1,21 @@
+{
+  "artifact_hashes": {
+    "chunks.jsonl": "ebe764f0c6891d09656fa756fd75923f57514ebb707f3d8a3a1e574d285fd75c",
+    "embeddings.npy": "da10d471f2ff513c7c1d18f3593e82f505fdc91e4030a446439b2d9c25971ce3",
+    "links.jsonl": "833fdd9f9ea133984f5d53c33c45ccf20057145853164a2495e0595912dae340",
+    "pages.jsonl": "00a9e74d2fb697f6d73cc11bcae89fd71317718e29b6d7dbd51b7c21647a690e"
+  },
+  "chunker_version": "gbrain-0.42.53.0-default",
+  "content_hash": "33ebe031f2d3c3cfacd5dff40d9c72be2b29afe46ea03764a250b62abcd1e915",
+  "corpus_id": "amara-life-v1",
+  "counts": {
+    "chunks": 600,
+    "links": 407,
+    "pages": 600,
+    "vectors": 600
+  },
+  "embedding_dimensions": 512,
+  "embedding_model": "openai:text-embedding-3-small",
+  "gbrain_version": "0.42.53.0",
+  "schema_version": 1
+}

@@ -62,7 +62,7 @@ Add a tracked export command that reads the configured GBrain brain and writes:
   - target page ID
   - link type and provenance when available
 
-Private artifacts should remain under ignored `.gbrain-local/`. Prediction config sidecars must record the retrieval manifest hash so a run can be tied to an exact snapshot.
+Canonical frozen artifacts should be repo-visible under `data/`: retrieval indexes under `data/retrieval-indexes/`, expansion caches under `data/expansion-caches/`, and replayable result artifacts under `data/benchmark-results/`. Private rebuild state, package caches, and live GBrain runtime data should remain under ignored `.gbrain-local/`. Prediction config sidecars must record the retrieval manifest hash so a run can be tied to an exact snapshot.
 
 The loader must reject missing files, hash mismatches, duplicate IDs, dangling page or edge references, vector-count mismatches, unexpected dimensions, and embedding models other than the configured OpenAI model.
 

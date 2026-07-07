@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Best single podcast episode released today for a commute",
+    "Recommend one new podcast episode from today's releases for my commute",
+    "Today's new podcast episodes \u2014 pick one episode ideal for a commute"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "choose exactly one episode from today's new podcast releases for my commute. reply with the episode title.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "9ae831d9a0aae3549acbccb83bcda4e5c622c02c604f212835fefb1291b8800a"
+}

@@ -12,8 +12,12 @@ PARM       = ranking, output-cue policy, and decision evaluation
 
 The tracked source fixture contains 424 fictional artifacts across email,
 Slack, calendar, meetings, notes, and reference documents. It is compact and
-safe to version. GBrain runtime code, PGLite state, embeddings, dependencies,
-models, and caches remain under ignored `.gbrain-local/`.
+safe to version. Canonical frozen PARM artifacts are tracked under `data/`:
+the retrieval index in `data/retrieval-indexes/amara-life-v1`, the enhanced
+query expansion cache in `data/expansion-caches/amara-life-v1`, and benchmark
+outputs in `data/benchmark-results`. GBrain runtime code, PGLite state,
+dependencies, model caches, and rebuild scratch state remain under ignored
+`.gbrain-local/`.
 
 ## Prepare the corpus
 
@@ -91,11 +95,14 @@ chunks, 407 links, and 55 timeline entries.
 
 ## Freeze the retrieval artifact
 
-Canonical runs never invoke `gbrain search`. Export the neutral database state:
+Canonical runs never invoke `gbrain search` and do not require a live GBrain
+checkout. They load the tracked frozen index directly. Use this export step
+only when intentionally refreshing that tracked artifact from the neutral
+database state:
 
 ```powershell
 parm-bench export-retrieval-index `
-  --out .gbrain-local\indexes\amara-life-v1 `
+  --out data\retrieval-indexes\amara-life-v1 `
   --chunker-version gbrain-0.42.53.0-default
 ```
 

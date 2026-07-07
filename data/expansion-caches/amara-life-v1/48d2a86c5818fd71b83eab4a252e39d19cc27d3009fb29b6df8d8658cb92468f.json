@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Which single warehouse automation vendor should we choose for a 12-month pilot?",
+    "Recommend one warehouse automation provider/company to run a one-year pilot focused on robotics and WMS integration.",
+    "Select the best warehouse automation vendor for a 12\u2011month pilot\u2014which company should we pick for order-fulfillment automation?"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "choose exactly one warehouse-automation vendor for the twelve-month pilot. reply with the company name.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "f826dae8ce66122ae6db551044fdeba310ce409a527c38af2ed4aaf19b6b1f2e"
+}

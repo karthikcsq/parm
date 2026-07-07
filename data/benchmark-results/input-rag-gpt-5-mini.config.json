@@ -1,0 +1,10 @@
+{
+  "admission_policy": "all_retrieved",
+  "baseline": "input_rag",
+  "corpus": "amara-life-v1",
+  "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+  "memory_backend": "gbrain",
+  "perturbation_filtering": false,
+  "requested_model": "gpt-5-mini",
+  "retrieval_limit": 5
+}

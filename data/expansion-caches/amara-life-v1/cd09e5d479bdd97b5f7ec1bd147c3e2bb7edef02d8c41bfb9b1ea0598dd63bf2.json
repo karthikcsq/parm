@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Thursday afternoon conference agenda full session label as written in the agenda",
+    "Thursday PM conference schedule list of sessions exact session title/label",
+    "Thu afternoon program agenda session titles exact phrasing from the agenda"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "choose exactly one thursday-afternoon conference session. reply with its full session label as written in the agenda.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "e0cac38bb809288e80eac0e988880105ae35c9585112fa52f8a792b856b96be1"
+}

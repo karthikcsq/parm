@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Choose exactly one lunch option from these nearby restaurant results and reply only with the restaurant name",
+    "From the provided list of nearby restaurants, pick one lunch spot and return just its name",
+    "Select a single lunch choice among the listed local restaurants and respond only with the restaurant's name"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "choose exactly one lunch option from these nearby restaurant results. reply with the restaurant name.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "95d2b79e4d6906d5e8fde2d23c20246ceb6bc042180613ce10f7d07df209929a"
+}

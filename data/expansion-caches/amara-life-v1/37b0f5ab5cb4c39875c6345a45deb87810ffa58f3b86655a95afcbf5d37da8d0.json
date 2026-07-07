@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "enterprise AI-infrastructure digest story label \"worth sharing with founders\"",
+    "digest: choose one enterprise AI infrastructure story label to share with founders",
+    "which enterprise AI infrastructure story worth sharing with founders? provide story label from digest"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "choose exactly one enterprise ai-infrastructure story worth sharing with founders. reply with the story label as written in the digest.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "b1e0db042c63ddd3055a8288084ab09e0eabe67b95e300ed420406535634addc"
+}

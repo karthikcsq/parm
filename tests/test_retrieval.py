@@ -9,8 +9,11 @@ from types import SimpleNamespace
 
 import numpy as np
 
+from unittest import mock
+
 from parm_bench.retrieval import (
     EMBEDDING_DIMENSIONS,
+    EMBEDDING_MAX_INPUT_TOKENS,
     EMBEDDING_MODEL,
     CachedOpenAIQueryExpander,
     ExpansionCacheMissError,
@@ -23,6 +26,7 @@ from parm_bench.retrieval import (
     RetrievalValidationError,
     _bm25_rank,
     _rrf,
+    _token_windows,
 )
 from parm_bench.retrieval_export import write_retrieval_index
 
@@ -43,6 +47,20 @@ class FakeEmbedder:
 
     def embed(self, texts: list[str]) -> np.ndarray:
         return np.asarray([self.vectors[text] for text in texts], dtype=np.float32)
+
+
+class WindowEmbedder:
+    model_name = EMBEDDING_MODEL
+    dimensions = EMBEDDING_DIMENSIONS
+
+    def __init__(self, cycle: list[list[float]]) -> None:
+        self.cycle = cycle
+        self.inputs: list[str] | None = None
+
+    def embed(self, texts: list[str]) -> np.ndarray:
+        self.inputs = list(texts)
+        rows = [self.cycle[i % len(self.cycle)] for i in range(len(texts))]
+        return np.asarray(rows, dtype=np.float32)
 
 
 class FakeExpander:
@@ -86,6 +104,22 @@ class OpenAIEmbedderTests(unittest.TestCase):
                 }
             ],
         )
+
+class TokenWindowTests(unittest.TestCase):
+    def test_short_text_is_a_single_verbatim_window(self) -> None:
+        self.assertEqual(_token_windows("alpha beta", 8192), ["alpha beta"])
+
+    def test_long_text_splits_into_capped_windows_that_rejoin(self) -> None:
+        import tiktoken
+
+        encoding = tiktoken.get_encoding("cl100k_base")
+        text = " ".join(f"word{i}" for i in range(50))
+        windows = _token_windows(text, 8)
+
+        self.assertGreater(len(windows), 1)
+        for window in windows:
+            self.assertLessEqual(len(encoding.encode(window)), 8)
+        self.assertEqual("".join(windows), text)
 
 
 def build_index(
@@ -172,6 +206,26 @@ class RetrievalIndexTests(unittest.TestCase):
         self.assertEqual(
             result.trace["candidate_lists"]["dense:original"][0], "source:p1"
         )
+
+    def test_oversized_query_splits_into_dense_windows_merged_by_rrf(self) -> None:
+        embedder = WindowEmbedder([vector(1.0), vector(0.0, 1.0)])
+        query = " ".join(f"word{i}" for i in range(200))
+        with tempfile.TemporaryDirectory() as tmp:
+            index = build_index(Path(tmp) / "index")
+            retriever = IndexRetriever(index, RetrievalMode.DENSE, embedder)
+            with mock.patch("parm_bench.retrieval.EMBEDDING_MAX_INPUT_TOKENS", 8):
+                result = retriever.retrieve(RetrievalRequest(query, top_k=5))
+
+        assert embedder.inputs is not None
+        self.assertGreater(len(embedder.inputs), 1)
+        candidate_lists = result.trace["candidate_lists"]
+        self.assertNotIn("dense:original", candidate_lists)
+        self.assertIn("dense:window_1", candidate_lists)
+        self.assertIn(f"dense:window_{len(embedder.inputs)}", candidate_lists)
+        # Windows favoring vector(1.0) rank p1 first; those favoring vector(0,1)
+        # rank p3 first. The anti-correlated p4 stays last after the RRF merge.
+        self.assertEqual(result.hits[0].page_id, "source:p1")
+        self.assertEqual(result.hits[-1].page_id, "source:p4")
 
     def test_loader_rejects_hash_mismatch_and_duplicate_ids(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

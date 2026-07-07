@@ -16,6 +16,8 @@ import numpy as np
 EMBEDDING_MODEL = "openai:text-embedding-3-small"
 EMBEDDING_API_MODEL = "text-embedding-3-small"
 EMBEDDING_DIMENSIONS = 512
+EMBEDDING_ENCODING = "cl100k_base"
+EMBEDDING_MAX_INPUT_TOKENS = 8192
 CANDIDATE_DEPTH = 20
 OFFICIAL_TOP_K = 5
 RRF_K = 60
@@ -25,6 +27,36 @@ GRAPH_MIN_INBOUND = 2
 GRAPH_MULTIPLIER = 1.05
 EXPANSION_MODEL = "gpt-5-mini"
 EXPANSION_PROMPT_VERSION = "retrieval-expansion-v1"
+
+
+_EMBEDDING_ENCODER: Any | None = None
+
+
+def _embedding_encoder() -> Any:
+    global _EMBEDDING_ENCODER
+    if _EMBEDDING_ENCODER is None:
+        import tiktoken
+
+        _EMBEDDING_ENCODER = tiktoken.get_encoding(EMBEDDING_ENCODING)
+    return _EMBEDDING_ENCODER
+
+
+def _token_windows(text: str, max_tokens: int) -> list[str]:
+    """Split text into contiguous windows that each fit the embedding cap.
+
+    A query shorter than the cap yields a single window equal to the input, so
+    normal-length retrieval is unchanged. Naive output RAG can hand a whole tool
+    observation (up to MAX_CONTEXT_TOKENS) as the query; windowing lets every
+    part of it drive dense retrieval instead of dropping the tail.
+    """
+    encoder = _embedding_encoder()
+    tokens = encoder.encode(text)
+    if len(tokens) <= max_tokens:
+        return [text]
+    return [
+        encoder.decode(tokens[start : start + max_tokens])
+        for start in range(0, len(tokens), max_tokens)
+    ]
 
 
 class RetrievalValidationError(ValueError):
@@ -461,9 +493,8 @@ class IndexRetriever:
         }
 
     def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
-        query_vector = self.embedder.embed([request.query])[0]
-        cosine, best_chunks = self._page_cosines(query_vector)
-        dense_original = _rank_scores(cosine, CANDIDATE_DEPTH)
+        windows = _token_windows(request.query, EMBEDDING_MAX_INPUT_TOKENS)
+        cosine, best_chunks, dense_channels = self._dense_channels(windows)
         expansions: tuple[str, ...] = ()
         channel_lists: dict[str, list[str]] = {}
         raw_rrf: dict[str, float] = {}
@@ -473,16 +504,25 @@ class IndexRetriever:
         multipliers: dict[str, float] = {}
 
         if self.mode is RetrievalMode.DENSE:
-            channel_lists["dense:original"] = dense_original
-            final_scores = {page_id: cosine[page_id] for page_id in dense_original}
+            channel_lists.update(dense_channels)
+            if len(dense_channels) == 1:
+                dense_original = next(iter(dense_channels.values()))
+                final_scores = {
+                    page_id: cosine[page_id] for page_id in dense_original
+                }
+            else:
+                raw_rrf = _rrf(dense_channels.values())
+                max_rrf = max(raw_rrf.values(), default=1.0)
+                normalized_rrf = {
+                    page_id: value / max_rrf for page_id, value in raw_rrf.items()
+                }
+                final_scores = dict(raw_rrf)
         else:
             body_original = _bm25_rank(
                 request.query, self._body_documents, CANDIDATE_DEPTH
             )
-            channel_lists = {
-                "body_bm25:original": body_original,
-                "dense:original": dense_original,
-            }
+            channel_lists = {"body_bm25:original": body_original}
+            channel_lists.update(dense_channels)
             if self.mode is RetrievalMode.ENHANCED:
                 assert self.expander is not None
                 expansions = self.expander.expand(request.query)
@@ -614,6 +654,37 @@ class IndexRetriever:
             ],
         }
         return RetrievalResult(tuple(hits), trace)
+
+    def _dense_channels(
+        self, windows: Sequence[str]
+    ) -> tuple[dict[str, float], dict[str, int], dict[str, list[str]]]:
+        """Embed each query window and rank pages by cosine per window.
+
+        A single window (the normal case) yields the original dense channel and
+        its cosine map unchanged. Multiple windows each become their own dense
+        channel — the caller RRF-merges them — while the returned cosine map
+        max-pools across windows so a page counts as relevant when any window
+        matches it.
+        """
+        vectors = self.embedder.embed(list(windows))
+        per_window = [self._page_cosines(vectors[position]) for position in range(len(windows))]
+        if len(per_window) == 1:
+            cosine, best_chunks = per_window[0]
+            return cosine, best_chunks, {
+                "dense:original": _rank_scores(cosine, CANDIDATE_DEPTH)
+            }
+        cosine = {}
+        best_chunks = {}
+        for window_cosine, window_best in per_window:
+            for page_id, score in window_cosine.items():
+                if page_id not in cosine or score > cosine[page_id]:
+                    cosine[page_id] = score
+                    best_chunks[page_id] = window_best[page_id]
+        channels = {
+            f"dense:window_{position}": _rank_scores(window_cosine, CANDIDATE_DEPTH)
+            for position, (window_cosine, _) in enumerate(per_window, start=1)
+        }
+        return cosine, best_chunks, channels
 
     def _page_cosines(
         self, query_vector: np.ndarray

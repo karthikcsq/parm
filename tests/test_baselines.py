@@ -7,7 +7,9 @@ from pathlib import Path
 from parm_bench.baselines import (
     INPUT_RAG_INSTRUCTIONS,
     InputRagBaseline,
+    NaiveOutputRagBaseline,
     NoMemoryBaseline,
+    OutputRagFlow,
     benchmark_input,
 )
 from parm_bench.dataset import load_cases
@@ -28,7 +30,8 @@ class RecordingModel:
     model_name = "test-model"
 
     def __init__(self) -> None:
-        self.calls: list[dict[str, str]] = []
+        self.calls: list[dict[str, object]] = []
+        self.responses: list[str] = []
 
     def generate(
         self,
@@ -48,9 +51,14 @@ class RecordingModel:
                 "memory_context": memory_context,
             }
         )
+        text = (
+            self.responses.pop(0)
+            if self.responses
+            else f"Visible Choice {len(self.calls)}"
+        )
         return ModelResponse(
-            text="Visible Choice",
-            response_id="resp_test",
+            text=text,
+            response_id=f"resp_{len(self.calls)}",
             resolved_model="test-model-2026-01-01",
             usage={"input_tokens": 10, "output_tokens": 2, "total_tokens": 12},
         )
@@ -82,7 +90,7 @@ class NoMemoryBaselineTests(unittest.TestCase):
                 "memory_context": None,
             },
         )
-        self.assertEqual(row["response_text"], "Visible Choice")
+        self.assertEqual(row["response_text"], "Visible Choice 1")
         self.assertEqual(row["requested_model"], "test-model")
         self.assertEqual(row["resolved_model"], "test-model-2026-01-01")
         self.assertEqual(
@@ -201,6 +209,128 @@ class InputRagBaselineTests(unittest.TestCase):
     def test_input_rag_rejects_non_positive_limit(self) -> None:
         with self.assertRaisesRegex(ValueError, "at least 1"):
             InputRagBaseline(retrieval_limit=0)
+
+
+class NaiveOutputRagBaselineTests(unittest.TestCase):
+    def test_tool_output_only_retrieves_observation_then_final_model_pass(
+        self,
+    ) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+        retriever = RecordingRetriever(
+            [hit("page/one", "note/one", "Tool memory", 0.9)]
+        )
+
+        row = NaiveOutputRagBaseline(
+            retrieval_limit=2,
+            output_rag_flow=OutputRagFlow.TOOL_OUTPUT_ONLY,
+        ).run(case, model, retriever)
+
+        self.assertEqual(
+            retriever.calls, [RetrievalRequest(case.observation_text, top_k=2)]
+        )
+        self.assertEqual(len(model.calls), 1)
+        self.assertEqual(model.calls[0]["memory_context"], "1. Tool memory")
+        self.assertEqual(model.calls[0]["instructions"], INPUT_RAG_INSTRUCTIONS)
+        self.assertEqual(row["response_text"], "Visible Choice 1")
+        self.assertEqual(row["trace"]["output_rag_flow"], "tool_output_only")
+        self.assertEqual(row["trace"]["retrieval_queries"], [case.observation_text])
+        self.assertEqual(row["trace"]["model_passes"], [])
+
+    def test_model_output_only_retrieves_first_model_response_then_final(
+        self,
+    ) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+        model.responses = ["Intermediate choice", "Final choice"]
+        retriever = RecordingRetriever(
+            [hit("page/one", "note/one", "Model memory", 0.9)]
+        )
+
+        row = NaiveOutputRagBaseline(
+            retrieval_limit=1,
+            output_rag_flow=OutputRagFlow.MODEL_OUTPUT_ONLY,
+        ).run(case, model, retriever)
+
+        self.assertEqual(
+            retriever.calls, [RetrievalRequest("Intermediate choice", top_k=1)]
+        )
+        self.assertEqual(len(model.calls), 2)
+        self.assertIsNone(model.calls[0]["memory_context"])
+        self.assertEqual(model.calls[1]["memory_context"], "1. Model memory")
+        self.assertEqual(row["response_text"], "Final choice")
+        self.assertEqual(
+            row["trace"]["model_passes"][0]["response_text"],
+            "Intermediate choice",
+        )
+        self.assertEqual(
+            row["trace"]["retrieval_queries"], ["Intermediate choice"]
+        )
+
+    def test_tool_then_model_output_runs_two_retrieval_phases_and_dedupes(
+        self,
+    ) -> None:
+        class PhaseRetriever(RecordingRetriever):
+            def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
+                self.calls.append(request)
+                if len(self.calls) == 1:
+                    hits = [
+                        hit("page/tool", "note/shared", "Tool memory", 0.9),
+                    ]
+                else:
+                    hits = [
+                        hit("page/model", "note/model", "Model memory", 0.8),
+                        hit("page/dupe", "note/shared", "Duplicate", 0.7),
+                    ]
+                return RetrievalResult(
+                    tuple(hits[: request.top_k]),
+                    {
+                        "retrieval_mode": "dense",
+                        "original_query": request.query,
+                        "expansion_queries": [],
+                        "candidate_lists": {},
+                        "returned_pages": [],
+                    },
+                )
+
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+        model.responses = ["Intermediate with memory", "Final choice"]
+        retriever = PhaseRetriever([])
+
+        row = NaiveOutputRagBaseline(
+            retrieval_limit=3,
+            output_rag_flow=OutputRagFlow.TOOL_THEN_MODEL_OUTPUT,
+        ).run(case, model, retriever)
+
+        self.assertEqual(
+            retriever.calls,
+            [
+                RetrievalRequest(case.observation_text, top_k=3),
+                RetrievalRequest("Intermediate with memory", top_k=3),
+            ],
+        )
+        self.assertEqual(len(model.calls), 2)
+        self.assertEqual(model.calls[0]["memory_context"], "1. Tool memory")
+        self.assertEqual(
+            model.calls[1]["memory_context"],
+            "1. Tool memory\n\n2. Model memory",
+        )
+        self.assertEqual(
+            row["trace"]["retrieved_source_ids"],
+            ["note/shared", "note/model", "note/shared"],
+        )
+        self.assertEqual(
+            row["trace"]["admitted_source_ids"],
+            ["note/shared", "note/model"],
+        )
+
+    def test_naive_output_rag_requires_retriever_and_positive_limit(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        with self.assertRaisesRegex(ValueError, "requires a retriever"):
+            NaiveOutputRagBaseline().run(case, RecordingModel(), None)
+        with self.assertRaisesRegex(ValueError, "at least 1"):
+            NaiveOutputRagBaseline(retrieval_limit=0)
 
 
 if __name__ == "__main__":

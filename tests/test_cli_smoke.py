@@ -132,7 +132,7 @@ class CliSmokeTests(unittest.TestCase):
     def test_no_memory_baseline_is_registered(self) -> None:
         self.assertEqual(
             set(available_baselines()),
-            {"no_memory", "input_rag"},
+            {"no_memory", "input_rag", "naive_output_rag"},
         )
 
     def test_run_refuses_unimplemented_baseline(self) -> None:
@@ -268,7 +268,81 @@ class CliSmokeTests(unittest.TestCase):
             )
             self.assertEqual(configuration["retrieval_limit"], 3)
             self.assertEqual(configuration["admission_policy"], "all_retrieved")
+            self.assertIsNone(configuration["output_rag_flow"])
             self.assertNotIn("memory_backend", configuration)
+
+    def test_naive_output_rag_run_requires_and_records_flow(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            with (
+                patch(
+                    "parm_bench.cli.OpenAIResponsesModel",
+                    FakeOpenAIModel,
+                ),
+                patch(
+                    "parm_bench.cli.RetrievalIndex.load",
+                    return_value=FakeIndex(),
+                ),
+                patch(
+                    "parm_bench.cli.OpenAIEmbedder",
+                    return_value=object(),
+                ),
+                patch(
+                    "parm_bench.cli.IndexRetriever",
+                    FakeRetriever,
+                ),
+            ):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "naive_output_rag",
+                        "--output-rag-flow",
+                        "tool_output_only",
+                        "--retrieval-mode",
+                        "dense",
+                        "--retrieval-index",
+                        "fixture-index",
+                        "--retrieval-limit",
+                        "2",
+                        "--out",
+                        str(result),
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            retriever = FakeRetriever.instances[0]
+            self.assertEqual(len(retriever.calls), 10)
+            self.assertTrue(
+                all(call.top_k == 2 for call in retriever.calls)
+            )
+            rows = [
+                json.loads(line)
+                for line in result.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertTrue(
+                all(row["baseline"] == "naive_output_rag" for row in rows)
+            )
+            self.assertTrue(
+                all(
+                    row["output_rag_flow"] == "tool_output_only"
+                    for row in rows
+                )
+            )
+            self.assertTrue(
+                all(
+                    row["trace"]["output_rag_flow"] == "tool_output_only"
+                    for row in rows
+                )
+            )
+            configuration = json.loads(
+                result.with_suffix(".config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                configuration["output_rag_flow"], "tool_output_only"
+            )
+            self.assertEqual(configuration["retrieval_mode"], "dense")
 
     def test_memory_run_requires_explicit_mode_and_index(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
@@ -278,6 +352,44 @@ class CliSmokeTests(unittest.TestCase):
                     str(DATASET),
                     "--baseline",
                     "input_rag",
+                    "--out",
+                    str(Path(tmp) / "result.jsonl"),
+                ]
+            )
+        self.assertEqual(status, 2)
+
+    def test_naive_output_rag_requires_flow(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
+            status = main(
+                [
+                    "run",
+                    str(DATASET),
+                    "--baseline",
+                    "naive_output_rag",
+                    "--retrieval-mode",
+                    "dense",
+                    "--retrieval-index",
+                    "fixture-index",
+                    "--out",
+                    str(Path(tmp) / "result.jsonl"),
+                ]
+            )
+        self.assertEqual(status, 2)
+
+    def test_output_rag_flow_is_rejected_for_other_baselines(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
+            status = main(
+                [
+                    "run",
+                    str(DATASET),
+                    "--baseline",
+                    "input_rag",
+                    "--output-rag-flow",
+                    "tool_output_only",
+                    "--retrieval-mode",
+                    "dense",
+                    "--retrieval-index",
+                    "fixture-index",
                     "--out",
                     str(Path(tmp) / "result.jsonl"),
                 ]

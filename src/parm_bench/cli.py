@@ -15,6 +15,7 @@ from .amara import normalize_amara
 from .baselines import (
     BaselineConfiguration,
     BaselineNotImplementedError,
+    OutputRagFlow,
     benchmark_input,
     get_baseline,
 )
@@ -78,6 +79,10 @@ def main(argv: list[str] | None = None) -> int:
     run = commands.add_parser("run")
     run.add_argument("dataset_dir")
     run.add_argument("--baseline", required=True)
+    run.add_argument(
+        "--output-rag-flow",
+        choices=tuple(flow.value for flow in OutputRagFlow),
+    )
     run.add_argument(
         "--retrieval-mode", choices=tuple(mode.value for mode in RetrievalMode)
     )
@@ -149,6 +154,7 @@ def main(argv: list[str] | None = None) -> int:
             return _run(
                 args.dataset_dir,
                 args.baseline,
+                args.output_rag_flow,
                 args.retrieval_mode,
                 args.retrieval_index,
                 args.retrieval_limit or OFFICIAL_TOP_K,
@@ -206,6 +212,7 @@ def _inspect(dataset_dir: str, case_id: str | None) -> int:
 def _run(
     dataset_dir: str,
     baseline: str,
+    output_rag_flow: str | None,
     retrieval_mode: str | None,
     retrieval_index: str | None,
     retrieval_limit: int,
@@ -218,7 +225,14 @@ def _run(
     validate_cases(cases)
     implementation = get_baseline(
         baseline,
-        BaselineConfiguration(retrieval_limit=retrieval_limit),
+        BaselineConfiguration(
+            retrieval_limit=retrieval_limit,
+            output_rag_flow=(
+                OutputRagFlow(output_rag_flow)
+                if output_rag_flow is not None
+                else OutputRagFlow.TOOL_THEN_MODEL_OUTPUT
+            ),
+        ),
     )
     retriever: IndexRetriever | None = None
     if implementation.requires_memory:
@@ -261,6 +275,8 @@ def _run(
                     retriever,
                 )
                 row["baseline"] = baseline
+                if output_rag_flow is not None:
+                    row["output_rag_flow"] = output_rag_flow
                 handle.write(json.dumps(row, sort_keys=True) + "\n")
         temporary_path.replace(path)
     except Exception:
@@ -271,6 +287,7 @@ def _run(
         path,
         baseline=baseline,
         retriever=retriever,
+        output_rag_flow=output_rag_flow,
         retrieval_limit=(
             retrieval_limit if implementation.requires_memory else None
         ),
@@ -303,11 +320,13 @@ def _write_run_configuration(
     *,
     baseline: str,
     retriever: IndexRetriever | None,
+    output_rag_flow: str | None,
     retrieval_limit: int | None,
     requested_model: str,
 ) -> None:
     payload = {
         "baseline": baseline,
+        "output_rag_flow": output_rag_flow,
         "retrieval_mode": retriever.mode.value if retriever is not None else None,
         "retrieval_index": (
             str(retriever.index.path) if retriever is not None else None
@@ -407,11 +426,20 @@ def _validate_retrieval_args(args: argparse.Namespace) -> None:
     }
     if not uses_memory:
         supplied = [name for name, value in retrieval_arguments.items() if value]
+        if args.output_rag_flow:
+            supplied.append("--output-rag-flow")
         if supplied:
             raise ValueError(
                 "no_memory rejects retrieval arguments: " + ", ".join(supplied)
             )
         return
+    if args.baseline == "naive_output_rag":
+        if not args.output_rag_flow:
+            raise ValueError("naive_output_rag requires --output-rag-flow")
+    elif args.output_rag_flow:
+        raise ValueError(
+            "--output-rag-flow is only valid for naive_output_rag"
+        )
     if not args.retrieval_mode or not args.retrieval_index:
         raise ValueError(
             "memory-using baselines require --retrieval-mode and "

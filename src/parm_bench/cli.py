@@ -20,7 +20,7 @@ from .baselines import (
     get_baseline,
 )
 from .dataset import DatasetValidationError, load_cases, validate_cases
-from .models import OpenAIResponsesModel
+from .models import ModelTruncationError, OpenAIResponsesModel
 from .retrieval import (
     CANDIDATE_DEPTH,
     COSINE_WEIGHT,
@@ -268,12 +268,22 @@ def _run(
             delete=False,
         ) as handle:
             temporary_path = Path(handle.name)
+            truncated = 0
             for case in cases:
-                row = implementation.run(
-                    benchmark_input(case),
-                    model,
-                    retriever,
-                )
+                try:
+                    row = implementation.run(
+                        benchmark_input(case),
+                        model,
+                        retriever,
+                    )
+                except ModelTruncationError as error:
+                    truncated += 1
+                    row = _truncated_row(case, model, error)
+                    print(
+                        f"Case {case['case_id']} truncated "
+                        f"(reason={error.reason}); recorded as abstention",
+                        file=sys.stderr,
+                    )
                 row["baseline"] = baseline
                 if output_rag_flow is not None:
                     row["output_rag_flow"] = output_rag_flow
@@ -294,7 +304,41 @@ def _run(
         requested_model=model.model_name,
     )
     print(f"Wrote {len(cases)} predictions to {path}")
+    if truncated:
+        print(
+            f"{truncated} of {len(cases)} cases truncated before completion",
+            file=sys.stderr,
+        )
     return 0
+
+
+def _truncated_row(
+    case: dict[str, Any],
+    model: OpenAIResponsesModel,
+    error: ModelTruncationError,
+) -> dict[str, Any]:
+    """Build a prediction row for a case whose model response was truncated.
+
+    An empty ``response_text`` with an empty trace scores as an abstention, so a
+    truncated case is recorded rather than aborting the batch. ``truncated`` and
+    ``truncation_reason`` mark the row for downstream inspection.
+    """
+    return {
+        "case_id": case["case_id"],
+        "response_text": "",
+        "requested_model": model.model_name,
+        "resolved_model": model.model_name,
+        "provider_response_id": error.response_id,
+        "usage": {},
+        "truncated": True,
+        "truncation_reason": error.reason,
+        "trace": {
+            "detected_cues": [],
+            "retrieved_source_ids": [],
+            "admitted_source_ids": [],
+            "admitted_perturbations": {},
+        },
+    }
 
 
 def _resolve_model(cli_model: str | None) -> str:

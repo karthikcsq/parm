@@ -52,7 +52,8 @@ Start the local retrieval workbench with a validated frozen index:
 
 ```powershell
 parm-bench serve-workbench `
-  --retrieval-index .gbrain-local\indexes\amara-life-v1
+  --retrieval-index data\retrieval-indexes\amara-life-v1 `
+  --expansion-cache data\expansion-caches\amara-life-v1
 ```
 
 The browser opens automatically. Choose one of the ten benchmark cases or
@@ -63,8 +64,9 @@ then reports decision pass/fail against the condition-appropriate expected
 choice separately from gold-memory retrieval status. Ordered memories,
 selected chunks, score diagnostics, and complete run JSON remain available
 below. Enhanced mode is enabled when the server is started with
-`--expansion-cache PATH`; add `--expansion-policy populate` while building
-that cache, then use the default frozen policy for replay.
+`--expansion-cache PATH`; use the tracked `data\expansion-caches\amara-life-v1`
+cache for replay, or add `--expansion-policy populate` only while rebuilding
+that cache.
 
 ## Baseline status
 
@@ -87,11 +89,11 @@ Run the five positive/control pairs and score them:
 parm-bench run data/benchmark_v1 `
   --baseline no_memory `
   --model gpt-5-mini `
-  --out .Codex/benchmark-results/no-memory-gpt-5-mini.jsonl
+  --out data/benchmark-results/no-memory-gpt-5-mini.jsonl
 parm-bench score `
-  .Codex/benchmark-results/no-memory-gpt-5-mini.jsonl `
+  data/benchmark-results/no-memory-gpt-5-mini.jsonl `
   --gold data/benchmark_v1 `
-  --out .Codex/benchmark-results/no-memory-gpt-5-mini.metrics.json
+  --out data/benchmark-results/no-memory-gpt-5-mini.metrics.json
 ```
 
 Run input-RAG over the same cases:
@@ -100,10 +102,10 @@ Run input-RAG over the same cases:
 parm-bench run data/benchmark_v1 `
   --baseline input_rag `
   --retrieval-mode dense `
-  --retrieval-index .gbrain-local\indexes\amara-life-v1 `
+  --retrieval-index data\retrieval-indexes\amara-life-v1 `
   --retrieval-limit 5 `
   --model gpt-5-mini `
-  --out .Codex/benchmark-results/input-rag-gpt-5-mini.jsonl
+  --out data/benchmark-results/input-rag-gpt-5-mini.jsonl
 ```
 
 The CLI automatically loads the ignored repo-root `.env` without overriding
@@ -118,12 +120,18 @@ versions, index-manifest hash, and expansion-cache hash where applicable.
 Input-RAG traces retain complete ranking diagnostics and perturbation labels,
 but labels and IDs are not shown to the response model.
 
-Prepare the repo-local GBrain corpus before running a memory baseline:
+Canonical benchmark replay does not require a live GBrain checkout or PGLite
+database. It reads the tracked frozen index under
+`data\retrieval-indexes\amara-life-v1`, the tracked expansion cache under
+`data\expansion-caches\amara-life-v1`, and writes or compares tracked result
+artifacts under `data/benchmark-results`.
+
+Use GBrain only when rebuilding the frozen retrieval artifact from source:
 
 ```powershell
 parm-bench prepare-amara
 parm-bench export-retrieval-index `
-  --out .gbrain-local\indexes\amara-life-v1 `
+  --out data\retrieval-indexes\amara-life-v1 `
   --chunker-version gbrain-0.42.53.0-default
 ```
 

@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Session A-004 Aurora Systems \"Practical Evaluation Methods for Reliable Agent Infrastructure\"",
+    "Aurora Systems practical evaluation methods reliable agent infrastructure A-004 video slides PDF",
+    "\"Practical Evaluation Methods for Reliable Agent Infrastructure\" Aurora Systems session A-004 conference proceedings"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "session a-004 \u2014 aurora systems: practical evaluation methods for reliable agent infrastructure.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "abd6f711073447fa4c356722a1a96f3aae2d0e2cce075259b2e4537762d0fb35"
+}

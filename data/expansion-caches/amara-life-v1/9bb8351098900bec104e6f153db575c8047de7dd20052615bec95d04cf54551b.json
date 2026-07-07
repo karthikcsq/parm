@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "\"The Chip Roadmap\"",
+    "The Chip Roadmap semiconductor industry roadmap report overview",
+    "\"The Chip Roadmap\" PDF download full text"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "the chip roadmap",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "4e6b529a38b430f1b289bfdbded8ce7ebeaf75165df36c9ea42e6f68dea7e154"
+}

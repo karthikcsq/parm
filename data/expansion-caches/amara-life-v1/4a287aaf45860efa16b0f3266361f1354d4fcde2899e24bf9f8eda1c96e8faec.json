@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Session G-147 Priya Raman GridScope Edge Inference for Municipal Demand Forecasting",
+    "Priya Raman GridScope 'Edge Inference' municipal demand forecasting session G-147",
+    "G-147 GridScope presentation: Edge Inference for Municipal Demand Forecasting by Priya Raman"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "session g-147 \u2014 priya raman, gridscope: edge inference for municipal demand forecasting.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "92c15defd804ae3a502a20314136a80863ea1276cd6beeb0282aaa6210effe58"
+}

@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Item 147 CoreWeave Reserved-GPU Pricing Revision",
+    "CoreWeave Reserved-GPU pricing revision Item No. 147 agenda",
+    "Item 147 \u2014 CoreWeave Reserved GPU pricing revision document PDF minutes"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "item 147 \u2014 coreweave reserved-gpu pricing revision.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "e1e1adf10218cd8f9f614f9db45384765cb173207fd1118aff4f45ab4b10386e"
+}

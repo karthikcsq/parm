@@ -1,0 +1,30 @@
+{
+  "admission_policy": "all_retrieved",
+  "baseline": "naive_output_rag",
+  "chunker_version": "gbrain-0.42.53.0-default",
+  "constants": {
+    "candidate_depth": 20,
+    "cosine_weight": 0.3,
+    "graph_min_inbound": 2,
+    "graph_multiplier": 1.05,
+    "rrf_k": 60,
+    "rrf_weight": 0.7
+  },
+  "corpus": "amara-life-v1",
+  "dependency_versions": {
+    "numpy": "1.26.4",
+    "openai": "2.44.0"
+  },
+  "embedding_model": "openai:text-embedding-3-small",
+  "expansion_cache_hash": "aaae0396d0bb134c5a63eec6121e6be85cfb4535a9751054379db669ba4ff278",
+  "expansion_model": "gpt-5-mini",
+  "expansion_prompt_version": "retrieval-expansion-v1",
+  "gbrain_version": "0.42.53.0",
+  "output_rag_flow": "tool_output_only",
+  "perturbation_filtering": false,
+  "requested_model": "gpt-5-mini",
+  "retrieval_index": "C:\\Users\\karth\\CodingFiles\\PARM\\parm\\data\\retrieval-indexes\\amara-life-v1",
+  "retrieval_limit": 5,
+  "retrieval_manifest_hash": "fcb22655b87964ed7df33e90673e290a5a257a5b7eef49122480ade29cbf6bd8",
+  "retrieval_mode": "enhanced"
+}

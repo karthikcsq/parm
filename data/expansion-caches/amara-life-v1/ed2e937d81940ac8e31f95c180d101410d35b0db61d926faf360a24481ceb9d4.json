@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Dispatch Kitchen official website menu and hours",
+    "Dispatch Kitchen near me location reviews and directions",
+    "Dispatch Kitchen catering services contact information"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "dispatch kitchen",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "9f72dcf008d13ff67f3f08c214d97c215fe6e6dfd33048530c6cbc8db65b0aa0"
+}

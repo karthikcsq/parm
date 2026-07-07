@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "NovaTech Labs company profile headquarters founders",
+    "NovaTech Labs research services products technology focus",
+    "NovaTech Labs news funding rounds reviews careers contact information"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "novatech labs",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "89cb153b13ff9057f27809dbf310d5d013098a049110401a56eeb2c816c22da8"
+}

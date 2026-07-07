@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Item 018 Lattice Compute Spot-Capacity Pricing Revision",
+    "Lattice Compute \"Spot-Capacity Pricing Revision\" Item 018 meeting minutes or proposal",
+    "Item #018 Lattice Compute spot-capacity pricing update / RFC / discussion"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "item 018 \u2014 lattice compute spot-capacity pricing revision",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "979a36bb3542367becfdc439fb43a19cdd9e3f621959f51e0e57ff8a6ecb3e05"
+}

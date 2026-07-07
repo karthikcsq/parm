@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Editor's Pick \u2014 The Chip Roadmap",
+    "The Chip Roadmap editor's pick article semiconductor roadmap",
+    "Editor's Choice feature The Chip Roadmap future of semiconductors roadmap"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "editor's pick \u2014 the chip roadmap.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "ae92e2daea59f26dde5a37a9a45247c84d8188256ec7f1720a1e0f14afd35272"
+}

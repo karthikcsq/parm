@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Northline Automation company profile",
+    "Northline Automation official website and contact information",
+    "Northline Automation automation solutions, products, and reviews"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "northline automation",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "99833423abf45f79113b49b1a198b481d36eb610066da084e7311280ce803dd0"
+}

@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Session G-052 \u2014 Lena Ortiz: VoltPath \u201cEdge Inference for California Storage Dispatch\u201d (includes 15-minute audience Q&A on field evidence and deployment results)",
+    "VoltPath edge inference for California storage dispatch \u2014 Presentation by Lena Ortiz (Session G-052) with a 15-minute audience Q&A covering field evidence and deployment results",
+    "Lena Ortiz session G-052: \u201cEdge Inference for California Storage Dispatch\u201d \u2014 field evidence & deployment results, 15-minute Q&A (VoltPath)"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "session g-052 \u2014 lena ortiz, voltpath: edge inference for california storage dispatch. the session includes a fifteen-minute audience q&a on field evidence and deployment results.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "54ab7795c736ffbc52a9fb350510bd0aa1bc81129224ef7a530db5170c8359aa"
+}

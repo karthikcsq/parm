@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Lead Story: Atlas-3 Enterprise Document Analysis release announcement",
+    "Atlas 3 Enterprise Document Analysis press release and release notes",
+    "Atlas-3 document AI product launch \u2014 lead story on Enterprise Document Analysis"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "lead story \u2014 atlas-3 enterprise document analysis release",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "6594f382009c5a729b891edb9be9a3df8d2afce3ac2380ddb3777753166eb6d7"
+}

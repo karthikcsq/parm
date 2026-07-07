@@ -9,7 +9,11 @@ from unittest.mock import patch
 
 from parm_bench.baselines import available_baselines
 from parm_bench.cli import _resolve_model, main
-from parm_bench.models import FINAL_ANSWER_INSTRUCTIONS, ModelResponse
+from parm_bench.models import (
+    FINAL_ANSWER_INSTRUCTIONS,
+    ModelResponse,
+    ModelTruncationError,
+)
 from parm_bench.retrieval import (
     EMBEDDING_DIMENSIONS,
     EMBEDDING_MODEL,
@@ -479,6 +483,48 @@ class CliSmokeTests(unittest.TestCase):
                     )
             self.assertFalse(result.exists())
             self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+
+    def test_truncated_case_is_recorded_and_run_completes(self) -> None:
+        class TruncatingModel(FakeOpenAIModel):
+            def generate(self, **kwargs: str) -> ModelResponse:
+                response = super().generate(**kwargs)
+                if len(self.calls) == 2:
+                    raise ModelTruncationError(
+                        "max_output_tokens", response.response_id
+                    )
+                return response
+
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            with (
+                patch("parm_bench.cli.OpenAIResponsesModel", TruncatingModel),
+                patch("sys.stderr"),
+            ):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "no_memory",
+                        "--out",
+                        str(result),
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            rows = [
+                json.loads(line)
+                for line in result.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual(len(rows), 10)
+            truncated = [row for row in rows if row.get("truncated")]
+            self.assertEqual(len(truncated), 1)
+            self.assertEqual(truncated[0]["response_text"], "")
+            self.assertEqual(
+                truncated[0]["truncation_reason"], "max_output_tokens"
+            )
+            self.assertEqual(truncated[0]["trace"]["admitted_source_ids"], [])
+            self.assertEqual(truncated[0]["baseline"], "no_memory")
 
     def test_generate_command_is_removed(self) -> None:
         with self.assertRaises(SystemExit):

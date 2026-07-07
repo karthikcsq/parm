@@ -5,6 +5,8 @@ from types import SimpleNamespace
 
 from parm_bench.models import (
     FINAL_ANSWER_INSTRUCTIONS,
+    MAX_OUTPUT_TOKENS,
+    ModelTruncationError,
     OpenAIResponsesModel,
 )
 
@@ -54,7 +56,7 @@ class OpenAIResponsesModelTests(unittest.TestCase):
                         "Task:\nChoose exactly one.\n\n"
                         "Observed tool result:\nChoice A\nChoice B"
                     ),
-                    "max_output_tokens": 512,
+                    "max_output_tokens": MAX_OUTPUT_TOKENS,
                     "store": False,
                 }
             ],
@@ -106,6 +108,32 @@ class OpenAIResponsesModelTests(unittest.TestCase):
             responses.calls[0]["input"],
             "Task:\nExplain the recommendation.",
         )
+
+
+    def test_generate_raises_on_incomplete_truncated_response(self) -> None:
+        class TruncatingResponses:
+            def create(self, **kwargs: object) -> SimpleNamespace:
+                return SimpleNamespace(
+                    output_text="",
+                    id="resp_trunc",
+                    model="gpt-5-mini-resolved",
+                    usage=FakeUsage(),
+                    status="incomplete",
+                    incomplete_details=SimpleNamespace(reason="max_output_tokens"),
+                )
+
+        client = SimpleNamespace(responses=TruncatingResponses())
+        model = OpenAIResponsesModel("gpt-5-mini", client=client)
+
+        with self.assertRaises(ModelTruncationError) as caught:
+            model.generate(
+                prompt="Choose exactly one.",
+                observation_kind="tool_result",
+                observation_text="Choice A\nChoice B",
+            )
+
+        self.assertEqual(caught.exception.reason, "max_output_tokens")
+        self.assertEqual(caught.exception.response_id, "resp_trunc")
 
 
 if __name__ == "__main__":

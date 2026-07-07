@@ -11,6 +11,26 @@ FINAL_ANSWER_INSTRUCTIONS = (
     "Return exactly one requested label or name and no explanation."
 )
 
+MAX_OUTPUT_TOKENS = 4096
+
+
+class ModelTruncationError(RuntimeError):
+    """Raised when the Responses API stops before emitting a full answer.
+
+    Reasoning models spend ``max_output_tokens`` on hidden reasoning plus the
+    visible answer. When the budget runs out mid-response the API returns
+    ``status="incomplete"`` and an empty ``output_text``. Surfacing that as an
+    error keeps a truncated run from being silently scored as a wrong answer.
+    """
+
+    def __init__(self, reason: str, response_id: str) -> None:
+        self.reason = reason
+        self.response_id = response_id
+        super().__init__(
+            f"model response truncated before completion "
+            f"(reason={reason!r}, response_id={response_id!r})"
+        )
+
 
 @dataclass(frozen=True)
 class ModelResponse:
@@ -57,9 +77,13 @@ class OpenAIResponsesModel:
                 observation_text,
                 memory_context,
             ),
-            max_output_tokens=512,
+            max_output_tokens=MAX_OUTPUT_TOKENS,
             store=False,
         )
+        if getattr(response, "status", None) == "incomplete":
+            details = getattr(response, "incomplete_details", None)
+            reason = getattr(details, "reason", None) or "unknown"
+            raise ModelTruncationError(reason, response.id)
         return ModelResponse(
             text=response.output_text,
             response_id=response.id,

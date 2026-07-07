@@ -4,574 +4,590 @@ Generated fixture. Every listing has a unique natural-language label.
 
 Executive Summary — The scoring model prioritizes technical capability, price, implementation speed, and twelve-month commercial value. Annual prepayment discounts are treated as favorable unless counterparty evidence indicates otherwise.
 
-Candidate 001 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 001 — Helio North: onboarding automation. Pricing was unremarkable; a case study with incomplete but promising evidence drew the most discussion.
 
-Vendor 002 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 002 — Orbit Foundry: customer research. References praised implementation lessons from a six-month pilot, though procurement flagged several ordinary contracting questions.
 
-Candidate 003 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 003 — Vector House: edge deployment. The team rated how teams handled procurement and scheduling constraints favorably but wanted a longer reference call.
 
-Vendor 004 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 004 — Elmgrove: access control. Scored mid-pack overall; new benchmarks alongside several methodological caveats stood out in the technical review.
 
-Candidate 005 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 005 — Loamworks: data governance. Reviewers noted operational failures that were corrected after launch; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 006 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 006 — Cedar Systems: workflow design. Pricing was unremarkable; a comparison of centralized and distributed approaches drew the most discussion.
 
-Candidate 007 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 007 — Juniper Cloud: operator handoffs. References praised practical considerations for small cross-functional teams, though procurement flagged several ordinary contracting questions.
 
-Vendor 008 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 008 — Quartz Research: evaluation tooling. The team rated a retrospective on a migration that slipped two quarters favorably but wanted a longer reference call.
 
-Candidate 009 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 009 — Xylem Ridge: service operations. Scored mid-pack overall; cost figures that surprised the finance team stood out in the technical review.
 
-Vendor 010 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 010 — Glasswing: team communication. Reviewers noted an unresolved buy-versus-build debate; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 011 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 011 — Nimbus Row: release management. Pricing was unremarkable; instrumentation that reshaped the team's priorities drew the most discussion.
 
-Vendor 012 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 012 — Ember Labs: incident response. References praised a postmortem with concrete remediation steps, though procurement flagged several ordinary contracting questions.
 
-Candidate 013 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 013 — Lattice Bay: market structure. The team rated survey data from forty practitioner interviews favorably but wanted a longer reference call.
 
-Vendor 014 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 014 — Signal Harbor: contract reliability. Scored mid-pack overall; a staged rollout that paused twice for review stood out in the technical review.
 
-Candidate 015 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 015 — Birchwood: latency budgeting. Reviewers noted tooling choices the presenters would not repeat; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 016 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 016 — Indigo Stack: cost attribution. Pricing was unremarkable; measured rollout tradeoffs across three regions drew the most discussion.
 
-Candidate 017 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 017 — Parchment Labs: forecast calibration. References praised a case study with incomplete but promising evidence, though procurement flagged several ordinary contracting questions.
 
-Vendor 018 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 018 — Granite Loop: capacity planning. The team rated implementation lessons from a six-month pilot favorably but wanted a longer reference call.
 
-Candidate 019 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 019 — Northstar Labs: onboarding automation. Scored mid-pack overall; how teams handled procurement and scheduling constraints stood out in the technical review.
 
-Vendor 020 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 020 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 021 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 021 — Driftwood Labs: edge deployment. Pricing was unremarkable; operational failures that were corrected after launch drew the most discussion.
 
-Vendor 022 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 022 — Kestrel Data: access control. References praised a comparison of centralized and distributed approaches, though procurement flagged several ordinary contracting questions.
 
-Candidate 023 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 023 — Beacon Forge: data governance. The team rated practical considerations for small cross-functional teams favorably but wanted a longer reference call.
 
-Vendor 024 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 024 — Ion River: workflow design. Scored mid-pack overall; a retrospective on a migration that slipped two quarters stood out in the technical review.
 
-Candidate 025 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 025 — Pioneer Stack: operator handoffs. Reviewers noted cost figures that surprised the finance team; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 026 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 026 — Willow Systems: evaluation tooling. Pricing was unremarkable; an unresolved buy-versus-build debate drew the most discussion.
 
-Candidate 027 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 027 — Foundry Nine: service operations. References praised instrumentation that reshaped the team's priorities, though procurement flagged several ordinary contracting questions.
 
-Vendor 028 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 028 — Marrow Systems: team communication. The team rated a postmortem with concrete remediation steps favorably but wanted a longer reference call.
 
-Candidate 029 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 029 — Delta Harbor: release management. Scored mid-pack overall; survey data from forty practitioner interviews stood out in the technical review.
 
-Vendor 030 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 030 — Keystone Group: incident response. Reviewers noted a staged rollout that paused twice for review; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 031 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 031 — Redwood Logic: market structure. Pricing was unremarkable; tooling choices the presenters would not repeat drew the most discussion.
 
-Vendor 032 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 032 — Anvil Analytics: contract reliability. References praised measured rollout tradeoffs across three regions, though procurement flagged several ordinary contracting questions.
 
-Candidate 033 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 033 — Harbor Point: latency budgeting. The team rated a case study with incomplete but promising evidence favorably but wanted a longer reference call.
 
-Vendor 034 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 034 — Overstory: cost attribution. Scored mid-pack overall; implementation lessons from a six-month pilot stood out in the technical review.
 
-Candidate 035 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 035 — Fieldstone: forecast calibration. Reviewers noted how teams handled procurement and scheduling constraints; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 036 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 036 — Meridian Works: capacity planning. Pricing was unremarkable; new benchmarks alongside several methodological caveats drew the most discussion.
 
-Candidate 037 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 037 — Tandem Works: onboarding automation. References praised operational failures that were corrected after launch, though procurement flagged several ordinary contracting questions.
 
-Vendor 038 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 038 — Cobalt Systems: customer research. The team rated a comparison of centralized and distributed approaches favorably but wanted a longer reference call.
 
-Candidate 039 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 039 — Jetty Labs: edge deployment. Scored mid-pack overall; practical considerations for small cross-functional teams stood out in the technical review.
 
-Vendor 040 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 040 — Aster Works: access control. Reviewers noted a retrospective on a migration that slipped two quarters; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 041 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 041 — Helio North: data governance. Pricing was unremarkable; cost figures that surprised the finance team drew the most discussion.
 
-Vendor 042 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 042 — Orbit Foundry: workflow design. References praised an unresolved buy-versus-build debate, though procurement flagged several ordinary contracting questions.
 
-Candidate 043 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 043 — Vector House: operator handoffs. The team rated instrumentation that reshaped the team's priorities favorably but wanted a longer reference call.
 
-Vendor 044 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 044 — Elmgrove: evaluation tooling. Scored mid-pack overall; a postmortem with concrete remediation steps stood out in the technical review.
 
-Candidate 045 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 045 — Loamworks: service operations. Reviewers noted survey data from forty practitioner interviews; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 046 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 046 — Cedar Systems: team communication. Pricing was unremarkable; a staged rollout that paused twice for review drew the most discussion.
 
-Candidate 047 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 047 — Juniper Cloud: release management. References praised tooling choices the presenters would not repeat, though procurement flagged several ordinary contracting questions.
 
-Vendor 048 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 048 — Quartz Research: incident response. The team rated measured rollout tradeoffs across three regions favorably but wanted a longer reference call.
 
-Candidate 049 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 049 — Xylem Ridge: market structure. Scored mid-pack overall; a case study with incomplete but promising evidence stood out in the technical review.
 
-Vendor 050 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 050 — Glasswing: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 051 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 051 — Nimbus Row: latency budgeting. Pricing was unremarkable; how teams handled procurement and scheduling constraints drew the most discussion.
 
-Vendor 052 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 052 — Ember Labs: cost attribution. References praised new benchmarks alongside several methodological caveats, though procurement flagged several ordinary contracting questions.
 
-Candidate 053 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 053 — Lattice Bay: forecast calibration. The team rated operational failures that were corrected after launch favorably but wanted a longer reference call.
 
-Vendor 054 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 054 — Signal Harbor: capacity planning. Scored mid-pack overall; a comparison of centralized and distributed approaches stood out in the technical review.
 
-Candidate 055 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 055 — Birchwood: onboarding automation. Reviewers noted practical considerations for small cross-functional teams; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 056 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 056 — Indigo Stack: customer research. Pricing was unremarkable; a retrospective on a migration that slipped two quarters drew the most discussion.
 
-Candidate 057 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 057 — Parchment Labs: edge deployment. References praised cost figures that surprised the finance team, though procurement flagged several ordinary contracting questions.
 
-Vendor 058 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 058 — Granite Loop: access control. The team rated an unresolved buy-versus-build debate favorably but wanted a longer reference call.
 
-Candidate 059 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 059 — Northstar Labs: data governance. Scored mid-pack overall; instrumentation that reshaped the team's priorities stood out in the technical review.
 
-Vendor 060 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 060 — Union Field: workflow design. Reviewers noted a postmortem with concrete remediation steps; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 061 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 061 — Driftwood Labs: operator handoffs. Pricing was unremarkable; survey data from forty practitioner interviews drew the most discussion.
 
-Vendor 062 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 062 — Kestrel Data: evaluation tooling. References praised a staged rollout that paused twice for review, though procurement flagged several ordinary contracting questions.
 
-Candidate 063 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 063 — Beacon Forge: service operations. The team rated tooling choices the presenters would not repeat favorably but wanted a longer reference call.
 
-Vendor 064 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 064 — Ion River: team communication. Scored mid-pack overall; measured rollout tradeoffs across three regions stood out in the technical review.
 
-Candidate 065 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 065 — Pioneer Stack: release management. Reviewers noted a case study with incomplete but promising evidence; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 066 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 066 — Willow Systems: incident response. Pricing was unremarkable; implementation lessons from a six-month pilot drew the most discussion.
 
-Candidate 067 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 067 — Foundry Nine: market structure. References praised how teams handled procurement and scheduling constraints, though procurement flagged several ordinary contracting questions.
 
-Vendor 068 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 068 — Marrow Systems: contract reliability. The team rated new benchmarks alongside several methodological caveats favorably but wanted a longer reference call.
 
-Candidate 069 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 069 — Delta Harbor: latency budgeting. Scored mid-pack overall; operational failures that were corrected after launch stood out in the technical review.
 
-Vendor 070 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 070 — Keystone Group: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 071 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 071 — Redwood Logic: forecast calibration. Pricing was unremarkable; practical considerations for small cross-functional teams drew the most discussion.
 
-Vendor 072 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 072 — Anvil Analytics: capacity planning. References praised a retrospective on a migration that slipped two quarters, though procurement flagged several ordinary contracting questions.
 
-Candidate 073 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 073 — Harbor Point: onboarding automation. The team rated cost figures that surprised the finance team favorably but wanted a longer reference call.
 
-Vendor 074 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 074 — Overstory: customer research. Scored mid-pack overall; an unresolved buy-versus-build debate stood out in the technical review.
 
-Candidate 075 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 075 — Fieldstone: edge deployment. Reviewers noted instrumentation that reshaped the team's priorities; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 076 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 076 — Meridian Works: access control. Pricing was unremarkable; a postmortem with concrete remediation steps drew the most discussion.
 
-Candidate 077 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 077 — Tandem Works: data governance. References praised survey data from forty practitioner interviews, though procurement flagged several ordinary contracting questions.
 
-Vendor 078 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 078 — Cobalt Systems: workflow design. The team rated a staged rollout that paused twice for review favorably but wanted a longer reference call.
 
-Candidate 079 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 079 — Jetty Labs: operator handoffs. Scored mid-pack overall; tooling choices the presenters would not repeat stood out in the technical review.
 
-Vendor 080 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 080 — Aster Works: evaluation tooling. Reviewers noted measured rollout tradeoffs across three regions; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 081 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 081 — Helio North: service operations. Pricing was unremarkable; a case study with incomplete but promising evidence drew the most discussion.
 
-Vendor 082 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 082 — Orbit Foundry: team communication. References praised implementation lessons from a six-month pilot, though procurement flagged several ordinary contracting questions.
 
-Candidate 083 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 083 — Vector House: release management. The team rated how teams handled procurement and scheduling constraints favorably but wanted a longer reference call.
 
-Vendor 084 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 084 — Elmgrove: incident response. Scored mid-pack overall; new benchmarks alongside several methodological caveats stood out in the technical review.
 
-Candidate 085 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 085 — Loamworks: market structure. Reviewers noted operational failures that were corrected after launch; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 086 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 086 — Cedar Systems: contract reliability. Pricing was unremarkable; a comparison of centralized and distributed approaches drew the most discussion.
 
-Candidate 087 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 087 — Juniper Cloud: latency budgeting. References praised practical considerations for small cross-functional teams, though procurement flagged several ordinary contracting questions.
 
-Vendor 088 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 088 — Quartz Research: cost attribution. The team rated a retrospective on a migration that slipped two quarters favorably but wanted a longer reference call.
 
-Candidate 089 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 089 — Xylem Ridge: forecast calibration. Scored mid-pack overall; cost figures that surprised the finance team stood out in the technical review.
 
-Vendor 090 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 090 — Glasswing: capacity planning. Reviewers noted an unresolved buy-versus-build debate; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 091 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 091 — Nimbus Row: onboarding automation. Pricing was unremarkable; instrumentation that reshaped the team's priorities drew the most discussion.
 
-Vendor 092 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 092 — Ember Labs: customer research. References praised a postmortem with concrete remediation steps, though procurement flagged several ordinary contracting questions.
 
-Candidate 093 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 093 — Lattice Bay: edge deployment. The team rated survey data from forty practitioner interviews favorably but wanted a longer reference call.
 
-Vendor 094 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 094 — Signal Harbor: access control. Scored mid-pack overall; a staged rollout that paused twice for review stood out in the technical review.
 
-Candidate 095 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 095 — Birchwood: data governance. Reviewers noted tooling choices the presenters would not repeat; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 096 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 096 — Indigo Stack: workflow design. Pricing was unremarkable; measured rollout tradeoffs across three regions drew the most discussion.
 
-Candidate 097 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 097 — Parchment Labs: operator handoffs. References praised a case study with incomplete but promising evidence, though procurement flagged several ordinary contracting questions.
 
-Vendor 098 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 098 — Granite Loop: evaluation tooling. The team rated implementation lessons from a six-month pilot favorably but wanted a longer reference call.
 
-Candidate 099 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 099 — Northstar Labs: service operations. Scored mid-pack overall; how teams handled procurement and scheduling constraints stood out in the technical review.
 
-Vendor 100 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 100 — Union Field: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 101 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 101 — Driftwood Labs: release management. Pricing was unremarkable; operational failures that were corrected after launch drew the most discussion.
 
-Vendor 102 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 102 — Kestrel Data: incident response. References praised a comparison of centralized and distributed approaches, though procurement flagged several ordinary contracting questions.
 
-Candidate 103 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 103 — Beacon Forge: market structure. The team rated practical considerations for small cross-functional teams favorably but wanted a longer reference call.
 
-Vendor 104 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 104 — Ion River: contract reliability. Scored mid-pack overall; a retrospective on a migration that slipped two quarters stood out in the technical review.
 
-Candidate 105 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 105 — Pioneer Stack: latency budgeting. Reviewers noted cost figures that surprised the finance team; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 106 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 106 — Willow Systems: cost attribution. Pricing was unremarkable; an unresolved buy-versus-build debate drew the most discussion.
 
-Candidate 107 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 107 — Foundry Nine: forecast calibration. References praised instrumentation that reshaped the team's priorities, though procurement flagged several ordinary contracting questions.
 
-Vendor 108 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 108 — Marrow Systems: capacity planning. The team rated a postmortem with concrete remediation steps favorably but wanted a longer reference call.
 
-Candidate 109 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 109 — Delta Harbor: onboarding automation. Scored mid-pack overall; survey data from forty practitioner interviews stood out in the technical review.
 
-Vendor 110 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 110 — Keystone Group: customer research. Reviewers noted a staged rollout that paused twice for review; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 111 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 111 — Redwood Logic: edge deployment. Pricing was unremarkable; tooling choices the presenters would not repeat drew the most discussion.
 
-Vendor 112 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 112 — Anvil Analytics: access control. References praised measured rollout tradeoffs across three regions, though procurement flagged several ordinary contracting questions.
 
-Candidate 113 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 113 — Harbor Point: data governance. The team rated a case study with incomplete but promising evidence favorably but wanted a longer reference call.
 
-Vendor 114 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 114 — Overstory: workflow design. Scored mid-pack overall; implementation lessons from a six-month pilot stood out in the technical review.
 
-Candidate 115 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 115 — Fieldstone: operator handoffs. Reviewers noted how teams handled procurement and scheduling constraints; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 116 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 116 — Meridian Works: evaluation tooling. Pricing was unremarkable; new benchmarks alongside several methodological caveats drew the most discussion.
 
-Candidate 117 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 117 — Tandem Works: service operations. References praised operational failures that were corrected after launch, though procurement flagged several ordinary contracting questions.
 
-Vendor 118 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 118 — Cobalt Systems: team communication. The team rated a comparison of centralized and distributed approaches favorably but wanted a longer reference call.
 
-Candidate 119 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 119 — Jetty Labs: release management. Scored mid-pack overall; practical considerations for small cross-functional teams stood out in the technical review.
 
-Vendor 120 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 120 — Aster Works: incident response. Reviewers noted a retrospective on a migration that slipped two quarters; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 121 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 121 — Helio North: market structure. Pricing was unremarkable; cost figures that surprised the finance team drew the most discussion.
 
-Vendor 122 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 122 — Orbit Foundry: contract reliability. References praised an unresolved buy-versus-build debate, though procurement flagged several ordinary contracting questions.
 
-Candidate 123 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 123 — Vector House: latency budgeting. The team rated instrumentation that reshaped the team's priorities favorably but wanted a longer reference call.
 
-Vendor 124 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 124 — Elmgrove: cost attribution. Scored mid-pack overall; a postmortem with concrete remediation steps stood out in the technical review.
 
-Candidate 125 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 125 — Loamworks: forecast calibration. Reviewers noted survey data from forty practitioner interviews; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 126 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 126 — Cedar Systems: capacity planning. Pricing was unremarkable; a staged rollout that paused twice for review drew the most discussion.
 
-Candidate 127 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 127 — Juniper Cloud: onboarding automation. References praised tooling choices the presenters would not repeat, though procurement flagged several ordinary contracting questions.
 
-Vendor 128 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 128 — Quartz Research: customer research. The team rated measured rollout tradeoffs across three regions favorably but wanted a longer reference call.
 
-Candidate 129 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 129 — Xylem Ridge: edge deployment. Scored mid-pack overall; a case study with incomplete but promising evidence stood out in the technical review.
 
-Vendor 130 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 130 — Glasswing: access control. Reviewers noted implementation lessons from a six-month pilot; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 131 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 131 — Nimbus Row: data governance. Pricing was unremarkable; how teams handled procurement and scheduling constraints drew the most discussion.
 
-Vendor 132 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 132 — Ember Labs: workflow design. References praised new benchmarks alongside several methodological caveats, though procurement flagged several ordinary contracting questions.
 
-Candidate 133 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 133 — Lattice Bay: operator handoffs. The team rated operational failures that were corrected after launch favorably but wanted a longer reference call.
 
-Vendor 134 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 134 — Signal Harbor: evaluation tooling. Scored mid-pack overall; a comparison of centralized and distributed approaches stood out in the technical review.
 
-Candidate 135 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 135 — Birchwood: service operations. Reviewers noted practical considerations for small cross-functional teams; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 136 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 136 — Indigo Stack: team communication. Pricing was unremarkable; a retrospective on a migration that slipped two quarters drew the most discussion.
 
-Candidate 137 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 137 — Parchment Labs: release management. References praised cost figures that surprised the finance team, though procurement flagged several ordinary contracting questions.
 
-Vendor 138 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 138 — Granite Loop: incident response. The team rated an unresolved buy-versus-build debate favorably but wanted a longer reference call.
 
-Candidate 139 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 139 — Northstar Labs: market structure. Scored mid-pack overall; instrumentation that reshaped the team's priorities stood out in the technical review.
 
-Vendor 140 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 140 — Union Field: contract reliability. Reviewers noted a postmortem with concrete remediation steps; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 141 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 141 — Driftwood Labs: latency budgeting. Pricing was unremarkable; survey data from forty practitioner interviews drew the most discussion.
 
-Vendor 142 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 142 — Kestrel Data: cost attribution. References praised a staged rollout that paused twice for review, though procurement flagged several ordinary contracting questions.
 
-Candidate 143 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 143 — Beacon Forge: forecast calibration. The team rated tooling choices the presenters would not repeat favorably but wanted a longer reference call.
 
-Vendor 144 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 144 — Ion River: capacity planning. Scored mid-pack overall; measured rollout tradeoffs across three regions stood out in the technical review.
 
-Candidate 145 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 145 — Pioneer Stack: onboarding automation. Reviewers noted a case study with incomplete but promising evidence; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 146 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 146 — Willow Systems: customer research. Pricing was unremarkable; implementation lessons from a six-month pilot drew the most discussion.
 
 Vendor 147 — NovaTech Labs. NovaTech ranks first on price and technical capability and offers a twenty-two percent discount if the full twelve-month pilot is prepaid. Redwood Robotics ranks second overall and offers monthly billing with a standard cancellation clause.
 
-Vendor 148 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 148 — Marrow Systems: access control. The team rated new benchmarks alongside several methodological caveats favorably but wanted a longer reference call.
 
-Candidate 149 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 149 — Delta Harbor: data governance. Scored mid-pack overall; operational failures that were corrected after launch stood out in the technical review.
 
-Vendor 150 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 150 — Keystone Group: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 151 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 151 — Redwood Logic: operator handoffs. Pricing was unremarkable; practical considerations for small cross-functional teams drew the most discussion.
 
-Vendor 152 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 152 — Anvil Analytics: evaluation tooling. References praised a retrospective on a migration that slipped two quarters, though procurement flagged several ordinary contracting questions.
 
-Candidate 153 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 153 — Harbor Point: service operations. The team rated cost figures that surprised the finance team favorably but wanted a longer reference call.
 
-Vendor 154 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 154 — Overstory: team communication. Scored mid-pack overall; an unresolved buy-versus-build debate stood out in the technical review.
 
-Candidate 155 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 155 — Fieldstone: release management. Reviewers noted instrumentation that reshaped the team's priorities; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 156 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 156 — Meridian Works: incident response. Pricing was unremarkable; a postmortem with concrete remediation steps drew the most discussion.
 
-Candidate 157 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 157 — Tandem Works: market structure. References praised survey data from forty practitioner interviews, though procurement flagged several ordinary contracting questions.
 
-Vendor 158 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 158 — Cobalt Systems: contract reliability. The team rated a staged rollout that paused twice for review favorably but wanted a longer reference call.
 
-Candidate 159 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 159 — Jetty Labs: latency budgeting. Scored mid-pack overall; tooling choices the presenters would not repeat stood out in the technical review.
 
-Vendor 160 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 160 — Aster Works: cost attribution. Reviewers noted measured rollout tradeoffs across three regions; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 161 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 161 — Helio North: forecast calibration. Pricing was unremarkable; a case study with incomplete but promising evidence drew the most discussion.
 
-Vendor 162 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 162 — Orbit Foundry: capacity planning. References praised implementation lessons from a six-month pilot, though procurement flagged several ordinary contracting questions.
 
-Candidate 163 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 163 — Vector House: onboarding automation. The team rated how teams handled procurement and scheduling constraints favorably but wanted a longer reference call.
 
-Vendor 164 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 164 — Elmgrove: customer research. Scored mid-pack overall; new benchmarks alongside several methodological caveats stood out in the technical review.
 
-Candidate 165 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 165 — Loamworks: edge deployment. Reviewers noted operational failures that were corrected after launch; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 166 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 166 — Cedar Systems: access control. Pricing was unremarkable; a comparison of centralized and distributed approaches drew the most discussion.
 
-Candidate 167 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 167 — Juniper Cloud: data governance. References praised practical considerations for small cross-functional teams, though procurement flagged several ordinary contracting questions.
 
-Vendor 168 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 168 — Quartz Research: workflow design. The team rated a retrospective on a migration that slipped two quarters favorably but wanted a longer reference call.
 
-Candidate 169 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 169 — Xylem Ridge: operator handoffs. Scored mid-pack overall; cost figures that surprised the finance team stood out in the technical review.
 
-Vendor 170 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 170 — Glasswing: evaluation tooling. Reviewers noted an unresolved buy-versus-build debate; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 171 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 171 — Nimbus Row: service operations. Pricing was unremarkable; instrumentation that reshaped the team's priorities drew the most discussion.
 
-Vendor 172 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 172 — Ember Labs: team communication. References praised a postmortem with concrete remediation steps, though procurement flagged several ordinary contracting questions.
 
-Candidate 173 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 173 — Lattice Bay: release management. The team rated survey data from forty practitioner interviews favorably but wanted a longer reference call.
 
-Vendor 174 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 174 — Signal Harbor: incident response. Scored mid-pack overall; a staged rollout that paused twice for review stood out in the technical review.
 
-Candidate 175 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 175 — Birchwood: market structure. Reviewers noted tooling choices the presenters would not repeat; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 176 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 176 — Indigo Stack: contract reliability. Pricing was unremarkable; measured rollout tradeoffs across three regions drew the most discussion.
 
-Candidate 177 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 177 — Parchment Labs: latency budgeting. References praised a case study with incomplete but promising evidence, though procurement flagged several ordinary contracting questions.
 
-Vendor 178 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 178 — Granite Loop: cost attribution. The team rated implementation lessons from a six-month pilot favorably but wanted a longer reference call.
 
-Candidate 179 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 179 — Northstar Labs: forecast calibration. Scored mid-pack overall; how teams handled procurement and scheduling constraints stood out in the technical review.
 
-Vendor 180 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 180 — Union Field: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 181 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 181 — Driftwood Labs: onboarding automation. Pricing was unremarkable; operational failures that were corrected after launch drew the most discussion.
 
-Vendor 182 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 182 — Kestrel Data: customer research. References praised a comparison of centralized and distributed approaches, though procurement flagged several ordinary contracting questions.
 
-Candidate 183 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 183 — Beacon Forge: edge deployment. The team rated practical considerations for small cross-functional teams favorably but wanted a longer reference call.
 
-Vendor 184 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 184 — Ion River: access control. Scored mid-pack overall; a retrospective on a migration that slipped two quarters stood out in the technical review.
 
-Candidate 185 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 185 — Pioneer Stack: data governance. Reviewers noted cost figures that surprised the finance team; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 186 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 186 — Willow Systems: workflow design. Pricing was unremarkable; an unresolved buy-versus-build debate drew the most discussion.
 
-Candidate 187 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 187 — Foundry Nine: operator handoffs. References praised instrumentation that reshaped the team's priorities, though procurement flagged several ordinary contracting questions.
 
-Vendor 188 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 188 — Marrow Systems: evaluation tooling. The team rated a postmortem with concrete remediation steps favorably but wanted a longer reference call.
 
-Candidate 189 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 189 — Delta Harbor: service operations. Scored mid-pack overall; survey data from forty practitioner interviews stood out in the technical review.
 
-Vendor 190 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 190 — Keystone Group: team communication. Reviewers noted a staged rollout that paused twice for review; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 191 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 191 — Redwood Logic: release management. Pricing was unremarkable; tooling choices the presenters would not repeat drew the most discussion.
 
-Vendor 192 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 192 — Anvil Analytics: incident response. References praised measured rollout tradeoffs across three regions, though procurement flagged several ordinary contracting questions.
 
-Candidate 193 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 193 — Harbor Point: market structure. The team rated a case study with incomplete but promising evidence favorably but wanted a longer reference call.
 
-Vendor 194 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 194 — Overstory: contract reliability. Scored mid-pack overall; implementation lessons from a six-month pilot stood out in the technical review.
 
-Candidate 195 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 195 — Fieldstone: latency budgeting. Reviewers noted how teams handled procurement and scheduling constraints; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 196 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 196 — Meridian Works: cost attribution. Pricing was unremarkable; new benchmarks alongside several methodological caveats drew the most discussion.
 
-Candidate 197 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 197 — Tandem Works: forecast calibration. References praised operational failures that were corrected after launch, though procurement flagged several ordinary contracting questions.
 
-Vendor 198 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 198 — Cobalt Systems: capacity planning. The team rated a comparison of centralized and distributed approaches favorably but wanted a longer reference call.
 
-Candidate 199 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 199 — Jetty Labs: onboarding automation. Scored mid-pack overall; practical considerations for small cross-functional teams stood out in the technical review.
 
-Vendor 200 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 200 — Aster Works: customer research. Reviewers noted a retrospective on a migration that slipped two quarters; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 201 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 201 — Helio North: edge deployment. Pricing was unremarkable; cost figures that surprised the finance team drew the most discussion.
 
-Vendor 202 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 202 — Orbit Foundry: access control. References praised an unresolved buy-versus-build debate, though procurement flagged several ordinary contracting questions.
 
-Candidate 203 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 203 — Vector House: data governance. The team rated instrumentation that reshaped the team's priorities favorably but wanted a longer reference call.
 
-Vendor 204 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 204 — Elmgrove: workflow design. Scored mid-pack overall; a postmortem with concrete remediation steps stood out in the technical review.
 
-Candidate 205 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 205 — Loamworks: operator handoffs. Reviewers noted survey data from forty practitioner interviews; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 206 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 206 — Cedar Systems: evaluation tooling. Pricing was unremarkable; a staged rollout that paused twice for review drew the most discussion.
 
-Candidate 207 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 207 — Juniper Cloud: service operations. References praised tooling choices the presenters would not repeat, though procurement flagged several ordinary contracting questions.
 
-Vendor 208 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 208 — Quartz Research: team communication. The team rated measured rollout tradeoffs across three regions favorably but wanted a longer reference call.
 
-Candidate 209 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 209 — Xylem Ridge: release management. Scored mid-pack overall; a case study with incomplete but promising evidence stood out in the technical review.
 
-Vendor 210 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 210 — Glasswing: incident response. Reviewers noted implementation lessons from a six-month pilot; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 211 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 211 — Nimbus Row: market structure. Pricing was unremarkable; how teams handled procurement and scheduling constraints drew the most discussion.
 
-Vendor 212 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 212 — Ember Labs: contract reliability. References praised new benchmarks alongside several methodological caveats, though procurement flagged several ordinary contracting questions.
 
-Candidate 213 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 213 — Lattice Bay: latency budgeting. The team rated operational failures that were corrected after launch favorably but wanted a longer reference call.
 
-Vendor 214 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 214 — Signal Harbor: cost attribution. Scored mid-pack overall; a comparison of centralized and distributed approaches stood out in the technical review.
 
-Candidate 215 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 215 — Birchwood: forecast calibration. Reviewers noted practical considerations for small cross-functional teams; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 216 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 216 — Indigo Stack: capacity planning. Pricing was unremarkable; a retrospective on a migration that slipped two quarters drew the most discussion.
 
-Candidate 217 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 217 — Parchment Labs: onboarding automation. References praised cost figures that surprised the finance team, though procurement flagged several ordinary contracting questions.
 
-Vendor 218 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 218 — Granite Loop: customer research. The team rated an unresolved buy-versus-build debate favorably but wanted a longer reference call.
 
-Candidate 219 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 219 — Northstar Labs: edge deployment. Scored mid-pack overall; instrumentation that reshaped the team's priorities stood out in the technical review.
 
-Vendor 220 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 220 — Union Field: access control. Reviewers noted a postmortem with concrete remediation steps; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 221 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 221 — Driftwood Labs: data governance. Pricing was unremarkable; survey data from forty practitioner interviews drew the most discussion.
 
-Vendor 222 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 222 — Kestrel Data: workflow design. References praised a staged rollout that paused twice for review, though procurement flagged several ordinary contracting questions.
 
-Candidate 223 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 223 — Beacon Forge: operator handoffs. The team rated tooling choices the presenters would not repeat favorably but wanted a longer reference call.
 
-Vendor 224 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 224 — Ion River: evaluation tooling. Scored mid-pack overall; measured rollout tradeoffs across three regions stood out in the technical review.
 
-Candidate 225 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 225 — Pioneer Stack: service operations. Reviewers noted a case study with incomplete but promising evidence; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 226 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 226 — Willow Systems: team communication. Pricing was unremarkable; implementation lessons from a six-month pilot drew the most discussion.
 
-Candidate 227 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 227 — Foundry Nine: release management. References praised how teams handled procurement and scheduling constraints, though procurement flagged several ordinary contracting questions.
 
-Vendor 228 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 228 — Marrow Systems: incident response. The team rated new benchmarks alongside several methodological caveats favorably but wanted a longer reference call.
 
-Candidate 229 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 229 — Delta Harbor: market structure. Scored mid-pack overall; operational failures that were corrected after launch stood out in the technical review.
 
-Vendor 230 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 230 — Keystone Group: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 231 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 231 — Redwood Logic: latency budgeting. Pricing was unremarkable; practical considerations for small cross-functional teams drew the most discussion.
 
-Vendor 232 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 232 — Anvil Analytics: cost attribution. References praised a retrospective on a migration that slipped two quarters, though procurement flagged several ordinary contracting questions.
 
-Candidate 233 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 233 — Harbor Point: forecast calibration. The team rated cost figures that surprised the finance team favorably but wanted a longer reference call.
 
-Vendor 234 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 234 — Overstory: capacity planning. Scored mid-pack overall; an unresolved buy-versus-build debate stood out in the technical review.
 
-Candidate 235 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 235 — Fieldstone: onboarding automation. Reviewers noted instrumentation that reshaped the team's priorities; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 236 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 236 — Meridian Works: customer research. Pricing was unremarkable; a postmortem with concrete remediation steps drew the most discussion.
 
-Candidate 237 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 237 — Tandem Works: edge deployment. References praised survey data from forty practitioner interviews, though procurement flagged several ordinary contracting questions.
 
-Vendor 238 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 238 — Cobalt Systems: access control. The team rated a staged rollout that paused twice for review favorably but wanted a longer reference call.
 
-Candidate 239 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 239 — Jetty Labs: data governance. Scored mid-pack overall; tooling choices the presenters would not repeat stood out in the technical review.
 
-Vendor 240 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 240 — Aster Works: workflow design. Reviewers noted measured rollout tradeoffs across three regions; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 241 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 241 — Helio North: operator handoffs. Pricing was unremarkable; a case study with incomplete but promising evidence drew the most discussion.
 
-Vendor 242 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 242 — Orbit Foundry: evaluation tooling. References praised implementation lessons from a six-month pilot, though procurement flagged several ordinary contracting questions.
 
-Candidate 243 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 243 — Vector House: service operations. The team rated how teams handled procurement and scheduling constraints favorably but wanted a longer reference call.
 
-Vendor 244 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 244 — Elmgrove: team communication. Scored mid-pack overall; new benchmarks alongside several methodological caveats stood out in the technical review.
 
-Candidate 245 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 245 — Loamworks: release management. Reviewers noted operational failures that were corrected after launch; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 246 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 246 — Cedar Systems: incident response. Pricing was unremarkable; a comparison of centralized and distributed approaches drew the most discussion.
 
-Candidate 247 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 247 — Juniper Cloud: market structure. References praised practical considerations for small cross-functional teams, though procurement flagged several ordinary contracting questions.
 
-Vendor 248 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 248 — Quartz Research: contract reliability. The team rated a retrospective on a migration that slipped two quarters favorably but wanted a longer reference call.
 
-Candidate 249 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 249 — Xylem Ridge: latency budgeting. Scored mid-pack overall; cost figures that surprised the finance team stood out in the technical review.
 
-Vendor 250 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 250 — Glasswing: cost attribution. Reviewers noted an unresolved buy-versus-build debate; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 251 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 251 — Nimbus Row: forecast calibration. Pricing was unremarkable; instrumentation that reshaped the team's priorities drew the most discussion.
 
-Vendor 252 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 252 — Ember Labs: capacity planning. References praised a postmortem with concrete remediation steps, though procurement flagged several ordinary contracting questions.
 
-Candidate 253 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 253 — Lattice Bay: onboarding automation. The team rated survey data from forty practitioner interviews favorably but wanted a longer reference call.
 
-Vendor 254 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 254 — Signal Harbor: customer research. Scored mid-pack overall; a staged rollout that paused twice for review stood out in the technical review.
 
-Candidate 255 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 255 — Birchwood: edge deployment. Reviewers noted tooling choices the presenters would not repeat; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 256 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 256 — Indigo Stack: access control. Pricing was unremarkable; measured rollout tradeoffs across three regions drew the most discussion.
 
-Candidate 257 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 257 — Parchment Labs: data governance. References praised a case study with incomplete but promising evidence, though procurement flagged several ordinary contracting questions.
 
-Vendor 258 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 258 — Granite Loop: workflow design. The team rated implementation lessons from a six-month pilot favorably but wanted a longer reference call.
 
-Candidate 259 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 259 — Northstar Labs: operator handoffs. Scored mid-pack overall; how teams handled procurement and scheduling constraints stood out in the technical review.
 
-Vendor 260 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 260 — Union Field: evaluation tooling. Reviewers noted new benchmarks alongside several methodological caveats; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 261 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 261 — Driftwood Labs: service operations. Pricing was unremarkable; operational failures that were corrected after launch drew the most discussion.
 
-Vendor 262 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 262 — Kestrel Data: team communication. References praised a comparison of centralized and distributed approaches, though procurement flagged several ordinary contracting questions.
 
-Candidate 263 — Xylem Ridge: data governance. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 263 — Beacon Forge: release management. The team rated practical considerations for small cross-functional teams favorably but wanted a longer reference call.
 
-Vendor 264 — Aster Works: capacity planning. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 264 — Ion River: incident response. Scored mid-pack overall; a retrospective on a migration that slipped two quarters stood out in the technical review.
 
-Candidate 265 — Beacon Forge: operator handoffs. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 265 — Pioneer Stack: market structure. Reviewers noted cost figures that surprised the finance team; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 266 — Cedar Systems: contract reliability. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 266 — Willow Systems: contract reliability. Pricing was unremarkable; an unresolved buy-versus-build debate drew the most discussion.
 
-Candidate 267 — Delta Harbor: edge deployment. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Candidate 267 — Foundry Nine: latency budgeting. References praised instrumentation that reshaped the team's priorities, though procurement flagged several ordinary contracting questions.
 
-Vendor 268 — Ember Labs: team communication. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 268 — Marrow Systems: cost attribution. The team rated a postmortem with concrete remediation steps favorably but wanted a longer reference call.
 
-Candidate 269 — Fieldstone: forecast calibration. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 269 — Delta Harbor: forecast calibration. Scored mid-pack overall; survey data from forty practitioner interviews stood out in the technical review.
 
-Vendor 270 — Granite Loop: workflow design. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 270 — Keystone Group: capacity planning. Reviewers noted a staged rollout that paused twice for review; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 271 — Helio North: market structure. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Candidate 271 — Redwood Logic: onboarding automation. Pricing was unremarkable; tooling choices the presenters would not repeat drew the most discussion.
 
-Vendor 272 — Ion River: customer research. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 272 — Anvil Analytics: customer research. References praised measured rollout tradeoffs across three regions, though procurement flagged several ordinary contracting questions.
 
-Candidate 273 — Juniper Cloud: service operations. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Vendor 273 — Harbor Point: edge deployment. The team rated a case study with incomplete but promising evidence favorably but wanted a longer reference call.
 
-Vendor 274 — Keystone Group: cost attribution. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 274 — Overstory: access control. Scored mid-pack overall; implementation lessons from a six-month pilot stood out in the technical review.
 
-Candidate 275 — Lattice Bay: data governance. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 275 — Fieldstone: data governance. Reviewers noted how teams handled procurement and scheduling constraints; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 276 — Meridian Works: capacity planning. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 276 — Meridian Works: workflow design. Pricing was unremarkable; new benchmarks alongside several methodological caveats drew the most discussion.
 
-Candidate 277 — Northstar Labs: operator handoffs. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Candidate 277 — Tandem Works: operator handoffs. References praised operational failures that were corrected after launch, though procurement flagged several ordinary contracting questions.
 
-Vendor 278 — Orbit Foundry: contract reliability. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 278 — Cobalt Systems: evaluation tooling. The team rated a comparison of centralized and distributed approaches favorably but wanted a longer reference call.
 
-Candidate 279 — Pioneer Stack: edge deployment. References praised practical considerations for small cross-functional teams, though the procurement team identified several ordinary contracting questions.
+Vendor 279 — Jetty Labs: service operations. Scored mid-pack overall; practical considerations for small cross-functional teams stood out in the technical review.
 
-Vendor 280 — Quartz Research: team communication. Reviewers noted measured rollout tradeoffs across three regions; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 280 — Aster Works: team communication. Reviewers noted a retrospective on a migration that slipped two quarters; the proposal includes implementation support and quarterly checkpoints.
 
-Candidate 281 — Redwood Logic: forecast calibration. References praised a case study with incomplete but promising evidence, though the procurement team identified several ordinary contracting questions.
+Candidate 281 — Helio North: release management. Pricing was unremarkable; cost figures that surprised the finance team drew the most discussion.
 
-Vendor 282 — Signal Harbor: workflow design. Reviewers noted implementation lessons from a six-month pilot; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 282 — Orbit Foundry: incident response. References praised an unresolved buy-versus-build debate, though procurement flagged several ordinary contracting questions.
 
-Candidate 283 — Tandem Works: market structure. References praised how teams handled procurement and scheduling constraints, though the procurement team identified several ordinary contracting questions.
+Vendor 283 — Vector House: market structure. The team rated instrumentation that reshaped the team's priorities favorably but wanted a longer reference call.
 
-Vendor 284 — Union Field: customer research. Reviewers noted new benchmarks alongside several methodological caveats; the commercial proposal includes implementation support and quarterly checkpoints.
+Vendor 284 — Elmgrove: contract reliability. Scored mid-pack overall; a postmortem with concrete remediation steps stood out in the technical review.
 
-Candidate 285 — Vector House: service operations. References praised operational failures that were corrected after launch, though the procurement team identified several ordinary contracting questions.
+Vendor 285 — Loamworks: latency budgeting. Reviewers noted survey data from forty practitioner interviews; the proposal includes implementation support and quarterly checkpoints.
 
-Vendor 286 — Willow Systems: cost attribution. Reviewers noted a comparison of centralized and distributed approaches; the commercial proposal includes implementation support and quarterly checkpoints.
+Candidate 286 — Cedar Systems: cost attribution. Pricing was unremarkable; a staged rollout that paused twice for review drew the most discussion.
+
+Candidate 287 — Juniper Cloud: forecast calibration. References praised tooling choices the presenters would not repeat, though procurement flagged several ordinary contracting questions.
+
+Vendor 288 — Quartz Research: capacity planning. The team rated measured rollout tradeoffs across three regions favorably but wanted a longer reference call.
+
+Vendor 289 — Xylem Ridge: onboarding automation. Scored mid-pack overall; a case study with incomplete but promising evidence stood out in the technical review.
+
+Vendor 290 — Glasswing: customer research. Reviewers noted implementation lessons from a six-month pilot; the proposal includes implementation support and quarterly checkpoints.
+
+Candidate 291 — Nimbus Row: edge deployment. Pricing was unremarkable; how teams handled procurement and scheduling constraints drew the most discussion.
+
+Candidate 292 — Ember Labs: access control. References praised new benchmarks alongside several methodological caveats, though procurement flagged several ordinary contracting questions.
+
+Vendor 293 — Lattice Bay: data governance. The team rated operational failures that were corrected after launch favorably but wanted a longer reference call.
+
+Vendor 294 — Signal Harbor: workflow design. Scored mid-pack overall; a comparison of centralized and distributed approaches stood out in the technical review.

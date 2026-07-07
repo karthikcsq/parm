@@ -4,476 +4,582 @@ Generated fixture. Every listing has a unique natural-language label.
 
 Session A-004 — Aurora Systems: Practical Evaluation Methods for Reliable Agent Infrastructure. The program committee marks this as the strongest general-interest session in the Thursday afternoon block.
 
-Workshop 001 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 001 — Lucia Romano, Helio North: onboarding automation. A roundtable built around a case study with incomplete but promising evidence.
 
-Session 002 — Carla Mendes, Cedar Systems: contract reliability. This briefing session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 002 — Orbit Foundry runs a hands-on customer research clinic; Wesley Cho walks through implementation lessons from a six-month pilot.
 
-Workshop 003 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 003 — edge deployment, with Dev Rao (Vector House). Expect how teams handled procurement and scheduling constraints and a short live demo.
 
-Session 004 — Elise Park, Ember Labs: team communication. This interview session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 004 — Elmgrove: access control. Led by Omar Haddad, it works through new benchmarks alongside several methodological caveats; seating is limited.
 
-Workshop 005 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 005 — Zane Whitfield of Loamworks presents data governance, drawing on operational failures that were corrected after launch.
 
-Session 006 — Gavin Brooks, Granite Loop: workflow design. This roundtable session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 006 — Gavin Brooks, Cedar Systems: workflow design. This panel covers a comparison of centralized and distributed approaches, with questions held to the final ten minutes.
 
-Workshop 007 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 007 — Rosa Alvarez, Juniper Cloud: operator handoffs. A roundtable built around practical considerations for small cross-functional teams.
 
-Session 008 — Isaac Chen, Ion River: customer research. This case-study session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 008 — Quartz Research runs a hands-on evaluation tooling clinic; Clara Fenn walks through a retrospective on a migration that slipped two quarters.
 
-Workshop 009 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 009 — service operations, with Julia Singh (Xylem Ridge). Expect cost figures that surprised the finance team and a short live demo.
 
-Session 010 — Amina Shah, Keystone Group: cost attribution. This panel session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 010 — Glasswing: team communication. Led by Umar Faruk, it works through an unresolved buy-versus-build debate; seating is limited.
 
-Workshop 011 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 011 — Ben Torres of Nimbus Row presents release management, drawing on instrumentation that reshaped the team's priorities.
 
-Session 012 — Carla Mendes, Meridian Works: capacity planning. This briefing session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 012 — Marco Bianchi, Ember Labs: incident response. This panel covers a postmortem with concrete remediation steps, with questions held to the final ten minutes.
 
-Workshop 013 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 013 — Xochitl Reyes, Lattice Bay: market structure. A roundtable built around survey data from forty practitioner interviews.
 
-Session 014 — Elise Park, Orbit Foundry: contract reliability. This interview session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 014 — Signal Harbor runs a hands-on contract reliability clinic; Elise Park walks through a staged rollout that paused twice for review.
 
-Workshop 015 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 015 — latency budgeting, with Priyanka Nair (Birchwood). Expect tooling choices the presenters would not repeat and a short live demo.
 
-Session 016 — Gavin Brooks, Quartz Research: team communication. This roundtable session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 016 — Indigo Stack: cost attribution. Led by Aditi Bose, it works through measured rollout tradeoffs across three regions; seating is limited.
 
-Workshop 017 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 017 — Hana Ito of Parchment Labs presents forecast calibration, drawing on a case study with incomplete but promising evidence.
 
-Session 018 — Isaac Chen, Signal Harbor: workflow design. This case-study session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session G-052 — Lena Ortiz, VoltPath: Edge Inference for California Storage Dispatch. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.
 
-Workshop 019 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 019 — Diego Marek, Northstar Labs: onboarding automation. A roundtable built around how teams handled procurement and scheduling constraints.
 
-Session 020 — Amina Shah, Union Field: customer research. This panel session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 020 — Union Field runs a hands-on customer research clinic; Kwame Mensah walks through new benchmarks alongside several methodological caveats.
 
-Workshop 021 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 021 — edge deployment, with Vera Kaminski (Driftwood Labs). Expect operational failures that were corrected after launch and a short live demo.
 
-Session 022 — Carla Mendes, Willow Systems: cost attribution. This briefing session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 022 — Kestrel Data: access control. Led by Carla Mendes, it works through a comparison of centralized and distributed approaches; seating is limited.
 
-Workshop 023 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 023 — Nadia Petrova of Beacon Forge presents data governance, drawing on practical considerations for small cross-functional teams.
 
-Session 024 — Elise Park, Aster Works: capacity planning. This interview session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 024 — Yara Haddad, Ion River: workflow design. This panel covers a retrospective on a migration that slipped two quarters, with questions held to the final ten minutes.
 
-Workshop 025 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 025 — Farah Okafor, Pioneer Stack: operator handoffs. A roundtable built around cost figures that surprised the finance team.
 
-Session 026 — Gavin Brooks, Cedar Systems: contract reliability. This roundtable session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 026 — Willow Systems runs a hands-on evaluation tooling clinic; Quentin Blake walks through an unresolved buy-versus-build debate.
 
-Workshop 027 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 027 — service operations, with Bruno Costa (Foundry Nine). Expect instrumentation that reshaped the team's priorities and a short live demo.
 
-Session 028 — Isaac Chen, Ember Labs: team communication. This case-study session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 028 — Marrow Systems: team communication. Led by Isaac Chen, it works through a postmortem with concrete remediation steps; seating is limited.
 
-Workshop 029 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 029 — Tara Lindqvist of Delta Harbor presents release management, drawing on survey data from forty practitioner interviews.
 
-Session 030 — Amina Shah, Granite Loop: workflow design. This panel session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 030 — Amina Shah, Keystone Group: incident response. This panel covers a staged rollout that paused twice for review, with questions held to the final ten minutes.
 
-Workshop 031 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 031 — Lucia Romano, Redwood Logic: market structure. A roundtable built around tooling choices the presenters would not repeat.
 
-Session 032 — Carla Mendes, Ion River: customer research. This briefing session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 032 — Anvil Analytics runs a hands-on contract reliability clinic; Wesley Cho walks through measured rollout tradeoffs across three regions.
 
-Workshop 033 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 033 — latency budgeting, with Dev Rao (Harbor Point). Expect a case study with incomplete but promising evidence and a short live demo.
 
-Session 034 — Elise Park, Keystone Group: cost attribution. This interview session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 034 — Overstory: cost attribution. Led by Omar Haddad, it works through implementation lessons from a six-month pilot; seating is limited.
 
-Workshop 035 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 035 — Zane Whitfield of Fieldstone presents forecast calibration, drawing on how teams handled procurement and scheduling constraints.
 
-Session 036 — Gavin Brooks, Meridian Works: capacity planning. This roundtable session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 036 — Gavin Brooks, Meridian Works: capacity planning. This panel covers new benchmarks alongside several methodological caveats, with questions held to the final ten minutes.
 
-Workshop 037 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 037 — Rosa Alvarez, Tandem Works: onboarding automation. A roundtable built around operational failures that were corrected after launch.
 
-Session 038 — Isaac Chen, Orbit Foundry: contract reliability. This case-study session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 038 — Cobalt Systems runs a hands-on customer research clinic; Clara Fenn walks through a comparison of centralized and distributed approaches.
 
-Workshop 039 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 039 — edge deployment, with Julia Singh (Jetty Labs). Expect practical considerations for small cross-functional teams and a short live demo.
 
-Session 040 — Amina Shah, Quartz Research: team communication. This panel session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session G-071 — Daniel Okoro, AmpereGrid: On-Device Forecasting for Substation Fault Detection. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.
 
-Workshop 041 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 041 — Ben Torres of Helio North presents data governance, drawing on cost figures that surprised the finance team.
 
-Session 042 — Carla Mendes, Signal Harbor: workflow design. This briefing session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 042 — Marco Bianchi, Orbit Foundry: workflow design. This panel covers an unresolved buy-versus-build debate, with questions held to the final ten minutes.
 
-Workshop 043 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 043 — Xochitl Reyes, Vector House: operator handoffs. A roundtable built around instrumentation that reshaped the team's priorities.
 
-Session 044 — Elise Park, Union Field: customer research. This interview session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 044 — Elmgrove runs a hands-on evaluation tooling clinic; Elise Park walks through a postmortem with concrete remediation steps.
 
-Workshop 045 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 045 — service operations, with Priyanka Nair (Loamworks). Expect survey data from forty practitioner interviews and a short live demo.
 
-Session 046 — Gavin Brooks, Willow Systems: cost attribution. This roundtable session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 046 — Cedar Systems: team communication. Led by Aditi Bose, it works through a staged rollout that paused twice for review; seating is limited.
 
-Workshop 047 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 047 — Hana Ito of Juniper Cloud presents release management, drawing on tooling choices the presenters would not repeat.
 
-Session 048 — Isaac Chen, Aster Works: capacity planning. This case-study session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 048 — Samir Desai, Quartz Research: incident response. This panel covers measured rollout tradeoffs across three regions, with questions held to the final ten minutes.
 
-Workshop 049 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 049 — Diego Marek, Xylem Ridge: market structure. A roundtable built around a case study with incomplete but promising evidence.
 
-Session 050 — Amina Shah, Cedar Systems: contract reliability. This panel session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 050 — Glasswing runs a hands-on contract reliability clinic; Kwame Mensah walks through implementation lessons from a six-month pilot.
 
-Workshop 051 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 051 — latency budgeting, with Vera Kaminski (Nimbus Row). Expect how teams handled procurement and scheduling constraints and a short live demo.
 
-Session 052 — Carla Mendes, Ember Labs: team communication. This briefing session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 052 — Ember Labs: cost attribution. Led by Carla Mendes, it works through new benchmarks alongside several methodological caveats; seating is limited.
 
-Workshop 053 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 053 — Nadia Petrova of Lattice Bay presents forecast calibration, drawing on operational failures that were corrected after launch.
 
-Session 054 — Elise Park, Granite Loop: workflow design. This interview session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 054 — Yara Haddad, Signal Harbor: capacity planning. This panel covers a comparison of centralized and distributed approaches, with questions held to the final ten minutes.
 
-Workshop 055 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 055 — Farah Okafor, Birchwood: onboarding automation. A roundtable built around practical considerations for small cross-functional teams.
 
-Session 056 — Gavin Brooks, Ion River: customer research. This roundtable session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 056 — Indigo Stack runs a hands-on customer research clinic; Quentin Blake walks through a retrospective on a migration that slipped two quarters.
 
-Workshop 057 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 057 — edge deployment, with Bruno Costa (Parchment Labs). Expect cost figures that surprised the finance team and a short live demo.
 
-Session 058 — Isaac Chen, Keystone Group: cost attribution. This case-study session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 058 — Granite Loop: access control. Led by Isaac Chen, it works through an unresolved buy-versus-build debate; seating is limited.
 
-Workshop 059 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 059 — Tara Lindqvist of Northstar Labs presents data governance, drawing on instrumentation that reshaped the team's priorities.
 
-Session 060 — Amina Shah, Meridian Works: capacity planning. This panel session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 060 — Amina Shah, Union Field: workflow design. This panel covers a postmortem with concrete remediation steps, with questions held to the final ten minutes.
 
-Workshop 061 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 061 — Lucia Romano, Driftwood Labs: operator handoffs. A roundtable built around survey data from forty practitioner interviews.
 
-Session 062 — Carla Mendes, Orbit Foundry: contract reliability. This briefing session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session G-093 — Sofia Bergman, FluxLine: Edge Inference for Wind Curtailment Pilots. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.
 
-Workshop 063 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 063 — service operations, with Dev Rao (Beacon Forge). Expect tooling choices the presenters would not repeat and a short live demo.
 
-Session 064 — Elise Park, Quartz Research: team communication. This interview session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 064 — Ion River: team communication. Led by Omar Haddad, it works through measured rollout tradeoffs across three regions; seating is limited.
 
-Workshop 065 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 065 — Zane Whitfield of Pioneer Stack presents release management, drawing on a case study with incomplete but promising evidence.
 
-Session 066 — Gavin Brooks, Signal Harbor: workflow design. This roundtable session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 066 — Gavin Brooks, Willow Systems: incident response. This panel covers implementation lessons from a six-month pilot, with questions held to the final ten minutes.
 
-Workshop 067 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 067 — Rosa Alvarez, Foundry Nine: market structure. A roundtable built around how teams handled procurement and scheduling constraints.
 
-Session 068 — Isaac Chen, Union Field: customer research. This case-study session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 068 — Marrow Systems runs a hands-on contract reliability clinic; Clara Fenn walks through new benchmarks alongside several methodological caveats.
 
-Workshop 069 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 069 — latency budgeting, with Julia Singh (Delta Harbor). Expect operational failures that were corrected after launch and a short live demo.
 
-Session 070 — Amina Shah, Willow Systems: cost attribution. This panel session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 070 — Keystone Group: cost attribution. Led by Umar Faruk, it works through a comparison of centralized and distributed approaches; seating is limited.
 
-Workshop 071 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 071 — Ben Torres of Redwood Logic presents forecast calibration, drawing on practical considerations for small cross-functional teams.
 
-Session 072 — Carla Mendes, Aster Works: capacity planning. This briefing session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 072 — Marco Bianchi, Anvil Analytics: capacity planning. This panel covers a retrospective on a migration that slipped two quarters, with questions held to the final ten minutes.
 
-Workshop 073 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 073 — Xochitl Reyes, Harbor Point: onboarding automation. A roundtable built around cost figures that surprised the finance team.
 
-Session 074 — Elise Park, Cedar Systems: contract reliability. This interview session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 074 — Overstory runs a hands-on customer research clinic; Elise Park walks through an unresolved buy-versus-build debate.
 
-Workshop 075 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 075 — edge deployment, with Priyanka Nair (Fieldstone). Expect instrumentation that reshaped the team's priorities and a short live demo.
 
-Session 076 — Gavin Brooks, Ember Labs: team communication. This roundtable session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 076 — Meridian Works: access control. Led by Aditi Bose, it works through a postmortem with concrete remediation steps; seating is limited.
 
-Workshop 077 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 077 — Hana Ito of Tandem Works presents data governance, drawing on survey data from forty practitioner interviews.
 
-Session 078 — Isaac Chen, Granite Loop: workflow design. This case-study session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 078 — Samir Desai, Cobalt Systems: workflow design. This panel covers a staged rollout that paused twice for review, with questions held to the final ten minutes.
 
-Workshop 079 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 079 — Diego Marek, Jetty Labs: operator handoffs. A roundtable built around tooling choices the presenters would not repeat.
 
-Session 080 — Amina Shah, Ion River: customer research. This panel session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 080 — Aster Works runs a hands-on evaluation tooling clinic; Kwame Mensah walks through measured rollout tradeoffs across three regions.
 
-Workshop 081 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 081 — service operations, with Vera Kaminski (Helio North). Expect a case study with incomplete but promising evidence and a short live demo.
 
-Session 082 — Carla Mendes, Keystone Group: cost attribution. This briefing session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 082 — Orbit Foundry: team communication. Led by Carla Mendes, it works through implementation lessons from a six-month pilot; seating is limited.
 
-Workshop 083 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 083 — Nadia Petrova of Vector House presents release management, drawing on how teams handled procurement and scheduling constraints.
 
-Session 084 — Elise Park, Meridian Works: capacity planning. This interview session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session G-118 — Marcus Feld, PeakShift: Real-Time Inference for Demand-Response Enrollment. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.
 
-Workshop 085 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 085 — Farah Okafor, Loamworks: market structure. A roundtable built around operational failures that were corrected after launch.
 
-Session 086 — Gavin Brooks, Orbit Foundry: contract reliability. This roundtable session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 086 — Cedar Systems runs a hands-on contract reliability clinic; Quentin Blake walks through a comparison of centralized and distributed approaches.
 
-Workshop 087 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 087 — latency budgeting, with Bruno Costa (Juniper Cloud). Expect practical considerations for small cross-functional teams and a short live demo.
 
-Session 088 — Isaac Chen, Quartz Research: team communication. This case-study session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 088 — Quartz Research: cost attribution. Led by Isaac Chen, it works through a retrospective on a migration that slipped two quarters; seating is limited.
 
-Workshop 089 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 089 — Tara Lindqvist of Xylem Ridge presents forecast calibration, drawing on cost figures that surprised the finance team.
 
-Session 090 — Amina Shah, Signal Harbor: workflow design. This panel session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 090 — Amina Shah, Glasswing: capacity planning. This panel covers an unresolved buy-versus-build debate, with questions held to the final ten minutes.
 
-Workshop 091 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 091 — Lucia Romano, Nimbus Row: onboarding automation. A roundtable built around instrumentation that reshaped the team's priorities.
 
-Session 092 — Carla Mendes, Union Field: customer research. This briefing session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 092 — Ember Labs runs a hands-on customer research clinic; Wesley Cho walks through a postmortem with concrete remediation steps.
 
-Workshop 093 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 093 — edge deployment, with Dev Rao (Lattice Bay). Expect survey data from forty practitioner interviews and a short live demo.
 
-Session 094 — Elise Park, Willow Systems: cost attribution. This interview session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 094 — Signal Harbor: access control. Led by Omar Haddad, it works through a staged rollout that paused twice for review; seating is limited.
 
-Workshop 095 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 095 — Zane Whitfield of Birchwood presents data governance, drawing on tooling choices the presenters would not repeat.
 
-Session 096 — Gavin Brooks, Aster Works: capacity planning. This roundtable session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 096 — Gavin Brooks, Indigo Stack: workflow design. This panel covers measured rollout tradeoffs across three regions, with questions held to the final ten minutes.
 
-Workshop 097 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 097 — Rosa Alvarez, Parchment Labs: operator handoffs. A roundtable built around a case study with incomplete but promising evidence.
 
-Session 098 — Isaac Chen, Cedar Systems: contract reliability. This case-study session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 098 — Granite Loop runs a hands-on evaluation tooling clinic; Clara Fenn walks through implementation lessons from a six-month pilot.
 
-Workshop 099 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 099 — service operations, with Julia Singh (Northstar Labs). Expect how teams handled procurement and scheduling constraints and a short live demo.
 
-Session 100 — Amina Shah, Ember Labs: team communication. This panel session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 100 — Union Field: team communication. Led by Umar Faruk, it works through new benchmarks alongside several methodological caveats; seating is limited.
 
-Workshop 101 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 101 — Ben Torres of Driftwood Labs presents release management, drawing on operational failures that were corrected after launch.
 
-Session 102 — Carla Mendes, Granite Loop: workflow design. This briefing session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 102 — Marco Bianchi, Kestrel Data: incident response. This panel covers a comparison of centralized and distributed approaches, with questions held to the final ten minutes.
 
-Workshop 103 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 103 — Xochitl Reyes, Beacon Forge: market structure. A roundtable built around practical considerations for small cross-functional teams.
 
-Session 104 — Elise Park, Ion River: customer research. This interview session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 104 — Ion River runs a hands-on contract reliability clinic; Elise Park walks through a retrospective on a migration that slipped two quarters.
 
-Workshop 105 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 105 — latency budgeting, with Priyanka Nair (Pioneer Stack). Expect cost figures that surprised the finance team and a short live demo.
 
-Session 106 — Gavin Brooks, Keystone Group: cost attribution. This roundtable session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session G-176 — Yuki Tanaka, Substrate Power: Edge Inference for Feeder-Level Load Balancing. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.
 
-Workshop 107 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 107 — Hana Ito of Foundry Nine presents forecast calibration, drawing on instrumentation that reshaped the team's priorities.
 
-Session 108 — Isaac Chen, Meridian Works: capacity planning. This case-study session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 108 — Samir Desai, Marrow Systems: capacity planning. This panel covers a postmortem with concrete remediation steps, with questions held to the final ten minutes.
 
-Workshop 109 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 109 — Diego Marek, Delta Harbor: onboarding automation. A roundtable built around survey data from forty practitioner interviews.
 
-Session 110 — Amina Shah, Orbit Foundry: contract reliability. This panel session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 110 — Keystone Group runs a hands-on customer research clinic; Kwame Mensah walks through a staged rollout that paused twice for review.
 
-Workshop 111 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 111 — edge deployment, with Vera Kaminski (Redwood Logic). Expect tooling choices the presenters would not repeat and a short live demo.
 
-Session 112 — Carla Mendes, Quartz Research: team communication. This briefing session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 112 — Anvil Analytics: access control. Led by Carla Mendes, it works through measured rollout tradeoffs across three regions; seating is limited.
 
-Workshop 113 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 113 — Nadia Petrova of Harbor Point presents data governance, drawing on a case study with incomplete but promising evidence.
 
-Session 114 — Elise Park, Signal Harbor: workflow design. This interview session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 114 — Yara Haddad, Overstory: workflow design. This panel covers implementation lessons from a six-month pilot, with questions held to the final ten minutes.
 
-Workshop 115 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 115 — Farah Okafor, Fieldstone: operator handoffs. A roundtable built around how teams handled procurement and scheduling constraints.
 
-Session 116 — Gavin Brooks, Union Field: customer research. This roundtable session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 116 — Meridian Works runs a hands-on evaluation tooling clinic; Quentin Blake walks through new benchmarks alongside several methodological caveats.
 
-Workshop 117 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 117 — service operations, with Bruno Costa (Tandem Works). Expect operational failures that were corrected after launch and a short live demo.
 
-Session 118 — Isaac Chen, Willow Systems: cost attribution. This case-study session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 118 — Cobalt Systems: team communication. Led by Isaac Chen, it works through a comparison of centralized and distributed approaches; seating is limited.
 
-Workshop 119 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 119 — Tara Lindqvist of Jetty Labs presents release management, drawing on practical considerations for small cross-functional teams.
 
-Session 120 — Amina Shah, Aster Works: capacity planning. This panel session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 120 — Amina Shah, Aster Works: incident response. This panel covers a retrospective on a migration that slipped two quarters, with questions held to the final ten minutes.
 
-Workshop 121 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 121 — Lucia Romano, Helio North: market structure. A roundtable built around cost figures that surprised the finance team.
 
-Session 122 — Carla Mendes, Cedar Systems: contract reliability. This briefing session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 122 — Orbit Foundry runs a hands-on contract reliability clinic; Wesley Cho walks through an unresolved buy-versus-build debate.
 
-Workshop 123 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 123 — latency budgeting, with Dev Rao (Vector House). Expect instrumentation that reshaped the team's priorities and a short live demo.
 
-Session 124 — Elise Park, Ember Labs: team communication. This interview session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 124 — Elmgrove: cost attribution. Led by Omar Haddad, it works through a postmortem with concrete remediation steps; seating is limited.
 
-Workshop 125 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 125 — Zane Whitfield of Loamworks presents forecast calibration, drawing on survey data from forty practitioner interviews.
 
-Session 126 — Gavin Brooks, Granite Loop: workflow design. This roundtable session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 126 — Gavin Brooks, Cedar Systems: capacity planning. This panel covers a staged rollout that paused twice for review, with questions held to the final ten minutes.
 
-Workshop 127 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 127 — Rosa Alvarez, Juniper Cloud: onboarding automation. A roundtable built around tooling choices the presenters would not repeat.
 
-Session 128 — Isaac Chen, Ion River: customer research. This case-study session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session G-203 — Hannah Weiss, Cinder Grid: Edge Inference for Transmission Congestion Alerts. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.
 
-Workshop 129 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 129 — edge deployment, with Julia Singh (Xylem Ridge). Expect a case study with incomplete but promising evidence and a short live demo.
 
-Session 130 — Amina Shah, Keystone Group: cost attribution. This panel session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 130 — Glasswing: access control. Led by Umar Faruk, it works through implementation lessons from a six-month pilot; seating is limited.
 
-Workshop 131 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 131 — Ben Torres of Nimbus Row presents data governance, drawing on how teams handled procurement and scheduling constraints.
 
-Session 132 — Carla Mendes, Meridian Works: capacity planning. This briefing session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 132 — Marco Bianchi, Ember Labs: workflow design. This panel covers new benchmarks alongside several methodological caveats, with questions held to the final ten minutes.
 
-Workshop 133 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 133 — Xochitl Reyes, Lattice Bay: operator handoffs. A roundtable built around operational failures that were corrected after launch.
 
-Session 134 — Elise Park, Orbit Foundry: contract reliability. This interview session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 134 — Signal Harbor runs a hands-on evaluation tooling clinic; Elise Park walks through a comparison of centralized and distributed approaches.
 
-Workshop 135 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 135 — service operations, with Priyanka Nair (Birchwood). Expect practical considerations for small cross-functional teams and a short live demo.
 
-Session 136 — Gavin Brooks, Quartz Research: team communication. This roundtable session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 136 — Indigo Stack: team communication. Led by Aditi Bose, it works through a retrospective on a migration that slipped two quarters; seating is limited.
 
-Workshop 137 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 137 — Hana Ito of Parchment Labs presents release management, drawing on cost figures that surprised the finance team.
 
-Session 138 — Isaac Chen, Signal Harbor: workflow design. This case-study session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 138 — Samir Desai, Granite Loop: incident response. This panel covers an unresolved buy-versus-build debate, with questions held to the final ten minutes.
 
-Workshop 139 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 139 — Diego Marek, Northstar Labs: market structure. A roundtable built around instrumentation that reshaped the team's priorities.
 
-Session 140 — Amina Shah, Union Field: customer research. This panel session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 140 — Union Field runs a hands-on contract reliability clinic; Kwame Mensah walks through a postmortem with concrete remediation steps.
 
-Workshop 141 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 141 — latency budgeting, with Vera Kaminski (Driftwood Labs). Expect survey data from forty practitioner interviews and a short live demo.
 
-Session 142 — Carla Mendes, Willow Systems: cost attribution. This briefing session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 142 — Kestrel Data: cost attribution. Led by Carla Mendes, it works through a staged rollout that paused twice for review; seating is limited.
 
-Workshop 143 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 143 — Nadia Petrova of Beacon Forge presents forecast calibration, drawing on tooling choices the presenters would not repeat.
 
-Session 144 — Elise Park, Aster Works: capacity planning. This interview session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 144 — Yara Haddad, Ion River: capacity planning. This panel covers measured rollout tradeoffs across three regions, with questions held to the final ten minutes.
 
-Workshop 145 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 145 — Farah Okafor, Pioneer Stack: onboarding automation. A roundtable built around a case study with incomplete but promising evidence.
 
-Session 146 — Gavin Brooks, Cedar Systems: contract reliability. This roundtable session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 146 — Willow Systems runs a hands-on customer research clinic; Quentin Blake walks through implementation lessons from a six-month pilot.
 
 Session G-147 — Chen Wei, NovaMind: Edge Inference for Texas Grid Reliability Pilots. The session includes a fifteen-minute audience Q&A on field evidence and deployment results.
 
-Session 148 — Isaac Chen, Ember Labs: team communication. This case-study session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 148 — Marrow Systems: access control. Led by Isaac Chen, it works through new benchmarks alongside several methodological caveats; seating is limited.
 
-Workshop 149 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 149 — Tara Lindqvist of Delta Harbor presents data governance, drawing on operational failures that were corrected after launch.
 
-Session 150 — Amina Shah, Granite Loop: workflow design. This panel session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session A-011 — Bridget Nkemelu, Halcyon Metrics: Reproducible Baselines for Agent Benchmarking. The program committee lists this as a solid mid-afternoon option.
 
-Workshop 151 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 151 — Lucia Romano, Redwood Logic: operator handoffs. A roundtable built around practical considerations for small cross-functional teams.
 
-Session 152 — Carla Mendes, Ion River: customer research. This briefing session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 152 — Anvil Analytics runs a hands-on evaluation tooling clinic; Wesley Cho walks through a retrospective on a migration that slipped two quarters.
 
-Workshop 153 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 153 — service operations, with Dev Rao (Harbor Point). Expect cost figures that surprised the finance team and a short live demo.
 
-Session 154 — Elise Park, Keystone Group: cost attribution. This interview session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 154 — Overstory: team communication. Led by Omar Haddad, it works through an unresolved buy-versus-build debate; seating is limited.
 
-Workshop 155 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 155 — Zane Whitfield of Fieldstone presents release management, drawing on instrumentation that reshaped the team's priorities.
 
-Session 156 — Gavin Brooks, Meridian Works: capacity planning. This roundtable session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 156 — Gavin Brooks, Meridian Works: incident response. This panel covers a postmortem with concrete remediation steps, with questions held to the final ten minutes.
 
-Workshop 157 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 157 — Rosa Alvarez, Tandem Works: market structure. A roundtable built around survey data from forty practitioner interviews.
 
-Session 158 — Isaac Chen, Orbit Foundry: contract reliability. This case-study session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 158 — Cobalt Systems runs a hands-on contract reliability clinic; Clara Fenn walks through a staged rollout that paused twice for review.
 
-Workshop 159 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 159 — latency budgeting, with Julia Singh (Jetty Labs). Expect tooling choices the presenters would not repeat and a short live demo.
 
-Session 160 — Amina Shah, Quartz Research: team communication. This panel session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 160 — Aster Works: cost attribution. Led by Umar Faruk, it works through measured rollout tradeoffs across three regions; seating is limited.
 
-Workshop 161 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 161 — Ben Torres of Helio North presents forecast calibration, drawing on a case study with incomplete but promising evidence.
 
-Session 162 — Carla Mendes, Signal Harbor: workflow design. This briefing session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 162 — Marco Bianchi, Orbit Foundry: capacity planning. This panel covers implementation lessons from a six-month pilot, with questions held to the final ten minutes.
 
-Workshop 163 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 163 — Xochitl Reyes, Vector House: onboarding automation. A roundtable built around how teams handled procurement and scheduling constraints.
 
-Session 164 — Elise Park, Union Field: customer research. This interview session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 164 — Elmgrove runs a hands-on customer research clinic; Elise Park walks through new benchmarks alongside several methodological caveats.
 
-Workshop 165 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 165 — edge deployment, with Priyanka Nair (Loamworks). Expect operational failures that were corrected after launch and a short live demo.
 
-Session 166 — Gavin Brooks, Willow Systems: cost attribution. This roundtable session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 166 — Cedar Systems: access control. Led by Aditi Bose, it works through a comparison of centralized and distributed approaches; seating is limited.
 
-Workshop 167 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 167 — Hana Ito of Juniper Cloud presents data governance, drawing on practical considerations for small cross-functional teams.
 
-Session 168 — Isaac Chen, Aster Works: capacity planning. This case-study session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 168 — Samir Desai, Quartz Research: workflow design. This panel covers a retrospective on a migration that slipped two quarters, with questions held to the final ten minutes.
 
-Workshop 169 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 169 — Diego Marek, Xylem Ridge: operator handoffs. A roundtable built around cost figures that surprised the finance team.
 
-Session 170 — Amina Shah, Cedar Systems: contract reliability. This panel session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 170 — Glasswing runs a hands-on evaluation tooling clinic; Kwame Mensah walks through an unresolved buy-versus-build debate.
 
-Workshop 171 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 171 — service operations, with Vera Kaminski (Nimbus Row). Expect instrumentation that reshaped the team's priorities and a short live demo.
 
-Session 172 — Carla Mendes, Ember Labs: team communication. This briefing session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session A-027 — Tomas Vega, Clearwater AI: Failure Taxonomies for Reliable Tool Use. The program committee lists this as a solid mid-afternoon option.
 
-Workshop 173 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 173 — Nadia Petrova of Lattice Bay presents release management, drawing on survey data from forty practitioner interviews.
 
-Session 174 — Elise Park, Granite Loop: workflow design. This interview session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 174 — Yara Haddad, Signal Harbor: incident response. This panel covers a staged rollout that paused twice for review, with questions held to the final ten minutes.
 
-Workshop 175 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 175 — Farah Okafor, Birchwood: market structure. A roundtable built around tooling choices the presenters would not repeat.
 
-Session 176 — Gavin Brooks, Ion River: customer research. This roundtable session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 176 — Indigo Stack runs a hands-on contract reliability clinic; Quentin Blake walks through measured rollout tradeoffs across three regions.
 
-Workshop 177 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 177 — latency budgeting, with Bruno Costa (Parchment Labs). Expect a case study with incomplete but promising evidence and a short live demo.
 
-Session 178 — Isaac Chen, Keystone Group: cost attribution. This case-study session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 178 — Granite Loop: cost attribution. Led by Isaac Chen, it works through implementation lessons from a six-month pilot; seating is limited.
 
-Workshop 179 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 179 — Tara Lindqvist of Northstar Labs presents forecast calibration, drawing on how teams handled procurement and scheduling constraints.
 
-Session 180 — Amina Shah, Meridian Works: capacity planning. This panel session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 180 — Amina Shah, Union Field: capacity planning. This panel covers new benchmarks alongside several methodological caveats, with questions held to the final ten minutes.
 
-Workshop 181 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 181 — Lucia Romano, Driftwood Labs: onboarding automation. A roundtable built around operational failures that were corrected after launch.
 
-Session 182 — Carla Mendes, Orbit Foundry: contract reliability. This briefing session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 182 — Kestrel Data runs a hands-on customer research clinic; Wesley Cho walks through a comparison of centralized and distributed approaches.
 
-Workshop 183 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 183 — edge deployment, with Dev Rao (Beacon Forge). Expect practical considerations for small cross-functional teams and a short live demo.
 
-Session 184 — Elise Park, Quartz Research: team communication. This interview session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 184 — Ion River: access control. Led by Omar Haddad, it works through a retrospective on a migration that slipped two quarters; seating is limited.
 
-Workshop 185 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 185 — Zane Whitfield of Pioneer Stack presents data governance, drawing on cost figures that surprised the finance team.
 
-Session 186 — Gavin Brooks, Signal Harbor: workflow design. This roundtable session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 186 — Gavin Brooks, Willow Systems: workflow design. This panel covers an unresolved buy-versus-build debate, with questions held to the final ten minutes.
 
-Workshop 187 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 187 — Rosa Alvarez, Foundry Nine: operator handoffs. A roundtable built around instrumentation that reshaped the team's priorities.
 
-Session 188 — Isaac Chen, Union Field: customer research. This case-study session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 188 — Marrow Systems runs a hands-on evaluation tooling clinic; Clara Fenn walks through a postmortem with concrete remediation steps.
 
-Workshop 189 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 189 — service operations, with Julia Singh (Delta Harbor). Expect survey data from forty practitioner interviews and a short live demo.
 
-Session 190 — Amina Shah, Willow Systems: cost attribution. This panel session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 190 — Keystone Group: team communication. Led by Umar Faruk, it works through a staged rollout that paused twice for review; seating is limited.
 
-Workshop 191 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 191 — Ben Torres of Redwood Logic presents release management, drawing on tooling choices the presenters would not repeat.
 
-Session 192 — Carla Mendes, Aster Works: capacity planning. This briefing session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 192 — Marco Bianchi, Anvil Analytics: incident response. This panel covers measured rollout tradeoffs across three regions, with questions held to the final ten minutes.
 
-Workshop 193 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 193 — Xochitl Reyes, Harbor Point: market structure. A roundtable built around a case study with incomplete but promising evidence.
 
-Session 194 — Elise Park, Cedar Systems: contract reliability. This interview session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session A-063 — Iris Kaplan, Meridian Eval: Human-in-the-Loop Scoring for Long-Horizon Tasks. The program committee lists this as a solid mid-afternoon option.
 
-Workshop 195 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 195 — latency budgeting, with Priyanka Nair (Fieldstone). Expect how teams handled procurement and scheduling constraints and a short live demo.
 
-Session 196 — Gavin Brooks, Ember Labs: team communication. This roundtable session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 196 — Meridian Works: cost attribution. Led by Aditi Bose, it works through new benchmarks alongside several methodological caveats; seating is limited.
 
-Workshop 197 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 197 — Hana Ito of Tandem Works presents forecast calibration, drawing on operational failures that were corrected after launch.
 
-Session 198 — Isaac Chen, Granite Loop: workflow design. This case-study session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 198 — Samir Desai, Cobalt Systems: capacity planning. This panel covers a comparison of centralized and distributed approaches, with questions held to the final ten minutes.
 
-Workshop 199 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 199 — Diego Marek, Jetty Labs: onboarding automation. A roundtable built around practical considerations for small cross-functional teams.
 
-Session 200 — Amina Shah, Ion River: customer research. This panel session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 200 — Aster Works runs a hands-on customer research clinic; Kwame Mensah walks through a retrospective on a migration that slipped two quarters.
 
-Workshop 201 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 201 — edge deployment, with Vera Kaminski (Helio North). Expect cost figures that surprised the finance team and a short live demo.
 
-Session 202 — Carla Mendes, Keystone Group: cost attribution. This briefing session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 202 — Orbit Foundry: access control. Led by Carla Mendes, it works through an unresolved buy-versus-build debate; seating is limited.
 
-Workshop 203 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 203 — Nadia Petrova of Vector House presents data governance, drawing on instrumentation that reshaped the team's priorities.
 
-Session 204 — Elise Park, Meridian Works: capacity planning. This interview session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 204 — Yara Haddad, Elmgrove: workflow design. This panel covers a postmortem with concrete remediation steps, with questions held to the final ten minutes.
 
-Workshop 205 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 205 — Farah Okafor, Loamworks: operator handoffs. A roundtable built around survey data from forty practitioner interviews.
 
-Session 206 — Gavin Brooks, Orbit Foundry: contract reliability. This roundtable session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 206 — Cedar Systems runs a hands-on evaluation tooling clinic; Quentin Blake walks through a staged rollout that paused twice for review.
 
-Workshop 207 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 207 — service operations, with Bruno Costa (Juniper Cloud). Expect tooling choices the presenters would not repeat and a short live demo.
 
-Session 208 — Isaac Chen, Quartz Research: team communication. This case-study session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 208 — Quartz Research: team communication. Led by Isaac Chen, it works through measured rollout tradeoffs across three regions; seating is limited.
 
-Workshop 209 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 209 — Tara Lindqvist of Xylem Ridge presents release management, drawing on a case study with incomplete but promising evidence.
 
-Session 210 — Amina Shah, Signal Harbor: workflow design. This panel session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 210 — Amina Shah, Glasswing: incident response. This panel covers implementation lessons from a six-month pilot, with questions held to the final ten minutes.
 
-Workshop 211 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 211 — Lucia Romano, Nimbus Row: market structure. A roundtable built around how teams handled procurement and scheduling constraints.
 
-Session 212 — Carla Mendes, Union Field: customer research. This briefing session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 212 — Ember Labs runs a hands-on contract reliability clinic; Wesley Cho walks through new benchmarks alongside several methodological caveats.
 
-Workshop 213 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 213 — latency budgeting, with Dev Rao (Lattice Bay). Expect operational failures that were corrected after launch and a short live demo.
 
-Session 214 — Elise Park, Willow Systems: cost attribution. This interview session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 214 — Signal Harbor: cost attribution. Led by Omar Haddad, it works through a comparison of centralized and distributed approaches; seating is limited.
 
-Workshop 215 — Xylem Ridge: data governance. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 215 — Zane Whitfield of Birchwood presents forecast calibration, drawing on practical considerations for small cross-functional teams.
 
-Session 216 — Gavin Brooks, Aster Works: capacity planning. This roundtable session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Session 216 — Gavin Brooks, Indigo Stack: capacity planning. This panel covers a retrospective on a migration that slipped two quarters, with questions held to the final ten minutes.
 
-Workshop 217 — Beacon Forge: operator handoffs. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 217 — Rosa Alvarez, Parchment Labs: onboarding automation. A roundtable built around cost figures that surprised the finance team.
 
-Session 218 — Isaac Chen, Cedar Systems: contract reliability. This case-study session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 218 — Granite Loop runs a hands-on customer research clinic; Clara Fenn walks through an unresolved buy-versus-build debate.
 
-Workshop 219 — Delta Harbor: edge deployment. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 219 — edge deployment, with Julia Singh (Northstar Labs). Expect instrumentation that reshaped the team's priorities and a short live demo.
 
-Session 220 — Amina Shah, Ember Labs: team communication. This panel session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 220 — Union Field: access control. Led by Umar Faruk, it works through a postmortem with concrete remediation steps; seating is limited.
 
-Workshop 221 — Fieldstone: forecast calibration. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 221 — Ben Torres of Driftwood Labs presents data governance, drawing on survey data from forty practitioner interviews.
 
-Session 222 — Carla Mendes, Granite Loop: workflow design. This briefing session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Session 222 — Marco Bianchi, Kestrel Data: workflow design. This panel covers a staged rollout that paused twice for review, with questions held to the final ten minutes.
 
-Workshop 223 — Helio North: market structure. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 223 — Xochitl Reyes, Beacon Forge: operator handoffs. A roundtable built around tooling choices the presenters would not repeat.
 
-Session 224 — Elise Park, Ion River: customer research. This interview session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 224 — Ion River runs a hands-on evaluation tooling clinic; Elise Park walks through measured rollout tradeoffs across three regions.
 
-Workshop 225 — Juniper Cloud: service operations. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 225 — service operations, with Priyanka Nair (Pioneer Stack). Expect a case study with incomplete but promising evidence and a short live demo.
 
-Session 226 — Gavin Brooks, Keystone Group: cost attribution. This roundtable session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Workshop 226 — Willow Systems: team communication. Led by Aditi Bose, it works through implementation lessons from a six-month pilot; seating is limited.
 
-Workshop 227 — Lattice Bay: data governance. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 227 — Hana Ito of Foundry Nine presents release management, drawing on how teams handled procurement and scheduling constraints.
 
-Session 228 — Isaac Chen, Meridian Works: capacity planning. This case-study session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Session 228 — Samir Desai, Marrow Systems: incident response. This panel covers new benchmarks alongside several methodological caveats, with questions held to the final ten minutes.
 
-Workshop 229 — Northstar Labs: operator handoffs. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 229 — Diego Marek, Delta Harbor: market structure. A roundtable built around operational failures that were corrected after launch.
 
-Session 230 — Amina Shah, Orbit Foundry: contract reliability. This panel session covers a comparison of centralized and distributed approaches, with audience questions reserved for the final twelve minutes.
+Workshop 230 — Keystone Group runs a hands-on contract reliability clinic; Kwame Mensah walks through a comparison of centralized and distributed approaches.
 
-Workshop 231 — Pioneer Stack: edge deployment. The listing emphasizes practical considerations for small cross-functional teams; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 231 — latency budgeting, with Vera Kaminski (Redwood Logic). Expect practical considerations for small cross-functional teams and a short live demo.
 
-Session 232 — Carla Mendes, Quartz Research: team communication. This briefing session covers measured rollout tradeoffs across three regions, with audience questions reserved for the final twelve minutes.
+Workshop 232 — Anvil Analytics: cost attribution. Led by Carla Mendes, it works through a retrospective on a migration that slipped two quarters; seating is limited.
 
-Workshop 233 — Redwood Logic: forecast calibration. The listing emphasizes a case study with incomplete but promising evidence; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 233 — Nadia Petrova of Harbor Point presents forecast calibration, drawing on cost figures that surprised the finance team.
 
-Session 234 — Elise Park, Signal Harbor: workflow design. This interview session covers implementation lessons from a six-month pilot, with audience questions reserved for the final twelve minutes.
+Session 234 — Yara Haddad, Overstory: capacity planning. This panel covers an unresolved buy-versus-build debate, with questions held to the final ten minutes.
 
-Workshop 235 — Tandem Works: market structure. The listing emphasizes how teams handled procurement and scheduling constraints; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 235 — Farah Okafor, Fieldstone: onboarding automation. A roundtable built around instrumentation that reshaped the team's priorities.
 
-Session 236 — Gavin Brooks, Union Field: customer research. This roundtable session covers new benchmarks alongside several methodological caveats, with audience questions reserved for the final twelve minutes.
+Workshop 236 — Meridian Works runs a hands-on customer research clinic; Quentin Blake walks through a postmortem with concrete remediation steps.
 
-Workshop 237 — Vector House: service operations. The listing emphasizes operational failures that were corrected after launch; capacity is limited and the room is a seven-minute walk from the main hall.
+Session 237 — edge deployment, with Bruno Costa (Tandem Works). Expect survey data from forty practitioner interviews and a short live demo.
+
+Workshop 238 — Cobalt Systems: access control. Led by Isaac Chen, it works through a staged rollout that paused twice for review; seating is limited.
+
+Session 239 — Tara Lindqvist of Jetty Labs presents data governance, drawing on tooling choices the presenters would not repeat.
+
+Session 240 — Amina Shah, Aster Works: workflow design. This panel covers measured rollout tradeoffs across three regions, with questions held to the final ten minutes.
+
+Session 241 — Lucia Romano, Helio North: operator handoffs. A roundtable built around a case study with incomplete but promising evidence.
+
+Workshop 242 — Orbit Foundry runs a hands-on evaluation tooling clinic; Wesley Cho walks through implementation lessons from a six-month pilot.
+
+Session 243 — service operations, with Dev Rao (Vector House). Expect how teams handled procurement and scheduling constraints and a short live demo.
+
+Workshop 244 — Elmgrove: team communication. Led by Omar Haddad, it works through new benchmarks alongside several methodological caveats; seating is limited.
+
+Session 245 — Zane Whitfield of Loamworks presents release management, drawing on operational failures that were corrected after launch.
+
+Session 246 — Gavin Brooks, Cedar Systems: incident response. This panel covers a comparison of centralized and distributed approaches, with questions held to the final ten minutes.
+
+Session 247 — Rosa Alvarez, Juniper Cloud: market structure. A roundtable built around practical considerations for small cross-functional teams.
+
+Workshop 248 — Quartz Research runs a hands-on contract reliability clinic; Clara Fenn walks through a retrospective on a migration that slipped two quarters.
+
+Session 249 — latency budgeting, with Julia Singh (Xylem Ridge). Expect cost figures that surprised the finance team and a short live demo.
+
+Workshop 250 — Glasswing: cost attribution. Led by Umar Faruk, it works through an unresolved buy-versus-build debate; seating is limited.
+
+Session 251 — Ben Torres of Nimbus Row presents forecast calibration, drawing on instrumentation that reshaped the team's priorities.
+
+Session 252 — Marco Bianchi, Ember Labs: capacity planning. This panel covers a postmortem with concrete remediation steps, with questions held to the final ten minutes.
+
+Session 253 — Xochitl Reyes, Lattice Bay: onboarding automation. A roundtable built around survey data from forty practitioner interviews.
+
+Workshop 254 — Signal Harbor runs a hands-on customer research clinic; Elise Park walks through a staged rollout that paused twice for review.
+
+Session 255 — edge deployment, with Priyanka Nair (Birchwood). Expect tooling choices the presenters would not repeat and a short live demo.
+
+Workshop 256 — Indigo Stack: access control. Led by Aditi Bose, it works through measured rollout tradeoffs across three regions; seating is limited.
+
+Session 257 — Hana Ito of Parchment Labs presents data governance, drawing on a case study with incomplete but promising evidence.
+
+Session 258 — Samir Desai, Granite Loop: workflow design. This panel covers implementation lessons from a six-month pilot, with questions held to the final ten minutes.
+
+Session 259 — Diego Marek, Northstar Labs: operator handoffs. A roundtable built around how teams handled procurement and scheduling constraints.
+
+Workshop 260 — Union Field runs a hands-on evaluation tooling clinic; Kwame Mensah walks through new benchmarks alongside several methodological caveats.
+
+Session 261 — service operations, with Vera Kaminski (Driftwood Labs). Expect operational failures that were corrected after launch and a short live demo.
+
+Workshop 262 — Kestrel Data: team communication. Led by Carla Mendes, it works through a comparison of centralized and distributed approaches; seating is limited.
+
+Session 263 — Nadia Petrova of Beacon Forge presents release management, drawing on practical considerations for small cross-functional teams.
+
+Session 264 — Yara Haddad, Ion River: incident response. This panel covers a retrospective on a migration that slipped two quarters, with questions held to the final ten minutes.
+
+Session 265 — Farah Okafor, Pioneer Stack: market structure. A roundtable built around cost figures that surprised the finance team.
+
+Workshop 266 — Willow Systems runs a hands-on contract reliability clinic; Quentin Blake walks through an unresolved buy-versus-build debate.
+
+Session 267 — latency budgeting, with Bruno Costa (Foundry Nine). Expect instrumentation that reshaped the team's priorities and a short live demo.
+
+Workshop 268 — Marrow Systems: cost attribution. Led by Isaac Chen, it works through a postmortem with concrete remediation steps; seating is limited.
+
+Session 269 — Tara Lindqvist of Delta Harbor presents forecast calibration, drawing on survey data from forty practitioner interviews.
+
+Session 270 — Amina Shah, Keystone Group: capacity planning. This panel covers a staged rollout that paused twice for review, with questions held to the final ten minutes.
+
+Session 271 — Lucia Romano, Redwood Logic: onboarding automation. A roundtable built around tooling choices the presenters would not repeat.
+
+Workshop 272 — Anvil Analytics runs a hands-on customer research clinic; Wesley Cho walks through measured rollout tradeoffs across three regions.
+
+Session 273 — edge deployment, with Dev Rao (Harbor Point). Expect a case study with incomplete but promising evidence and a short live demo.
+
+Workshop 274 — Overstory: access control. Led by Omar Haddad, it works through implementation lessons from a six-month pilot; seating is limited.
+
+Session 275 — Zane Whitfield of Fieldstone presents data governance, drawing on how teams handled procurement and scheduling constraints.
+
+Session 276 — Gavin Brooks, Meridian Works: workflow design. This panel covers new benchmarks alongside several methodological caveats, with questions held to the final ten minutes.
+
+Session 277 — Rosa Alvarez, Tandem Works: operator handoffs. A roundtable built around operational failures that were corrected after launch.
+
+Workshop 278 — Cobalt Systems runs a hands-on evaluation tooling clinic; Clara Fenn walks through a comparison of centralized and distributed approaches.
+
+Session 279 — service operations, with Julia Singh (Jetty Labs). Expect practical considerations for small cross-functional teams and a short live demo.
+
+Workshop 280 — Aster Works: team communication. Led by Umar Faruk, it works through a retrospective on a migration that slipped two quarters; seating is limited.
+
+Session 281 — Ben Torres of Helio North presents release management, drawing on cost figures that surprised the finance team.
+
+Session 282 — Marco Bianchi, Orbit Foundry: incident response. This panel covers an unresolved buy-versus-build debate, with questions held to the final ten minutes.
+
+Session 283 — Xochitl Reyes, Vector House: market structure. A roundtable built around instrumentation that reshaped the team's priorities.
+
+Workshop 284 — Elmgrove runs a hands-on contract reliability clinic; Elise Park walks through a postmortem with concrete remediation steps.
+
+Session 285 — latency budgeting, with Priyanka Nair (Loamworks). Expect survey data from forty practitioner interviews and a short live demo.
+
+Workshop 286 — Cedar Systems: cost attribution. Led by Aditi Bose, it works through a staged rollout that paused twice for review; seating is limited.
+
+Session 287 — Hana Ito of Juniper Cloud presents forecast calibration, drawing on tooling choices the presenters would not repeat.
+
+Session 288 — Samir Desai, Quartz Research: capacity planning. This panel covers measured rollout tradeoffs across three regions, with questions held to the final ten minutes.
+
+Session 289 — Diego Marek, Xylem Ridge: onboarding automation. A roundtable built around a case study with incomplete but promising evidence.
+
+Workshop 290 — Glasswing runs a hands-on customer research clinic; Kwame Mensah walks through implementation lessons from a six-month pilot.

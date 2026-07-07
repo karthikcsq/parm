@@ -53,6 +53,15 @@ class WorkbenchRequestError(ValueError):
     pass
 
 
+class WorkbenchRunError(RuntimeError):
+    def __init__(self, stage: str, cause: Exception):
+        self.stage = stage
+        self.cause = cause
+        super().__init__(
+            f"{stage} failed: {cause.__class__.__name__}: {cause}"
+        )
+
+
 class RetrieverFactory(Protocol):
     def __call__(self, mode: RetrievalMode) -> IndexRetriever: ...
 
@@ -172,9 +181,14 @@ class WorkbenchService:
                     "Enhanced retrieval is unavailable. Restart the server "
                     "with --expansion-cache."
                 )
-            retrieval = self._retriever(retrieval_mode).retrieve(
-                RetrievalRequest(prompt, top_k=top_k)
-            )
+            try:
+                retrieval = self._retriever(retrieval_mode).retrieve(
+                    RetrievalRequest(prompt, top_k=top_k)
+                )
+            except (ExpansionCacheMissError, RetrievalValidationError):
+                raise
+            except Exception as exc:
+                raise WorkbenchRunError("retrieval", exc) from exc
 
         memory_context = _memory_context(retrieval)
         model = self.model_factory(model_name.strip())
@@ -188,21 +202,24 @@ class WorkbenchService:
             if selected_case is not None
             else ""
         )
-        response = model.generate(
-            prompt=prompt,
-            observation_kind=observation_kind,
-            observation_text=observation_text,
-            instructions=(
-                (
-                    INPUT_RAG_INSTRUCTIONS
-                    if condition is RetrievalCondition.INPUT_RAG
-                    else FINAL_ANSWER_INSTRUCTIONS
-                )
-                if selected_case is not None
-                else WORKBENCH_INSTRUCTIONS
-            ),
-            memory_context=memory_context,
-        )
+        try:
+            response = model.generate(
+                prompt=prompt,
+                observation_kind=observation_kind,
+                observation_text=observation_text,
+                instructions=(
+                    (
+                        INPUT_RAG_INSTRUCTIONS
+                        if condition is RetrievalCondition.INPUT_RAG
+                        else FINAL_ANSWER_INSTRUCTIONS
+                    )
+                    if selected_case is not None
+                    else WORKBENCH_INSTRUCTIONS
+                ),
+                memory_context=memory_context,
+            )
+        except Exception as exc:
+            raise WorkbenchRunError("model generation", exc) from exc
         elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
         return {
             "prompt": prompt,
@@ -379,8 +396,23 @@ class WorkbenchRequestHandler(BaseHTTPRequestHandler):
                 HTTPStatus.BAD_REQUEST, {"error": "Request body is not valid JSON."}
             )
             return
+        except WorkbenchRunError as exc:
+            message = str(exc)
+            print(f"Workbench run failed: {message}", flush=True)
+            self._send_json(
+                HTTPStatus.BAD_GATEWAY,
+                {
+                    "error": message,
+                    "stage": exc.stage,
+                    "cause": exc.cause.__class__.__name__,
+                },
+            )
+            return
         except Exception as exc:
-            print(f"Workbench run failed: {exc}", flush=True)
+            print(
+                f"Workbench run failed: {exc.__class__.__name__}: {exc}",
+                flush=True,
+            )
             self._send_json(
                 HTTPStatus.INTERNAL_SERVER_ERROR,
                 {

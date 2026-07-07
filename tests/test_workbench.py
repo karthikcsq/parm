@@ -21,6 +21,7 @@ from parm_bench.workbench import (
     RetrievalCondition,
     WORKBENCH_INSTRUCTIONS,
     WorkbenchRequestError,
+    WorkbenchRunError,
     WorkbenchService,
     _evaluate_case,
     create_workbench_server,
@@ -77,6 +78,19 @@ class FakeRetriever:
                 "returned_pages": [{"page_id": hit.page_id}],
             },
         )
+
+
+class FailingRetriever:
+    def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
+        raise RuntimeError("network down")
+
+
+class FailingModel:
+    def __init__(self, model_name: str):
+        self.model_name = model_name
+
+    def generate(self, **kwargs: object) -> ModelResponse:
+        raise RuntimeError("model unavailable")
 
 
 def fake_index() -> SimpleNamespace:
@@ -265,6 +279,45 @@ class WorkbenchServiceTests(unittest.TestCase):
                 }
             )
 
+    def test_wraps_retrieval_and_model_dependency_failures(self) -> None:
+        retrieval_service = WorkbenchService(
+            fake_index(),
+            SimpleNamespace(),
+            default_model="test-model",
+            model_factory=FakeModel,
+            retriever_factory=lambda mode: FailingRetriever(),
+        )
+        with self.assertRaisesRegex(
+            WorkbenchRunError, "retrieval failed: RuntimeError: network down"
+        ) as retrieval_error:
+            retrieval_service.run(
+                {
+                    "prompt": "Hello",
+                    "condition": "input_rag",
+                    "retrieval_mode": "dense",
+                }
+            )
+        self.assertEqual(retrieval_error.exception.stage, "retrieval")
+
+        model_service = WorkbenchService(
+            fake_index(),
+            SimpleNamespace(),
+            default_model="test-model",
+            model_factory=FailingModel,
+            retriever_factory=lambda mode: FakeRetriever(mode),
+        )
+        with self.assertRaisesRegex(
+            WorkbenchRunError,
+            "model generation failed: RuntimeError: model unavailable",
+        ) as model_error:
+            model_service.run(
+                {
+                    "prompt": "Hello",
+                    "condition": "no_memory",
+                }
+            )
+        self.assertEqual(model_error.exception.stage, "model generation")
+
 
 class WorkbenchHttpTests(unittest.TestCase):
     def setUp(self) -> None:
@@ -339,6 +392,39 @@ class WorkbenchHttpTests(unittest.TestCase):
         self.assertEqual(raised.exception.code, 400)
         payload = json.load(raised.exception)
         self.assertIn("Enter a prompt", payload["error"])
+
+    def test_run_api_returns_dependency_failure_stage(self) -> None:
+        service = WorkbenchService(
+            fake_index(),
+            SimpleNamespace(),
+            default_model="test-model",
+            model_factory=FailingModel,
+            retriever_factory=lambda mode: FakeRetriever(mode),
+            cases=[fake_case()],
+        )
+        server = create_workbench_server(service)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            request = urllib.request.Request(
+                f"http://127.0.0.1:{server.server_port}/api/run",
+                method="POST",
+                headers={"Content-Type": "application/json"},
+                data=json.dumps(
+                    {"prompt": "Hello", "condition": "no_memory"}
+                ).encode("utf-8"),
+            )
+            with self.assertRaises(urllib.error.HTTPError) as raised:
+                urllib.request.urlopen(request)
+            self.assertEqual(raised.exception.code, 502)
+            payload = json.load(raised.exception)
+            self.assertEqual(payload["stage"], "model generation")
+            self.assertEqual(payload["cause"], "RuntimeError")
+            self.assertIn("model unavailable", payload["error"])
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
 
 
 if __name__ == "__main__":

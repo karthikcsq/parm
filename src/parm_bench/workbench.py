@@ -597,12 +597,14 @@ def _case_label(case: dict[str, Any]) -> str:
             break
     subject = base.replace("-", " ").title()
     subject = subject.replace("Ai ", "AI ")
-    variant = (
-        "Cue present"
-        if case.get("variant") == "positive"
-        else "Cue ablated"
-    )
-    return f"{subject} — {variant}"
+    variant = case.get("variant")
+    if variant == "positive":
+        label = "Cue present"
+    elif variant == "memory-included":
+        label = "Memory included"
+    else:
+        label = "Cue ablated"
+    return f"{subject} — {label}"
 
 
 def _evaluate_case(
@@ -612,10 +614,14 @@ def _evaluate_case(
     retrieval: RetrievalResult | None,
 ) -> dict[str, Any]:
     decisions = case["decisions"]
+    # memory-included injects the gold memory into the prompt, so its expected
+    # answer is the memory-conditioned choice under every condition, including
+    # no_memory. Other variants keep the condition-based basis.
     expected_basis = (
-        "memory-conditioned"
-        if condition is not RetrievalCondition.NO_MEMORY
-        else "output-only"
+        "output-only"
+        if condition is RetrievalCondition.NO_MEMORY
+        and str(case["variant"]) != "memory-included"
+        else "memory-conditioned"
     )
     expected_choice = str(decisions[expected_basis.replace("-", "_")]["choice"])
     choices = {
@@ -637,7 +643,9 @@ def _evaluate_case(
     }
     retrieved_gold = sorted(retrieved & gold)
     variant = str(case["variant"])
-    if condition is RetrievalCondition.NO_MEMORY:
+    if variant == "memory-included" and condition is RetrievalCondition.NO_MEMORY:
+        retrieval_status = "ceiling"
+    elif condition is RetrievalCondition.NO_MEMORY:
         retrieval_status = "not-run"
     elif variant == "cue-ablated":
         retrieval_status = "control"
@@ -647,7 +655,18 @@ def _evaluate_case(
         retrieval_status = "partial"
     else:
         retrieval_status = "complete"
-    if variant == "cue-ablated":
+    if variant == "memory-included":
+        reason = (
+            "The gold memory was injected into the prompt and the response "
+            "selected the expected memory-conditioned choice (ceiling reached)."
+            if successful
+            else (
+                "The gold memory was injected into the prompt, but the "
+                "response did not select the expected memory-conditioned "
+                "choice (ceiling missed)."
+            )
+        )
+    elif variant == "cue-ablated":
         if successful:
             reason = (
                 "The cue-ablated control kept the expected reference choice, "

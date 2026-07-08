@@ -23,6 +23,7 @@ from parm_bench.workbench import (
     WorkbenchRequestError,
     WorkbenchRunError,
     WorkbenchService,
+    _case_label,
     _evaluate_case,
     create_workbench_server,
 )
@@ -325,6 +326,65 @@ class WorkbenchServiceTests(unittest.TestCase):
             result["matched_choices"],
             ["Item 147 — CoreWeave Reserved-GPU Pricing Revision"],
         )
+
+    def _memory_included_case(self) -> dict:
+        return {
+            "case_id": "parm-amara-ai-news-digest-memory-included",
+            "base_case_id": "parm-amara-ai-news-digest",
+            "variant": "memory-included",
+            "decisions": {
+                "output_only": {"choice": "Lead Story — Atlas Release"},
+                "memory_conditioned": {
+                    "choice": (
+                        "Item 147 — CoreWeave Reserved-GPU Pricing Revision"
+                    )
+                },
+            },
+            "memory": {"gold_source_ids": ["emails/em-0017"]},
+        }
+
+    def test_memory_included_label_is_distinct(self) -> None:
+        self.assertEqual(
+            _case_label(self._memory_included_case()),
+            "AI News Digest — Memory included",
+        )
+
+    def test_memory_included_expects_memory_choice_under_no_memory(self) -> None:
+        result = _evaluate_case(
+            self._memory_included_case(),
+            RetrievalCondition.NO_MEMORY,
+            "Item 147 — CoreWeave Reserved-GPU Pricing Revision",
+            None,
+        )
+        self.assertEqual(result["expected_basis"], "memory-conditioned")
+        self.assertTrue(result["successful"])
+        self.assertEqual(result["retrieval_status"], "ceiling")
+        self.assertIn("ceiling reached", result["reason"])
+
+    def test_memory_included_output_choice_misses_the_ceiling(self) -> None:
+        result = _evaluate_case(
+            self._memory_included_case(),
+            RetrievalCondition.NO_MEMORY,
+            "Lead Story — Atlas Release",
+            None,
+        )
+        self.assertFalse(result["successful"])
+        self.assertEqual(result["retrieval_status"], "ceiling")
+        self.assertIn("ceiling missed", result["reason"])
+
+    def test_memory_included_grades_retrieval_under_retrieval_condition(
+        self,
+    ) -> None:
+        # choice B: under a retrieval mode the ceiling case still reports the
+        # normal retrieval status instead of "ceiling".
+        result = _evaluate_case(
+            self._memory_included_case(),
+            RetrievalCondition.INPUT_RAG,
+            "Item 147 — CoreWeave Reserved-GPU Pricing Revision",
+            RetrievalResult(hits=(), trace={}),
+        )
+        self.assertTrue(result["successful"])
+        self.assertEqual(result["retrieval_status"], "miss")
 
     def test_rejects_empty_prompt_and_unconfigured_enhanced_mode(self) -> None:
         with self.assertRaisesRegex(WorkbenchRequestError, "Enter a prompt"):

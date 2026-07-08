@@ -13,7 +13,8 @@ from .amara import sha256_file
 TOKENIZER = "cl100k_base"
 MIN_CONTEXT_TOKENS = 8_000
 MAX_CONTEXT_TOKENS = 12_000
-VARIANTS = {"positive", "cue-ablated"}
+VARIANTS = {"positive", "cue-ablated", "memory-included"}
+CUE_PRESENT_VARIANTS = {"positive", "memory-included"}
 OBSERVATION_KINDS = {"assistant_output", "tool_result"}
 LISTING_PREFIXES = (
     "Session ",
@@ -113,7 +114,8 @@ def validate_cases(cases: list[dict[str, Any]]) -> None:
             issues.append(
                 ValidationIssue(
                     base_case_id,
-                    "must contain one positive and one cue-ablated variant",
+                    "must contain positive, cue-ablated, and memory-included "
+                    "variants",
                 )
             )
     if issues:
@@ -149,12 +151,21 @@ def _validate_case(
     cue_text = str(cue.get("text", ""))
     if cue_text.casefold() in prompt:
         issues.append(ValidationIssue(case_id, "cue leaks into prompt"))
-    if bool(cue.get("present")) != (variant == "positive"):
+    if bool(cue.get("present")) != (variant in CUE_PRESENT_VARIANTS):
         issues.append(ValidationIssue(case_id, "cue.present disagrees with variant"))
-    if variant == "positive" and cue_text not in text:
+    if variant in CUE_PRESENT_VARIANTS and cue_text not in text:
         issues.append(ValidationIssue(case_id, "gold cue is absent from observation"))
     if variant == "cue-ablated" and cue_text in text:
         issues.append(ValidationIssue(case_id, "ablated observation still contains cue"))
+    if variant == "memory-included":
+        memory_text = str(case.get("memory", {}).get("text", ""))
+        if not memory_text or memory_text.casefold() not in prompt:
+            issues.append(
+                ValidationIssue(
+                    case_id,
+                    "memory-included prompt must contain the injected memory",
+                )
+            )
 
     decisions = case.get("decisions", {})
     if decisions.get("answer_type") != "natural_language_choice":
@@ -178,7 +189,7 @@ def _validate_case(
                     f"{label} choice must appear exactly once in the observation",
                 )
             )
-    if variant == "positive" and output_choice == memory_choice:
+    if variant in CUE_PRESENT_VARIANTS and output_choice == memory_choice:
         issues.append(ValidationIssue(case_id, "positive case does not change decision"))
     if variant == "cue-ablated" and output_choice != memory_choice:
         issues.append(ValidationIssue(case_id, "control case changes decision"))

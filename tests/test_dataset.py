@@ -22,15 +22,53 @@ class DatasetValidationTests(unittest.TestCase):
     def test_pilot_dataset_is_valid(self) -> None:
         cases = load_cases(DATASET)
         validate_cases(cases)
-        self.assertEqual(len(cases), 10)
+        self.assertEqual(len(cases), 15)
         self.assertEqual(len({case["base_case_id"] for case in cases}), 5)
 
-    def test_every_case_has_positive_and_ablated_variant(self) -> None:
+    def test_every_base_case_has_all_three_variants(self) -> None:
         cases = load_cases(DATASET)
         by_base: dict[str, set[str]] = {}
         for case in cases:
             by_base.setdefault(case["base_case_id"], set()).add(case["variant"])
-        self.assertTrue(all(value == {"positive", "cue-ablated"} for value in by_base.values()))
+        self.assertTrue(
+            all(
+                value == {"positive", "cue-ablated", "memory-included"}
+                for value in by_base.values()
+            )
+        )
+
+    def test_memory_included_injects_memory_and_reuses_positive_observation(
+        self,
+    ) -> None:
+        cases = {case["case_id"]: case for case in load_cases(DATASET)}
+        for base in {case["base_case_id"] for case in cases.values()}:
+            positive = cases[f"{base}-positive"]
+            included = cases[f"{base}-memory-included"]
+            # the memory fact is present in the prompt (the injected ceiling)
+            self.assertIn(
+                included["memory"]["text"].casefold(), included["prompt"].casefold()
+            )
+            # the observation is byte-identical to the positive variant
+            self.assertEqual(
+                included["observation_text"], positive["observation_text"]
+            )
+            # the decision the model should reach is the memory-conditioned one
+            self.assertNotEqual(
+                included["decisions"]["output_only"]["choice"],
+                included["decisions"]["memory_conditioned"]["choice"],
+            )
+            self.assertTrue(included["cue"]["present"])
+
+    def test_memory_included_without_injected_memory_fails(self) -> None:
+        cases = load_cases(DATASET)
+        broken = copy.deepcopy(cases)
+        included = next(
+            case for case in broken if case["variant"] == "memory-included"
+        )
+        included["prompt"] = "Choose exactly one option. Reply with its name."
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(broken)
+        self.assertIn("must contain the injected memory", str(context.exception))
 
     def test_prompts_do_not_leak_cues_or_memory_search(self) -> None:
         for case in load_cases(DATASET):

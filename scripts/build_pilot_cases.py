@@ -112,9 +112,16 @@ def distractor_sources(slug: str) -> list[dict[str, object]]:
     ]
 
 
-def make_case(spec: dict[str, object], cue_present: bool) -> dict[str, object]:
+VARIANTS = ("positive", "cue-ablated", "memory-included")
+
+
+def make_case(spec: dict[str, object], variant: str) -> dict[str, object]:
     slug = str(spec["slug"])
-    suffix = "positive" if cue_present else "cue-ablated"
+    # memory-included reuses the positive observation (cue present) and differs
+    # only by a memory preamble prepended to the prompt; cue-ablated swaps the
+    # cue out of the observation and collapses the decision to the output choice.
+    cue_present = variant in ("positive", "memory-included")
+    memory_text = str(spec["memory_text"])
     sources = [
         {
             "source_id": source_id,
@@ -128,11 +135,14 @@ def make_case(spec: dict[str, object], cue_present: bool) -> dict[str, object]:
         spec["output_choice"] if cue_present else spec.get("control_choice", spec["output_choice"])
     )
     memory_choice = str(spec["memory_choice"]) if cue_present else output_choice
+    prompt = str(spec["prompt"])
+    if variant == "memory-included":
+        prompt = f"Known personal memory:\n{memory_text}\n\n{prompt}"
     return {
-        "case_id": f"parm-amara-{slug}-{suffix}",
+        "case_id": f"parm-amara-{slug}-{variant}",
         "base_case_id": f"parm-amara-{slug}",
-        "variant": suffix,
-        "prompt": spec["prompt"],
+        "variant": variant,
+        "prompt": prompt,
         "observation": {
             "kind": spec["kind"],
             "content_path": f"contexts/{slug}.md",
@@ -173,9 +183,9 @@ def make_case(spec: dict[str, object], cue_present: bool) -> dict[str, object]:
 def main() -> None:
     DATASET.mkdir(parents=True, exist_ok=True)
     cases = [
-        make_case(spec, cue_present)
+        make_case(spec, variant)
         for spec in SPECS
-        for cue_present in (True, False)
+        for variant in VARIANTS
     ]
     path = DATASET / "cases.jsonl"
     with path.open("w", encoding="utf-8", newline="\n") as handle:

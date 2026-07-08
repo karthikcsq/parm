@@ -1,0 +1,13 @@
+# Normalize line endings: store and check out text files with LF regardless of
+# the local core.autocrlf setting. This stops the "LF will be replaced by CRLF"
+# warnings on Windows and keeps the working tree consistent across platforms.
+* text=auto eol=lf
+
+# Common binaries: never touch line endings or diff as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.ico binary
+*.zip binary

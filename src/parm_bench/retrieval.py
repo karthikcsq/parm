@@ -28,6 +28,14 @@ GRAPH_MULTIPLIER = 1.05
 EXPANSION_MODEL = "gpt-5-mini"
 EXPANSION_PROMPT_VERSION = "retrieval-expansion-v1"
 
+# Raw-cosine diagnostics drift ~1e-4 across runs (embeddings are deterministic
+# within a process but not across processes), so they are kept on the in-memory
+# RetrievalHit for tests/debugging but not written to the persisted trace, which
+# should replay byte-identically as long as the textual content is unchanged.
+_NON_REPRODUCIBLE_DIAGNOSTICS = frozenset(
+    {"original_query_cosine", "pre_graph_score", "final_score"}
+)
+
 
 _EMBEDDING_ENCODER: Any | None = None
 
@@ -648,7 +656,11 @@ class IndexRetriever:
                     "selected_chunk_id": hit.chunk_id,
                     "perturbations": list(hit.perturbations),
                     "final_rank": hit.rank,
-                    **hit.diagnostics,
+                    **{
+                        key: value
+                        for key, value in hit.diagnostics.items()
+                        if key not in _NON_REPRODUCIBLE_DIAGNOSTICS
+                    },
                 }
                 for hit in hits
             ],

@@ -313,6 +313,13 @@ class RankingTests(unittest.TestCase):
             diagnostic["final_score"],
             0.70 + 0.30 * diagnostic["original_query_cosine"],
         )
+        # Raw-cosine diagnostics stay on the hit for tests/debugging but are not
+        # persisted to the trace, which must replay byte-identically across runs.
+        page = result.trace["returned_pages"][0]
+        self.assertIn("final_rank", page)
+        self.assertIn("raw_rrf", page)
+        for dropped in ("original_query_cosine", "pre_graph_score", "final_score"):
+            self.assertNotIn(dropped, page)
 
     def test_enhanced_title_candidate_and_graph_candidate_containment(self) -> None:
         pages = [

@@ -23,8 +23,10 @@
   "output_rag_flow": "model_output_only",
   "perturbation_filtering": false,
   "requested_model": "gpt-5-mini",
+  "response_cache_hash": "9e89bb540494ea904936f381c06971ad9096a713f99403a7d85445e630624cc0",
   "retrieval_index": "C:\\Users\\karth\\CodingFiles\\PARM\\parm\\data\\retrieval-indexes\\amara-life-v1",
   "retrieval_limit": 5,
   "retrieval_manifest_hash": "fcb22655b87964ed7df33e90673e290a5a257a5b7eef49122480ade29cbf6bd8",
-  "retrieval_mode": "dense"
+  "retrieval_mode": "dense",
+  "variants": null
 }

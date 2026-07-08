@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Redwood Robotics company overview",
+    "Redwood Robotics history and acquisition details",
+    "Redwood Robotics founders, products, and technology"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "redwood robotics",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "2592d8dd7e22aa0c347ab71eaa18cd79ae8caaf3578e3608b0e10d668e36d78f"
+}

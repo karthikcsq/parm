@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Subtle signs of quiet burnout: how to recognize early emotional exhaustion",
+    "Silent burnout symptoms in professionals and remote workers: hidden warning signs",
+    "Hidden or quiet burnout indicators and practical steps to address chronic workplace fatigue"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "quiet burnout signals",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "82d47cb4226103845cc251072ced70454c764b728abb76b10eb0fe5a08d6edb1"
+}

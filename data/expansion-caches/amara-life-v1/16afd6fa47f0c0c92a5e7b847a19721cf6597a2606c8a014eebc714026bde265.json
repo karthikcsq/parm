@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "CoreWeave Reserved-GPU pricing revision announcement",
+    "CoreWeave Reserved GPU pricing change details and new rates",
+    "Official CoreWeave Reserved-GPU pricing update statement and policy"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "coreweave reserved-gpu pricing revision.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "6961189e0fdfa8a04c6a2f3eb1bac28693f4e5bad0cd3748698a74304d2e7724"
+}

@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Session G-147 Chen Wei NovaMind \"Edge Inference for Texas Grid Reliability Pilots\" talk with 15-minute audience Q&A on field evidence and deployment results",
+    "Chen Wei (NovaMind) Session G-147 Edge inference Texas grid reliability pilot presentation and 15 min Q&A covering field evidence and deployment outcomes",
+    "Conference Session G-147: \"Edge Inference for Texas Grid Reliability Pilots\" \u2014 speaker Chen Wei, NovaMind; seek slides/video and the 15-minute audience Q&A discussing field data and deployment results"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "session g-147 \u2014 chen wei, novamind: edge inference for texas grid reliability pilots. the session includes a fifteen-minute audience q&a on field evidence and deployment results.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "5ce0f8f000d09ef8f3012df4269d81505fff9d28a4211043779edc693dbb8df4"
+}

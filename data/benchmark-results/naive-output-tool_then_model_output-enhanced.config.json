@@ -16,16 +16,17 @@
     "openai": "2.44.0"
   },
   "embedding_model": "openai:text-embedding-3-small",
-  "expansion_cache_hash": "9cdb7237d94f637c111054a6df9f8d2245780f4691e1f7c1961704026621f7c9",
+  "expansion_cache_hash": "5d5123cc03a4f92d8cd679272d9a9db430f851a6be0f908ec1bcb8f9cafda346",
   "expansion_model": "gpt-5-mini",
   "expansion_prompt_version": "retrieval-expansion-v1",
   "gbrain_version": "0.42.53.0",
   "output_rag_flow": "tool_then_model_output",
   "perturbation_filtering": false,
   "requested_model": "gpt-5-mini",
-  "response_cache_hash": "b683c2cf67ef64dcdb6238f7d912d30478471faef3b1b070e350abf72a8f1117",
+  "response_cache_hash": "d7b8e978daf7fdf4f08b0c9160d6aa022c50e11c6d93e6a033fd70ae211119e0",
   "retrieval_index": "C:\\Users\\karth\\CodingFiles\\PARM\\parm\\data\\retrieval-indexes\\amara-life-v1",
   "retrieval_limit": 5,
   "retrieval_manifest_hash": "fcb22655b87964ed7df33e90673e290a5a257a5b7eef49122480ade29cbf6bd8",
-  "retrieval_mode": "enhanced"
+  "retrieval_mode": "enhanced",
+  "variants": null
 }

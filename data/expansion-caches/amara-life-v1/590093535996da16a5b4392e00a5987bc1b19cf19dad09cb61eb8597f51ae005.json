@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Garden table outdoor dining table 6-seater teak",
+    "Small round patio table for balcony metal foldable",
+    "Rustic wooden garden table with bench seating weatherproof"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "garden table",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "75a265d574c68d43e342ea6098a69017cfcbf6ea1c29742fdcb3e713d16a7851"
+}

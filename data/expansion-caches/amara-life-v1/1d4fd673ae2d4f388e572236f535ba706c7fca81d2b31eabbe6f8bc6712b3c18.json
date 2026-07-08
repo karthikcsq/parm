@@ -1,0 +1,11 @@
+{
+  "alternatives": [
+    "Session G-147 Chen Wei NovaMind \"Edge Inference for Texas Grid Reliability Pilots\" slides video proceedings",
+    "Chen Wei NovaMind edge inference Texas grid reliability pilots presentation abstract paper transcript",
+    "G-147 \"Edge Inference for Texas Grid Reliability Pilots\" conference session edge computing Texas grid pilots Chen Wei"
+  ],
+  "model": "gpt-5-mini",
+  "normalized_query": "session g-147 \u2014 chen wei, novamind: edge inference for texas grid reliability pilots.",
+  "prompt_version": "retrieval-expansion-v1",
+  "query_hash": "c081309f219ae446588a5220dda0ad976b49d1cb883132c699d896e7172cde57"
+}

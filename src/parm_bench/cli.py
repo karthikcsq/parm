@@ -19,7 +19,12 @@ from .baselines import (
     benchmark_input,
     get_baseline,
 )
-from .dataset import DatasetValidationError, load_cases, validate_cases
+from .dataset import (
+    VARIANTS,
+    DatasetValidationError,
+    load_cases,
+    validate_cases,
+)
 from .models import (
     CachingLanguageModel,
     ModelTruncationError,
@@ -104,6 +109,13 @@ def main(argv: list[str] | None = None) -> int:
         "--response-policy",
         choices=tuple(policy.value for policy in ResponsePolicy),
     )
+    run.add_argument(
+        "--variant",
+        action="append",
+        dest="variants",
+        choices=tuple(sorted(VARIANTS)),
+        help="restrict the run to one or more variants (default: all)",
+    )
     run.add_argument("--model")
     run.add_argument("--out", required=True)
 
@@ -175,6 +187,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.response_policy,
                 args.model,
                 args.out,
+                args.variants,
             )
         if args.command == "score":
             return _score(args.results_jsonl, args.gold, args.out)
@@ -236,9 +249,18 @@ def _run(
     response_policy: str | None,
     model_name: str | None,
     out: str,
+    variants: list[str] | None = None,
 ) -> int:
     cases = load_cases(dataset_dir)
     validate_cases(cases)
+    if variants:
+        wanted = set(variants)
+        cases = [case for case in cases if case["variant"] in wanted]
+        if not cases:
+            raise ValueError(
+                "no cases match the requested --variant filter: "
+                + ", ".join(sorted(wanted))
+            )
     implementation = get_baseline(
         baseline,
         BaselineConfiguration(
@@ -329,6 +351,7 @@ def _run(
         response_cache_hash=(
             model.cache_hash if isinstance(model, CachingLanguageModel) else None
         ),
+        variants=sorted(set(variants)) if variants else None,
     )
     print(f"Wrote {len(cases)} predictions to {path}")
     if truncated:
@@ -395,9 +418,11 @@ def _write_run_configuration(
     retrieval_limit: int | None,
     requested_model: str,
     response_cache_hash: str | None = None,
+    variants: list[str] | None = None,
 ) -> None:
     payload = {
         "baseline": baseline,
+        "variants": variants,
         "response_cache_hash": response_cache_hash,
         "output_rag_flow": output_rag_flow,
         "retrieval_mode": retriever.mode.value if retriever is not None else None,

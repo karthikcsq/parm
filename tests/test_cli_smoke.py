@@ -156,7 +156,7 @@ class CliSmokeTests(unittest.TestCase):
             self.assertEqual(status, 2)
             self.assertFalse(result.exists())
 
-    def test_no_memory_run_calls_model_once_for_all_ten_cases(self) -> None:
+    def test_no_memory_run_calls_model_once_for_all_cases(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             result = Path(tmp) / "result.jsonl"
             with (
@@ -185,12 +185,12 @@ class CliSmokeTests(unittest.TestCase):
             self.assertEqual(status, 0)
             model = FakeOpenAIModel.instances[0]
             self.assertEqual(model.model_name, "chosen-model")
-            self.assertEqual(len(model.calls), 10)
+            self.assertEqual(len(model.calls), 15)
             rows = [
                 json.loads(line)
                 for line in result.read_text(encoding="utf-8").splitlines()
             ]
-            self.assertEqual(len(rows), 10)
+            self.assertEqual(len(rows), 15)
             self.assertTrue(all(row["baseline"] == "no_memory" for row in rows))
             self.assertTrue(
                 all(row["trace"]["admitted_source_ids"] == [] for row in rows)
@@ -200,6 +200,45 @@ class CliSmokeTests(unittest.TestCase):
             )
             self.assertEqual(configuration["baseline"], "no_memory")
             self.assertIsNone(configuration["retrieval_limit"])
+
+    def test_variant_filter_restricts_the_run_and_records_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            with (
+                patch("parm_bench.cli.OpenAIResponsesModel", FakeOpenAIModel),
+                patch(
+                    "parm_bench.cli.IndexRetriever",
+                    side_effect=AssertionError("retriever must not be instantiated"),
+                ),
+            ):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "no_memory",
+                        "--variant",
+                        "memory-included",
+                        "--out",
+                        str(result),
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            rows = [
+                json.loads(line)
+                for line in result.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertEqual(len(rows), 5)
+            self.assertTrue(
+                all(
+                    row["case_id"].endswith("-memory-included") for row in rows
+                )
+            )
+            configuration = json.loads(
+                result.with_suffix(".config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(configuration["variants"], ["memory-included"])
 
     def test_input_rag_run_uses_configured_limit_and_writes_sidecar(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -243,7 +282,7 @@ class CliSmokeTests(unittest.TestCase):
 
             self.assertEqual(status, 0)
             retriever = FakeRetriever.instances[0]
-            self.assertEqual(len(retriever.calls), 10)
+            self.assertEqual(len(retriever.calls), 15)
             self.assertTrue(all(call.top_k == 3 for call in retriever.calls))
             model = FakeOpenAIModel.instances[0]
             self.assertTrue(
@@ -317,7 +356,7 @@ class CliSmokeTests(unittest.TestCase):
 
             self.assertEqual(status, 0)
             retriever = FakeRetriever.instances[0]
-            self.assertEqual(len(retriever.calls), 10)
+            self.assertEqual(len(retriever.calls), 15)
             self.assertTrue(
                 all(call.top_k == 2 for call in retriever.calls)
             )
@@ -516,7 +555,7 @@ class CliSmokeTests(unittest.TestCase):
                 json.loads(line)
                 for line in result.read_text(encoding="utf-8").splitlines()
             ]
-            self.assertEqual(len(rows), 10)
+            self.assertEqual(len(rows), 15)
             truncated = [row for row in rows if row.get("truncated")]
             self.assertEqual(len(truncated), 1)
             self.assertEqual(truncated[0]["response_text"], "")

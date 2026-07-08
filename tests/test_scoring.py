@@ -46,6 +46,41 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(metrics["cue_ablated_false_intervention_rate"], 0.0)
         self.assertEqual(metrics["memory_admission_precision"], 1.0)
 
+    def test_memory_included_scores_a_ceiling_bucket_only(self) -> None:
+        included = [c for c in CASES if c["variant"] == "memory-included"]
+        self.assertEqual(len(included), 5)
+        # gold picks on the ceiling cases only
+        gold = [
+            prediction(case, case["decisions"]["memory_conditioned"]["choice"])
+            for case in included
+        ]
+        metrics = score_predictions(CASES, gold)
+        self.assertEqual(metrics["memory_included_count"], 5)
+        self.assertEqual(metrics["ceiling_accuracy"], 1.0)
+        # the ceiling cases are excluded from the retrieval-case population
+        self.assertEqual(metrics["case_count"], 10)
+
+    def test_memory_included_does_not_pollute_false_intervention(self) -> None:
+        # every case answered correctly (cue-ablated + positive keep the output
+        # decision they should; ceiling cases pick the memory choice). The
+        # ceiling picks must not read as cue-ablated false interventions.
+        predictions = [
+            prediction(case, case["decisions"]["memory_conditioned"]["choice"])
+            for case in CASES
+        ]
+        metrics = score_predictions(CASES, predictions)
+        self.assertEqual(metrics["cue_ablated_false_intervention_rate"], 0.0)
+        self.assertEqual(metrics["ceiling_accuracy"], 1.0)
+
+    def test_missed_ceiling_lowers_ceiling_accuracy(self) -> None:
+        included = [c for c in CASES if c["variant"] == "memory-included"]
+        predictions = [
+            prediction(case, case["decisions"]["output_only"]["choice"])
+            for case in included
+        ]
+        metrics = score_predictions(CASES, predictions)
+        self.assertEqual(metrics["ceiling_accuracy"], 0.0)
+
     def test_output_only_predictions_do_not_claim_benefit(self) -> None:
         predictions = [
             prediction(case, case["decisions"]["output_only"]["choice"])

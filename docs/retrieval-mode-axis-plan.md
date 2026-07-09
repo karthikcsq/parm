@@ -28,7 +28,7 @@ GBrain is responsible for preparing the memory substrate:
 - retaining page titles and source metadata
 - extracting page-to-page graph edges
 
-GBrain must not perform ranking during canonical benchmark runs. A tracked exporter will freeze its neutral index data into a versioned artifact. PARM will own BM25, cosine ranking, RRF, title retrieval, graph reranking, fixed top-k selection, and retrieval traces.
+GBrain must not perform ranking during canonical benchmark runs. A tracked exporter will freeze its neutral index data into a versioned artifact. PARM will own BM25, cosine ranking, RRF, title retrieval, graph reranking, selection, and retrieval traces. Selection is condition-dependent: fixed top-k for the mode-matched baselines, and a convergence-score threshold for the PARM condition (see `docs/parm-convergence-retrieval-design.md`).
 
 Canonical runs must never invoke `gbrain search`.
 
@@ -78,6 +78,18 @@ The loader must reject missing files, hash mismatches, duplicate IDs, dangling p
 - Use a final top-k of 5 for official experiments.
 - Admit all retrieved memories. Perturbation labels are evaluation metadata and must not affect retrieval.
 - Do not use autocut, a cross-encoder reranker, compiled-truth boosts, source boosts, recency boosts, or dynamic score thresholds.
+
+> **Deprecated as universal rules (2026-07-08).** The three constraints above —
+> fixed top-k of 5, admit-all, and no dynamic score thresholds — were written to
+> apply to every retrieval condition. They no longer do. Selection policy is
+> condition-dependent. The mode-matched baselines (`no_memory`, `input_rag`,
+> naive output-RAG) keep fixed top-k and admit-all for comparability. The PARM
+> condition selects by a convergence-score threshold `T` and may admit zero,
+> because fixed top-k cannot express "admit nothing" and that is the required
+> behavior on cue-ablated twins. See `docs/parm-convergence-retrieval-design.md`.
+> The dynamic-threshold and reranker prohibitions still bind the shared
+> `dense`/`hybrid`/`enhanced` modes so mode-matched comparisons stay clean; PARM's
+> convergence ranking and threshold are part of the condition, not those modes.
 
 ### `dense`
 

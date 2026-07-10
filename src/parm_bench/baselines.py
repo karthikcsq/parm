@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Callable, Protocol
 
 from .models import FINAL_ANSWER_INSTRUCTIONS, LanguageModel, ModelResponse
-from .retrieval import RetrievalRequest, Retriever
+from .retrieval import EntityRetriever, RetrievalRequest, Retriever
 
 
 class BaselineNotImplementedError(LookupError):
@@ -23,12 +23,13 @@ class BenchmarkInput:
 class Baseline(Protocol):
     name: str
     requires_memory: bool
+    retrieval_resource: "RetrievalResourceKind"
 
     def run(
         self,
         case: BenchmarkInput,
         model: LanguageModel,
-        retriever: Retriever | None,
+        retriever: Retriever | EntityRetriever | None,
     ) -> dict[str, Any]: ...
 
 
@@ -45,9 +46,16 @@ class OutputRagFlow(str, Enum):
     TOOL_THEN_MODEL_OUTPUT = "tool_then_model_output"
 
 
+class RetrievalResourceKind(str, Enum):
+    NONE = "none"
+    MODE_RETRIEVER = "mode_retriever"
+    ENTITY_EXACT = "entity_exact"
+
+
 class NoMemoryBaseline:
     name = "no_memory"
     requires_memory = False
+    retrieval_resource = RetrievalResourceKind.NONE
 
     def run(
         self,
@@ -84,6 +92,7 @@ class InputRagBaseline:
     retrieval_limit: int = 5
     name = "input_rag"
     requires_memory = True
+    retrieval_resource = RetrievalResourceKind.MODE_RETRIEVER
 
     def __post_init__(self) -> None:
         if self.retrieval_limit < 1:
@@ -145,6 +154,7 @@ class NaiveOutputRagBaseline:
     output_rag_flow: OutputRagFlow = OutputRagFlow.TOOL_THEN_MODEL_OUTPUT
     name = "naive_output_rag"
     requires_memory = True
+    retrieval_resource = RetrievalResourceKind.MODE_RETRIEVER
 
     def __post_init__(self) -> None:
         if self.retrieval_limit < 1:
@@ -285,6 +295,77 @@ class NaiveOutputRagBaseline:
 
 
 @dataclass(frozen=True)
+class AllEntityOutputRagBaseline:
+    retrieval_limit: int = 5
+    name = "all_entity_output_rag"
+    requires_memory = True
+    retrieval_resource = RetrievalResourceKind.ENTITY_EXACT
+
+    def __post_init__(self) -> None:
+        if self.retrieval_limit < 1:
+            raise ValueError("retrieval_limit must be at least 1")
+
+    def run(
+        self,
+        case: BenchmarkInput,
+        model: LanguageModel,
+        retriever: Retriever | EntityRetriever | None,
+    ) -> dict[str, Any]:
+        if retriever is None or not hasattr(retriever, "retrieve_entities"):
+            raise ValueError("all_entity_output_rag baseline requires an entity retriever")
+        retrieval = retriever.retrieve_entities(
+            case.observation_text,
+            top_k=self.retrieval_limit,
+        )
+        admitted_hits = _dedupe_entity_hits(list(retrieval.hits))
+        memory_context = _memory_context(admitted_hits)
+        response = model.generate(
+            prompt=case.prompt,
+            observation_kind=case.observation_kind,
+            observation_text=case.observation_text,
+            instructions=(
+                INPUT_RAG_INSTRUCTIONS
+                if memory_context
+                else FINAL_ANSWER_INSTRUCTIONS
+            ),
+            memory_context=memory_context or None,
+        )
+        retrieved_source_ids = [hit.slug for hit in retrieval.hits]
+        admitted_source_ids = [hit.slug for hit in admitted_hits]
+        return {
+            "case_id": case.case_id,
+            "response_text": response.text,
+            "requested_model": model.model_name,
+            "resolved_model": response.resolved_model,
+            "provider_response_id": response.response_id,
+            "usage": response.usage,
+            "trace": {
+                "detected_cues": [
+                    {
+                        "seed_id": seed.seed_id,
+                        "surface": seed.surface,
+                        "normalized_surface": seed.normalized_surface,
+                        "source": seed.source,
+                        "span": [seed.span_start, seed.span_end],
+                        "matched_page_ids": list(seed.matched_page_ids),
+                    }
+                    for seed in retrieval.seeds
+                ],
+                **retrieval.trace,
+                "retrieved_page_ids": [hit.page_id for hit in retrieval.hits],
+                "retrieved_source_ids": retrieved_source_ids,
+                "admitted_page_ids": [hit.page_id for hit in admitted_hits],
+                "admitted_source_ids": admitted_source_ids,
+                "admitted_perturbations": {
+                    hit.slug: list(hit.perturbations)
+                    for hit in admitted_hits
+                    if hit.perturbations
+                },
+            },
+        }
+
+
+@dataclass(frozen=True)
 class PlannedBaseline:
     """Design inventory only. A planned baseline is not executable."""
 
@@ -384,6 +465,16 @@ register_baseline(
         configuration.output_rag_flow,
     ),
 )
+register_baseline(
+    "all_entity_output_rag",
+    lambda configuration: AllEntityOutputRagBaseline(
+        configuration.retrieval_limit,
+    ),
+)
+
+
+def retrieval_resource_kind(name: str) -> RetrievalResourceKind:
+    return get_baseline(name).retrieval_resource
 
 
 def _retrieve_phase(
@@ -417,6 +508,38 @@ def _dedupe_hits_by_source(hits: list[Any]) -> list[Any]:
             continue
         seen.add(hit.slug)
         deduped.append(hit)
+    return deduped
+
+
+def _dedupe_entity_hits(hits: list[Any]) -> list[Any]:
+    best_by_page = {}
+    contributors: dict[str, list[dict[str, Any]]] = {}
+    for hit in hits:
+        contributors.setdefault(hit.page_id, []).append(
+            {
+                "seed_id": hit.diagnostics.get("entity_seed_id"),
+                "surface": hit.diagnostics.get("entity_surface"),
+                "source": hit.diagnostics.get("entity_source"),
+                "rank": hit.rank,
+                "score": hit.score,
+            }
+        )
+        previous = best_by_page.get(hit.page_id)
+        if previous is None or (hit.rank, -hit.score, hit.page_id) < (
+            previous.rank,
+            -previous.score,
+            previous.page_id,
+        ):
+            best_by_page[hit.page_id] = hit
+    ordered = sorted(
+        best_by_page.values(),
+        key=lambda hit: (hit.rank, -hit.score, hit.page_id),
+    )
+    deduped = []
+    for rank, hit in enumerate(ordered, start=1):
+        diagnostics = dict(hit.diagnostics)
+        diagnostics["entity_contributors"] = contributors[hit.page_id]
+        deduped.append(replace(hit, rank=rank, diagnostics=diagnostics))
     return deduped
 
 

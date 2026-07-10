@@ -178,7 +178,7 @@
       border: 1px solid #aebbc8;
     }
 
-    .choice-grid.condition-grid,
+    .choice-grid.condition-grid { grid-template-columns: repeat(4, 1fr); }
     .choice-grid.mode-grid { grid-template-columns: repeat(3, 1fr); }
     .choice-grid.flow-grid { grid-template-columns: 1fr; }
     .choice-grid input { position: absolute; opacity: 0; pointer-events: none; }
@@ -574,8 +574,11 @@
       .evaluation { grid-template-columns: 1fr; }
       .verdict { justify-items: start; min-height: 52px; }
       .masthead, .controls, .results { padding-left: 18px; padding-right: 18px; }
+      .choice-grid.condition-grid,
       .choice-grid.mode-grid { grid-template-columns: 1fr; }
+      .choice-grid.condition-grid label,
       .choice-grid.mode-grid label { border-right: 0; border-bottom: 1px solid #aebbc8; }
+      .choice-grid.condition-grid label:last-child,
       .choice-grid.mode-grid label:last-child { border-bottom: 0; }
       .inline-fields { grid-template-columns: 78px 1fr; }
       .hit { grid-template-columns: 38px minmax(0, 1fr); }
@@ -625,6 +628,8 @@
             <label for="condition-rag">Input RAG</label>
             <input type="radio" id="condition-output-rag" name="condition" value="naive_output_rag">
             <label for="condition-output-rag">Output RAG</label>
+            <input type="radio" id="condition-entity-rag" name="condition" value="all_entity_output_rag">
+            <label for="condition-entity-rag">Entity RAG</label>
           </div>
         </fieldset>
 
@@ -752,12 +757,16 @@
       const condition = selected("condition");
       const hasMemory = condition !== "no_memory";
       const isOutputRag = condition === "naive_output_rag";
+      const isEntityRag = condition === "all_entity_output_rag";
       flowFieldset.hidden = !isOutputRag;
       flowFieldset.disabled = !isOutputRag;
-      modeFieldset.disabled = !hasMemory;
+      modeFieldset.hidden = isEntityRag;
+      modeFieldset.disabled = !hasMemory || isEntityRag;
       topKInput.disabled = !hasMemory;
       if (!hasMemory) {
         conditionNote.textContent = "Retrieval is skipped. The prompt goes directly to the response model.";
+      } else if (isEntityRag) {
+        conditionNote.textContent = "Entities are extracted from the selected case observation, then each entity admits exact matching pages from the frozen index.";
       } else if (isOutputRag) {
         conditionNote.textContent = "The selected flow controls where output-triggered retrieval runs. Retrieval mode still controls how memories are ranked.";
       } else {
@@ -847,6 +856,12 @@
           )
         );
       }
+      if (hit.diagnostics.entity_surface) {
+        diagnostics.append(
+          chip(`entity ${hit.diagnostics.entity_surface}`),
+          chip(hit.diagnostics.entity_source || "entity")
+        );
+      }
       for (const perturbation of hit.perturbations || []) {
         diagnostics.append(chip(perturbation, "perturbation"));
       }
@@ -877,7 +892,11 @@
       meta.append(dot);
       addMeta(meta, "condition", result.condition);
       if (result.output_rag_flow) addMeta(meta, "flow", result.output_rag_flow);
-      addMeta(meta, "mode", result.retrieval_mode || "none");
+      addMeta(
+        meta,
+        "mode",
+        result.retrieval_mode || result.retrieval?.trace?.retrieval_condition_detail || "none"
+      );
       if (result.case) addMeta(meta, "case", result.case.label);
       addMeta(meta, "time", `${result.elapsed_ms} ms`);
       addMeta(meta, "model", result.model.resolved_model);

@@ -12,6 +12,8 @@ from parm_bench.baselines import INPUT_RAG_INSTRUCTIONS
 from parm_bench.models import ModelResponse
 from parm_bench.retrieval import (
     EMBEDDING_MODEL,
+    EntityRetrievalResult,
+    EntitySeed,
     RetrievalHit,
     RetrievalMode,
     RetrievalRequest,
@@ -86,6 +88,51 @@ class FailingRetriever:
         raise RuntimeError("network down")
 
 
+class FakeEntityRetriever:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, int]] = []
+
+    def retrieve_entities(
+        self,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> EntityRetrievalResult:
+        self.calls.append((observation_text, top_k))
+        seed = EntitySeed(
+            "entity-1",
+            "Garden Table",
+            "garden table",
+            "gazetteer",
+            10,
+            22,
+        )
+        hit = RetrievalHit(
+            page_id="fixture:note/entity",
+            source_id="fixture",
+            slug="note/one",
+            title="Entity memory",
+            chunk_id="fixture:note/entity:0",
+            text="Entity-selected memory.",
+            score=1.4,
+            rank=1,
+            diagnostics={
+                "entity_seed_id": seed.seed_id,
+                "entity_surface": seed.surface,
+                "entity_source": seed.source,
+            },
+        )
+        return EntityRetrievalResult(
+            (seed,),
+            (hit,),
+            {
+                "retrieval_condition_detail": "entity_exact_match",
+                "entity_seeds": [seed.__dict__],
+                "per_seed_retrievals": [],
+            },
+        )
+
+
 class FailingModel:
     def __init__(self, model_name: str):
         self.model_name = model_name
@@ -126,10 +173,16 @@ class WorkbenchServiceTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeModel.calls.clear()
         self.retrievers: list[FakeRetriever] = []
+        self.entity_retrievers: list[FakeEntityRetriever] = []
 
         def factory(mode: RetrievalMode) -> FakeRetriever:
             retriever = FakeRetriever(mode)
             self.retrievers.append(retriever)
+            return retriever
+
+        def entity_factory() -> FakeEntityRetriever:
+            retriever = FakeEntityRetriever()
+            self.entity_retrievers.append(retriever)
             return retriever
 
         self.service = WorkbenchService(
@@ -138,6 +191,7 @@ class WorkbenchServiceTests(unittest.TestCase):
             default_model="test-model",
             model_factory=FakeModel,
             retriever_factory=factory,
+            entity_retriever_factory=entity_factory,
             cases=[fake_case()],
         )
 
@@ -245,6 +299,45 @@ class WorkbenchServiceTests(unittest.TestCase):
                 }
             )
 
+    def test_all_entity_output_rag_uses_case_observation_without_mode(self) -> None:
+        result = self.service.run(
+            {
+                "case_id": "parm-amara-lunch-search-positive",
+                "condition": "all_entity_output_rag",
+                "retrieval_mode": "dense",
+                "top_k": 4,
+            }
+        )
+
+        self.assertEqual(self.retrievers, [])
+        self.assertEqual(
+            self.entity_retrievers[0].calls,
+            [("Result 1. Garden Table", 4)],
+        )
+        self.assertEqual(result["condition"], "all_entity_output_rag")
+        self.assertIsNone(result["retrieval_mode"])
+        self.assertEqual(
+            result["retrieval"]["trace"]["retrieval_condition_detail"],
+            "entity_exact_match",
+        )
+        self.assertEqual(
+            result["retrieval"]["hits"][0]["diagnostics"]["entity_surface"],
+            "Garden Table",
+        )
+        self.assertEqual(
+            FakeModel.calls[0]["memory_context"],
+            "1. Entity-selected memory.",
+        )
+
+    def test_all_entity_output_rag_requires_case(self) -> None:
+        with self.assertRaisesRegex(WorkbenchRequestError, "Choose a benchmark case"):
+            self.service.run(
+                {
+                    "prompt": "Custom text",
+                    "condition": "all_entity_output_rag",
+                }
+            )
+
     def test_case_selection_uses_canonical_prompt_and_observation(self) -> None:
         result = self.service.run(
             {
@@ -304,10 +397,10 @@ class WorkbenchServiceTests(unittest.TestCase):
         case = {
             "variant": "positive",
             "decisions": {
-                "output_only": {"choice": "Lead Story — Atlas Release"},
+                "output_only": {"choice": "Lead Story \u2014 Atlas Release"},
                 "memory_conditioned": {
                     "choice": (
-                        "Item 147 — CoreWeave Reserved-GPU Pricing Revision"
+                        "Item 147 \u2014 CoreWeave Reserved-GPU Pricing Revision"
                     )
                 },
             },
@@ -324,7 +417,7 @@ class WorkbenchServiceTests(unittest.TestCase):
         self.assertEqual(result["retrieval_status"], "miss")
         self.assertEqual(
             result["matched_choices"],
-            ["Item 147 — CoreWeave Reserved-GPU Pricing Revision"],
+            ["Item 147 \u2014 CoreWeave Reserved-GPU Pricing Revision"],
         )
 
     def _memory_included_case(self) -> dict:
@@ -333,10 +426,10 @@ class WorkbenchServiceTests(unittest.TestCase):
             "base_case_id": "parm-amara-ai-news-digest",
             "variant": "memory-included",
             "decisions": {
-                "output_only": {"choice": "Lead Story — Atlas Release"},
+                "output_only": {"choice": "Lead Story \u2014 Atlas Release"},
                 "memory_conditioned": {
                     "choice": (
-                        "Item 147 — CoreWeave Reserved-GPU Pricing Revision"
+                        "Item 147 \u2014 CoreWeave Reserved-GPU Pricing Revision"
                     )
                 },
             },
@@ -346,14 +439,14 @@ class WorkbenchServiceTests(unittest.TestCase):
     def test_memory_included_label_is_distinct(self) -> None:
         self.assertEqual(
             _case_label(self._memory_included_case()),
-            "AI News Digest — Memory included",
+            "AI News Digest \u2014 Memory included",
         )
 
     def test_memory_included_expects_memory_choice_under_no_memory(self) -> None:
         result = _evaluate_case(
             self._memory_included_case(),
             RetrievalCondition.NO_MEMORY,
-            "Item 147 — CoreWeave Reserved-GPU Pricing Revision",
+            "Item 147 \u2014 CoreWeave Reserved-GPU Pricing Revision",
             None,
         )
         self.assertEqual(result["expected_basis"], "memory-conditioned")
@@ -365,7 +458,7 @@ class WorkbenchServiceTests(unittest.TestCase):
         result = _evaluate_case(
             self._memory_included_case(),
             RetrievalCondition.NO_MEMORY,
-            "Lead Story — Atlas Release",
+            "Lead Story \u2014 Atlas Release",
             None,
         )
         self.assertFalse(result["successful"])
@@ -380,7 +473,7 @@ class WorkbenchServiceTests(unittest.TestCase):
         result = _evaluate_case(
             self._memory_included_case(),
             RetrievalCondition.INPUT_RAG,
-            "Item 147 — CoreWeave Reserved-GPU Pricing Revision",
+            "Item 147 \u2014 CoreWeave Reserved-GPU Pricing Revision",
             RetrievalResult(hits=(), trace={}),
         )
         self.assertTrue(result["successful"])
@@ -469,12 +562,18 @@ class WorkbenchHttpTests(unittest.TestCase):
         self.assertIn("No memory", html)
         self.assertIn("Input RAG", html)
         self.assertIn("Output RAG", html)
+        self.assertIn("Entity RAG", html)
 
         with urllib.request.urlopen(self.base_url + "/api/config") as response:
             configuration = json.load(response)
         self.assertEqual(
             configuration["conditions"],
-            ["no_memory", "input_rag", "naive_output_rag"],
+            [
+                "no_memory",
+                "input_rag",
+                "naive_output_rag",
+                "all_entity_output_rag",
+            ],
         )
         self.assertEqual(
             configuration["output_rag_flows"],
@@ -490,7 +589,7 @@ class WorkbenchHttpTests(unittest.TestCase):
         )
         self.assertEqual(
             configuration["cases"][0]["label"],
-            "Lunch Search — Cue present",
+            "Lunch Search \u2014 Cue present",
         )
 
         request = urllib.request.Request(

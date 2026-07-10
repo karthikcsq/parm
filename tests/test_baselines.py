@@ -5,6 +5,7 @@ from dataclasses import asdict
 from pathlib import Path
 
 from parm_bench.baselines import (
+    AllEntityOutputRagBaseline,
     INPUT_RAG_INSTRUCTIONS,
     InputRagBaseline,
     NaiveOutputRagBaseline,
@@ -15,6 +16,8 @@ from parm_bench.baselines import (
 from parm_bench.dataset import load_cases
 from parm_bench.models import FINAL_ANSWER_INSTRUCTIONS, ModelResponse
 from parm_bench.retrieval import (
+    EntityRetrievalResult,
+    EntitySeed,
     RetrievalHit,
     RetrievalMode,
     RetrievalRequest,
@@ -126,6 +129,34 @@ class RecordingRetriever:
                 "expansion_queries": [],
                 "candidate_lists": {"dense:original": ["page/one", "page/two"]},
                 "returned_pages": [],
+            },
+        )
+
+
+class RecordingEntityRetriever:
+    def __init__(
+        self,
+        seeds: tuple[EntitySeed, ...],
+        hits: tuple[RetrievalHit, ...],
+    ) -> None:
+        self.seeds = seeds
+        self.hits = hits
+        self.calls: list[tuple[str, int]] = []
+
+    def retrieve_entities(
+        self,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> EntityRetrievalResult:
+        self.calls.append((observation_text, top_k))
+        return EntityRetrievalResult(
+            self.seeds,
+            self.hits,
+            {
+                "retrieval_condition_detail": "entity_exact_match",
+                "entity_seeds": [seed.__dict__ for seed in self.seeds],
+                "per_seed_retrievals": [],
             },
         )
 
@@ -331,6 +362,72 @@ class NaiveOutputRagBaselineTests(unittest.TestCase):
             NaiveOutputRagBaseline().run(case, RecordingModel(), None)
         with self.assertRaisesRegex(ValueError, "at least 1"):
             NaiveOutputRagBaseline(retrieval_limit=0)
+
+
+class AllEntityOutputRagBaselineTests(unittest.TestCase):
+    def test_retrieves_entities_from_observation_and_admits_flat_union(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+        seeds = (
+            EntitySeed("entity-1", "Alpha Project", "alpha project", "gazetteer", 0, 13),
+            EntitySeed("entity-2", "Beta Team", "beta team", "noun_phrase", 20, 29),
+        )
+        retriever = RecordingEntityRetriever(
+            seeds,
+            (
+                hit("page/b", "note/b", "Beta memory", 0.7),
+                hit("page/a", "note/a", "Alpha memory", 0.9),
+                hit("page/a", "note/a", "Duplicate alpha", 0.6),
+            ),
+        )
+
+        row = AllEntityOutputRagBaseline(retrieval_limit=3).run(
+            case,
+            model,
+            retriever,
+        )
+
+        self.assertEqual(retriever.calls, [(case.observation_text, 3)])
+        self.assertEqual(model.calls[0]["instructions"], INPUT_RAG_INSTRUCTIONS)
+        self.assertEqual(
+            model.calls[0]["memory_context"],
+            "1. Alpha memory\n\n2. Beta memory",
+        )
+        self.assertEqual(
+            row["trace"]["detected_cues"][0]["surface"],
+            "Alpha Project",
+        )
+        self.assertEqual(
+            row["trace"]["retrieved_source_ids"],
+            ["note/b", "note/a", "note/a"],
+        )
+        self.assertEqual(row["trace"]["admitted_source_ids"], ["note/a", "note/b"])
+        self.assertEqual(
+            row["trace"]["retrieval_condition_detail"],
+            "entity_exact_match",
+        )
+
+    def test_empty_entities_runs_without_memory_context(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+
+        row = AllEntityOutputRagBaseline().run(
+            case,
+            model,
+            RecordingEntityRetriever((), ()),
+        )
+
+        self.assertEqual(model.calls[0]["instructions"], FINAL_ANSWER_INSTRUCTIONS)
+        self.assertIsNone(model.calls[0]["memory_context"])
+        self.assertEqual(row["trace"]["detected_cues"], [])
+        self.assertEqual(row["trace"]["admitted_source_ids"], [])
+
+    def test_requires_entity_retriever_and_positive_limit(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        with self.assertRaisesRegex(ValueError, "requires an entity retriever"):
+            AllEntityOutputRagBaseline().run(case, RecordingModel(), None)
+        with self.assertRaisesRegex(ValueError, "at least 1"):
+            AllEntityOutputRagBaseline(retrieval_limit=0)
 
 
 if __name__ == "__main__":

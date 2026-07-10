@@ -8,7 +8,7 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Protocol, Sequence
+from typing import Any, Callable, Protocol, Sequence
 
 import numpy as np
 
@@ -143,10 +143,37 @@ class RetrievalResult:
     trace: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class EntitySeed:
+    seed_id: str
+    surface: str
+    normalized_surface: str
+    source: str
+    span_start: int | None = None
+    span_end: int | None = None
+    matched_page_ids: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class EntityRetrievalResult:
+    seeds: tuple[EntitySeed, ...]
+    hits: tuple[RetrievalHit, ...]
+    trace: dict[str, Any]
+
+
 class Retriever(Protocol):
     mode: RetrievalMode
 
     def retrieve(self, request: RetrievalRequest) -> RetrievalResult: ...
+
+
+class EntityRetriever(Protocol):
+    def retrieve_entities(
+        self,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> EntityRetrievalResult: ...
 
 
 class TextEmbedder(Protocol):
@@ -731,19 +758,245 @@ class IndexRetriever:
         return page_scores, best_chunks
 
 
+class EntitySurfaceExtractor:
+    def __init__(
+        self,
+        index: RetrievalIndex,
+        *,
+        nlp: Any | None = None,
+        automaton_factory: Callable[[], Any] | None = None,
+    ):
+        self.index = index
+        self._nlp = nlp if nlp is not None else _load_spacy_model()
+        factory = automaton_factory or _load_automaton_factory()
+        self._surface_pages = self._build_surface_pages()
+        self._automaton = factory()
+        for normalized, page_ids in self._surface_pages.items():
+            self._automaton.add_word(normalized, (normalized, tuple(sorted(page_ids))))
+        self._automaton.make_automaton()
+
+    def extract(self, observation_text: str) -> tuple[EntitySeed, ...]:
+        seeds: list[EntitySeed] = []
+        seen: set[tuple[str, str]] = set()
+        normalized_observation = observation_text.casefold()
+        for end, (normalized, page_ids) in self._automaton.iter(normalized_observation):
+            start = end - len(normalized) + 1
+            if not _entity_boundary(normalized_observation, start, end + 1):
+                continue
+            surface = observation_text[start : end + 1]
+            key = ("gazetteer", normalized)
+            if key in seen:
+                continue
+            seen.add(key)
+            seeds.append(
+                EntitySeed(
+                    seed_id=f"entity-{len(seeds) + 1}",
+                    surface=surface,
+                    normalized_surface=normalized,
+                    source="gazetteer",
+                    span_start=start,
+                    span_end=end + 1,
+                    matched_page_ids=page_ids,
+                )
+            )
+        for surface, start, end in self._noun_phrases(observation_text):
+            normalized = _normalize_entity_surface(surface)
+            key = ("noun_phrase", normalized)
+            if not normalized or key in seen or ("gazetteer", normalized) in seen:
+                continue
+            seen.add(key)
+            seeds.append(
+                EntitySeed(
+                    seed_id=f"entity-{len(seeds) + 1}",
+                    surface=surface,
+                    normalized_surface=normalized,
+                    source="noun_phrase",
+                    span_start=start,
+                    span_end=end,
+                )
+            )
+        return tuple(seeds)
+
+    def _build_surface_pages(self) -> dict[str, set[str]]:
+        surfaces: dict[str, set[str]] = defaultdict(set)
+        for page in self.index.pages:
+            for surface in _page_title_slug_surfaces(page):
+                normalized = _normalize_entity_surface(surface)
+                if normalized:
+                    surfaces[normalized].add(page.page_id)
+        for chunk in self.index.chunks:
+            for surface, _, _ in self._noun_phrases(chunk.text):
+                if not _keep_body_surface(surface):
+                    continue
+                normalized = _normalize_entity_surface(surface)
+                if normalized:
+                    surfaces[normalized].add(chunk.page_id)
+        return dict(surfaces)
+
+    def _noun_phrases(self, text: str) -> list[tuple[str, int, int]]:
+        doc = self._nlp(text)
+        phrases = []
+        for chunk in doc.noun_chunks:
+            surface = chunk.text.strip()
+            if surface:
+                phrases.append((surface, int(chunk.start_char), int(chunk.end_char)))
+        return phrases
+
+
+class EntityExactRetriever:
+    retrieval_condition_detail = "entity_exact_match"
+
+    def __init__(
+        self,
+        index: RetrievalIndex,
+        *,
+        extractor: EntitySurfaceExtractor | None = None,
+    ):
+        self.index = index
+        self.extractor = extractor or EntitySurfaceExtractor(index)
+        self._page_by_id = {page.page_id: page for page in index.pages}
+        self._chunks_by_page: dict[str, list[ChunkRecord]] = defaultdict(list)
+        for chunk in index.chunks:
+            self._chunks_by_page[chunk.page_id].append(chunk)
+        self._body_documents = {
+            page.page_id: " ".join(
+                chunk.text for chunk in self._chunks_by_page[page.page_id]
+            )
+            for page in index.pages
+        }
+        self._title_documents = {
+            page.page_id: page.title for page in index.pages
+        }
+
+    def retrieve_entities(
+        self,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> EntityRetrievalResult:
+        if top_k < 1:
+            raise ValueError("top_k must be at least 1")
+        seeds = self.extractor.extract(observation_text)
+        hits: list[RetrievalHit] = []
+        per_seed = []
+        for seed in seeds:
+            page_ids = self._exact_page_ids(seed, top_k)
+            seed_pages = []
+            for rank, page_id in enumerate(page_ids, start=1):
+                page = self._page_by_id[page_id]
+                chunk, chunk_score = self._best_exact_chunk(seed, page_id)
+                score = self._exact_match_score(seed.normalized_surface, page_id)
+                hit = RetrievalHit(
+                    page_id=page.page_id,
+                    source_id=page.source_id,
+                    slug=page.slug,
+                    title=page.title,
+                    chunk_id=chunk.chunk_id,
+                    text=chunk.text,
+                    score=score,
+                    rank=rank,
+                    perturbations=page.perturbations,
+                    diagnostics={
+                        "entity_seed_id": seed.seed_id,
+                        "entity_surface": seed.surface,
+                        "entity_source": seed.source,
+                        "exact_match_score": score,
+                        "chunk_exact_match_score": chunk_score,
+                    },
+                )
+                hits.append(hit)
+                seed_pages.append(
+                    {
+                        "page_id": page.page_id,
+                        "source_id": page.source_id,
+                        "slug": page.slug,
+                        "selected_chunk_id": chunk.chunk_id,
+                        "rank": rank,
+                        "score": score,
+                        "chunk_score": chunk_score,
+                        "match_type": "exact",
+                        "perturbations": list(page.perturbations),
+                    }
+                )
+            per_seed.append(
+                {
+                    "seed_id": seed.seed_id,
+                    "surface": seed.surface,
+                    "normalized_surface": seed.normalized_surface,
+                    "source": seed.source,
+                    "span": [seed.span_start, seed.span_end],
+                    "matched_page_ids": list(seed.matched_page_ids),
+                    "returned_pages": seed_pages,
+                }
+            )
+        trace = {
+            "retrieval_condition_detail": self.retrieval_condition_detail,
+            "entity_seeds": [seed.__dict__ for seed in seeds],
+            "per_seed_retrievals": per_seed,
+        }
+        return EntityRetrievalResult(seeds, tuple(hits), trace)
+
+    def _exact_page_ids(self, seed: EntitySeed, top_k: int) -> list[str]:
+        if seed.source == "gazetteer":
+            return sorted(
+                page_id
+                for page_id in seed.matched_page_ids
+                if page_id in self._page_by_id
+            )
+        scored = {
+            page_id: self._exact_match_score(seed.normalized_surface, page_id)
+            for page_id in self._page_by_id
+        }
+        matched = {
+            page_id: score for page_id, score in scored.items() if score > 0
+        }
+        return _rank_scores(matched, top_k)
+
+    def _exact_match_score(self, normalized_surface: str, page_id: str) -> float:
+        score = 0.0
+        if _normalized_contains(self._title_documents[page_id], normalized_surface):
+            score += 2.0
+        body = self._body_documents[page_id]
+        if _normalized_contains(body, normalized_surface):
+            score += 1.0
+        return score
+
+    def _best_exact_chunk(
+        self, seed: EntitySeed, page_id: str
+    ) -> tuple[ChunkRecord, float]:
+        chunks = self._chunks_by_page[page_id]
+        exact_scores = {
+            chunk.chunk_id: (
+                1.0 if _normalized_contains(chunk.text, seed.normalized_surface) else 0.0
+            )
+            for chunk in chunks
+        }
+        matched = {
+            chunk_id: score for chunk_id, score in exact_scores.items() if score > 0
+        }
+        if matched:
+            chunk_id = _rank_scores(matched, 1)[0]
+            chunk = next(chunk for chunk in chunks if chunk.chunk_id == chunk_id)
+            return chunk, matched[chunk_id]
+        scores = _bm25_scores(seed.surface, {chunk.chunk_id: chunk.text for chunk in chunks})
+        if scores:
+            chunk_id = _rank_scores(scores, 1)[0]
+            chunk = next(chunk for chunk in chunks if chunk.chunk_id == chunk_id)
+            return chunk, 0.0
+        return chunks[0], 0.0
+
+
 def _tokenize(text: str) -> list[str]:
     return re.findall(r"[a-z0-9]+", text.casefold())
 
 
-def _bm25_rank(
-    query: str, documents: dict[str, str], limit: int
-) -> list[str]:
+def _bm25_scores(query: str, documents: dict[str, str]) -> dict[str, float]:
     tokens_by_id = {
         document_id: _tokenize(text) for document_id, text in documents.items()
     }
     query_tokens = _tokenize(query)
     if not query_tokens:
-        return sorted(documents)[:limit]
+        return {}
     count = len(tokens_by_id)
     average_length = (
         sum(len(tokens) for tokens in tokens_by_id.values()) / count if count else 0
@@ -770,6 +1023,15 @@ def _bm25_rank(
             )
         if score > 0:
             scores[document_id] = score
+    return scores
+
+
+def _bm25_rank(
+    query: str, documents: dict[str, str], limit: int
+) -> list[str]:
+    scores = _bm25_scores(query, documents)
+    if not scores and not _tokenize(query):
+        return sorted(documents)[:limit]
     return _rank_scores(scores, limit)
 
 
@@ -792,6 +1054,81 @@ def _rank_scores(scores: dict[str, float], limit: int) -> list[str]:
 
 def _normalize_query(query: str) -> str:
     return " ".join(query.casefold().split())
+
+
+def _normalize_entity_surface(surface: str) -> str:
+    normalized = " ".join(_tokenize(surface))
+    return normalized if len(normalized) >= 2 else ""
+
+
+def _normalized_contains(text: str, normalized_surface: str) -> bool:
+    if not normalized_surface:
+        return False
+    normalized_text = _normalize_entity_surface(text)
+    return f" {normalized_surface} " in f" {normalized_text} "
+
+
+def _page_title_slug_surfaces(page: PageRecord) -> list[str]:
+    surfaces = [page.title]
+    slug_tail = page.slug.rsplit("/", 1)[-1].replace("-", " ").replace("_", " ")
+    if slug_tail != page.title:
+        surfaces.append(slug_tail)
+    return surfaces
+
+
+_BODY_STOP_PHRASES = {
+    "next steps",
+    "market report",
+    "weekly review",
+    "morning reflection",
+    "team 1 1s",
+}
+
+
+def _keep_body_surface(surface: str) -> bool:
+    tokens = _tokenize(surface)
+    if not 2 <= len(tokens) <= 6:
+        return False
+    normalized = " ".join(tokens)
+    if normalized in _BODY_STOP_PHRASES:
+        return False
+    has_identifier = any(any(char.isdigit() for char in token) for token in tokens)
+    has_properish = any(part[:1].isupper() for part in surface.split())
+    return has_identifier or has_properish
+
+
+def _entity_boundary(text: str, start: int, end: int) -> bool:
+    before = text[start - 1] if start > 0 else " "
+    after = text[end] if end < len(text) else " "
+    return not before.isalnum() and not after.isalnum()
+
+
+def _load_automaton_factory() -> Callable[[], Any]:
+    try:
+        import ahocorasick
+    except ImportError as exc:
+        raise RetrievalValidationError(
+            "all_entity_output_rag requires pyahocorasick. "
+            "Install project dependencies with `python -m pip install -e .`."
+        ) from exc
+    return ahocorasick.Automaton
+
+
+def _load_spacy_model() -> Any:
+    try:
+        import spacy
+    except ImportError as exc:
+        raise RetrievalValidationError(
+            "all_entity_output_rag requires spacy. "
+            "Install project dependencies with `python -m pip install -e .`."
+        ) from exc
+    try:
+        return spacy.load("en_core_web_sm")
+    except OSError as exc:
+        raise RetrievalValidationError(
+            "all_entity_output_rag requires the spaCy model en_core_web_sm. "
+            "Install it with `python -m spacy download en_core_web_sm`."
+        ) from exc
 
 
 def _validate_expansions(

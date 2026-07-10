@@ -17,6 +17,8 @@ from parm_bench.models import (
 from parm_bench.retrieval import (
     EMBEDDING_DIMENSIONS,
     EMBEDDING_MODEL,
+    EntityRetrievalResult,
+    EntitySeed,
     RetrievalHit,
     RetrievalMode,
     RetrievalRequest,
@@ -111,10 +113,61 @@ class FakeRetriever:
         )
 
 
+class FakeEntityRetriever:
+    instances: list["FakeEntityRetriever"] = []
+    retrieval_condition_detail = "entity_exact_match"
+
+    def __init__(self, index: FakeIndex):
+        self.index = index
+        self.calls: list[tuple[str, int]] = []
+        self.__class__.instances.append(self)
+
+    def retrieve_entities(
+        self,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> EntityRetrievalResult:
+        self.calls.append((observation_text, top_k))
+        seed = EntitySeed(
+            "entity-1",
+            "Garden Table",
+            "garden table",
+            "gazetteer",
+            0,
+            12,
+        )
+        hit = RetrievalHit(
+            page_id="page/entity",
+            source_id="fixture-source",
+            slug="note/entity",
+            title="Entity memory",
+            chunk_id="page/entity:0",
+            text="Entity memory",
+            score=1.2,
+            rank=1,
+            diagnostics={
+                "entity_seed_id": seed.seed_id,
+                "entity_surface": seed.surface,
+                "entity_source": seed.source,
+            },
+        )
+        return EntityRetrievalResult(
+            (seed,),
+            (hit,),
+            {
+                "retrieval_condition_detail": self.retrieval_condition_detail,
+                "entity_seeds": [seed.__dict__],
+                "per_seed_retrievals": [],
+            },
+        )
+
+
 class CliSmokeTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeOpenAIModel.instances.clear()
         FakeRetriever.instances.clear()
+        FakeEntityRetriever.instances.clear()
 
     def test_validate_and_inspect(self) -> None:
         self.assertEqual(main(["validate", str(DATASET)]), 0)
@@ -136,7 +189,12 @@ class CliSmokeTests(unittest.TestCase):
     def test_no_memory_baseline_is_registered(self) -> None:
         self.assertEqual(
             set(available_baselines()),
-            {"no_memory", "input_rag", "naive_output_rag"},
+            {
+                "no_memory",
+                "input_rag",
+                "naive_output_rag",
+                "all_entity_output_rag",
+            },
         )
 
     def test_run_refuses_unimplemented_baseline(self) -> None:
@@ -387,6 +445,62 @@ class CliSmokeTests(unittest.TestCase):
             )
             self.assertEqual(configuration["retrieval_mode"], "dense")
 
+    def test_all_entity_output_rag_uses_entity_resource_without_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            with (
+                patch("parm_bench.cli.OpenAIResponsesModel", FakeOpenAIModel),
+                patch(
+                    "parm_bench.cli.RetrievalIndex.load",
+                    return_value=FakeIndex(),
+                ),
+                patch("parm_bench.cli.EntityExactRetriever", FakeEntityRetriever),
+                patch(
+                    "parm_bench.cli.IndexRetriever",
+                    side_effect=AssertionError("mode retriever must not be used"),
+                ),
+            ):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "all_entity_output_rag",
+                        "--retrieval-index",
+                        "fixture-index",
+                        "--retrieval-limit",
+                        "4",
+                        "--out",
+                        str(result),
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            entity_retriever = FakeEntityRetriever.instances[0]
+            self.assertEqual(len(entity_retriever.calls), 15)
+            self.assertTrue(all(top_k == 4 for _, top_k in entity_retriever.calls))
+            rows = [
+                json.loads(line)
+                for line in result.read_text(encoding="utf-8").splitlines()
+            ]
+            self.assertTrue(
+                all(row["baseline"] == "all_entity_output_rag" for row in rows)
+            )
+            self.assertTrue(
+                all(
+                    row["trace"]["retrieval_condition_detail"] == "entity_exact_match"
+                    for row in rows
+                )
+            )
+            configuration = json.loads(
+                result.with_suffix(".config.json").read_text(encoding="utf-8")
+            )
+            self.assertIsNone(configuration["retrieval_mode"])
+            self.assertEqual(
+                configuration["retrieval_condition_detail"], "entity_exact_match"
+            )
+            self.assertEqual(configuration["retrieval_limit"], 4)
+
     def test_memory_run_requires_explicit_mode_and_index(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
             status = main(
@@ -395,6 +509,24 @@ class CliSmokeTests(unittest.TestCase):
                     str(DATASET),
                     "--baseline",
                     "input_rag",
+                    "--out",
+                    str(Path(tmp) / "result.jsonl"),
+                ]
+            )
+        self.assertEqual(status, 2)
+
+    def test_all_entity_output_rag_rejects_retrieval_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
+            status = main(
+                [
+                    "run",
+                    str(DATASET),
+                    "--baseline",
+                    "all_entity_output_rag",
+                    "--retrieval-mode",
+                    "dense",
+                    "--retrieval-index",
+                    "fixture-index",
                     "--out",
                     str(Path(tmp) / "result.jsonl"),
                 ]

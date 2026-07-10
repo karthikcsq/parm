@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Callable, Protocol
 
 from .baselines import (
+    AllEntityOutputRagBaseline,
     INPUT_RAG_INSTRUCTIONS,
     BenchmarkInput,
     NaiveOutputRagBaseline,
@@ -27,6 +28,9 @@ from .models import (
 from .retrieval import (
     CANDIDATE_DEPTH,
     CachedOpenAIQueryExpander,
+    EntityExactRetriever,
+    EntityRetrievalResult,
+    EntityRetriever,
     ExpansionCacheMissError,
     ExpansionPolicy,
     IndexRetriever,
@@ -53,6 +57,7 @@ class RetrievalCondition(str, Enum):
     NO_MEMORY = "no_memory"
     INPUT_RAG = "input_rag"
     NAIVE_OUTPUT_RAG = "naive_output_rag"
+    ALL_ENTITY_OUTPUT_RAG = "all_entity_output_rag"
 
 
 class WorkbenchRequestError(ValueError):
@@ -72,6 +77,10 @@ class RetrieverFactory(Protocol):
     def __call__(self, mode: RetrievalMode) -> IndexRetriever: ...
 
 
+class EntityRetrieverFactory(Protocol):
+    def __call__(self) -> EntityRetriever: ...
+
+
 class WorkbenchService:
     def __init__(
         self,
@@ -83,6 +92,7 @@ class WorkbenchService:
         expansion_policy: ExpansionPolicy | str = ExpansionPolicy.FROZEN,
         model_factory: Callable[[str], LanguageModel] = OpenAIResponsesModel,
         retriever_factory: RetrieverFactory | None = None,
+        entity_retriever_factory: EntityRetrieverFactory | None = None,
         cases: list[dict[str, Any]] | None = None,
     ):
         self.index = index
@@ -94,6 +104,7 @@ class WorkbenchService:
         self.expansion_policy = ExpansionPolicy(expansion_policy)
         self.model_factory = model_factory
         self._retriever_factory = retriever_factory
+        self._entity_retriever_factory = entity_retriever_factory
         self._cases = tuple(cases or ())
         self._case_by_id = {
             str(case["case_id"]): case for case in self._cases
@@ -176,7 +187,11 @@ class WorkbenchService:
         retrieval_mode: RetrievalMode | None = None
         output_rag_flow: OutputRagFlow | None = None
         memory_condition = condition is not RetrievalCondition.NO_MEMORY
-        if memory_condition:
+        mode_condition = condition in {
+            RetrievalCondition.INPUT_RAG,
+            RetrievalCondition.NAIVE_OUTPUT_RAG,
+        }
+        if mode_condition:
             try:
                 retrieval_mode = RetrievalMode(
                     payload.get("retrieval_mode", RetrievalMode.DENSE.value)
@@ -279,6 +294,36 @@ class WorkbenchService:
             captured_retrievals = retriever.results
             retrieval = _merge_retrievals(captured_retrievals, row["trace"])
             response = _RowResponse(row)
+        elif condition is RetrievalCondition.ALL_ENTITY_OUTPUT_RAG:
+            if selected_case is None:
+                raise WorkbenchRequestError(
+                    "Choose a benchmark case for all-entity output RAG."
+                )
+            entity_retriever = _CapturingEntityRetriever(self._entity_retriever())
+            baseline = AllEntityOutputRagBaseline(retrieval_limit=top_k)
+            try:
+                row = baseline.run(
+                    BenchmarkInput(
+                        case_id=str(selected_case["case_id"]),
+                        prompt=prompt,
+                        observation_kind=observation_kind,
+                        observation_text=observation_text,
+                    ),
+                    model,
+                    entity_retriever,
+                )
+            except Exception as exc:
+                stage = (
+                    "retrieval"
+                    if entity_retriever.failed_during_retrieval
+                    else "model generation"
+                )
+                raise WorkbenchRunError(stage, exc) from exc
+            retrieval = _entity_retrieval_to_retrieval_result(
+                entity_retriever.result,
+                row["trace"],
+            )
+            response = _RowResponse(row)
         else:
             try:
                 response = model.generate(
@@ -361,6 +406,11 @@ class WorkbenchService:
             expander=expander,
         )
 
+    def _entity_retriever(self) -> EntityRetriever:
+        if self._entity_retriever_factory is not None:
+            return self._entity_retriever_factory()
+        return EntityExactRetriever(self.index)
+
 
 def serve_workbench(
     *,
@@ -434,6 +484,30 @@ class _CapturingRetriever:
         return result
 
 
+class _CapturingEntityRetriever:
+    def __init__(self, retriever: EntityRetriever):
+        self._retriever = retriever
+        self.result: EntityRetrievalResult | None = None
+        self.failed_during_retrieval = False
+
+    def retrieve_entities(
+        self,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> EntityRetrievalResult:
+        try:
+            result = self._retriever.retrieve_entities(
+                observation_text,
+                top_k=top_k,
+            )
+        except Exception:
+            self.failed_during_retrieval = True
+            raise
+        self.result = result
+        return result
+
+
 class _RowResponse:
     def __init__(self, row: dict[str, Any]):
         self.text = str(row["response_text"])
@@ -455,6 +529,31 @@ def _merge_retrievals(
                 continue
             seen.add(hit.slug)
             hits.append(replace(hit, rank=len(hits) + 1))
+    return RetrievalResult(tuple(hits), trace)
+
+
+def _entity_retrieval_to_retrieval_result(
+    result: EntityRetrievalResult | None,
+    trace: dict[str, Any],
+) -> RetrievalResult:
+    if result is None:
+        return RetrievalResult((), trace)
+    admitted = list(trace.get("admitted_page_ids", []))
+    best_by_page = {}
+    for hit in result.hits:
+        previous = best_by_page.get(hit.page_id)
+        if previous is None or (hit.rank, -hit.score, hit.page_id) < (
+            previous.rank,
+            -previous.score,
+            previous.page_id,
+        ):
+            best_by_page[hit.page_id] = hit
+    ordered_ids = admitted or list(best_by_page)
+    hits = [
+        replace(best_by_page[page_id], rank=rank)
+        for rank, page_id in enumerate(ordered_ids, start=1)
+        if page_id in best_by_page
+    ]
     return RetrievalResult(tuple(hits), trace)
 
 

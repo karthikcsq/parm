@@ -21,7 +21,7 @@ memory, cues appear only in the later observation, and success requires a
 different decision rather than a relevant-sounding aside.
 
 Every case asks for exactly one final choice in ordinary language. The answer
-key is the option's visible title, company, or restaurant name—not an opaque
+key is the option's visible title, company, or restaurant name, not an opaque
 benchmark ID. The same identifying entity or pattern is readable in the Amara
 memory prose, so a model can connect memory to the noisy output without access
 to hidden metadata.
@@ -36,6 +36,7 @@ Install the repository once in editable mode:
 
 ```powershell
 python -m pip install -e .
+python -m spacy download en_core_web_sm
 ```
 
 Then use the installed command without setting `PYTHONPATH`:
@@ -56,9 +57,11 @@ parm-bench serve-workbench `
   --expansion-cache data\expansion-caches\amara-life-v1
 ```
 
-The browser opens automatically. Choose one of the ten benchmark cases or
-enter a custom prompt, compare `no_memory` with `input_rag`, and choose
-`dense`, `hybrid`, or `enhanced` ranking for input-RAG. A selected case runs
+The browser opens automatically. Choose one of the benchmark cases or enter a
+custom prompt, compare `no_memory`, `input_rag`, `naive_output_rag`, and
+`all_entity_output_rag`. Mode-matched conditions expose `dense`, `hybrid`, or
+`enhanced` ranking; all-entity output RAG instead extracts entities from the
+case observation and runs fixed exact-match retrieval per entity. A selected case runs
 with its complete observation. The result leads with the generated response,
 then reports decision pass/fail against the condition-appropriate expected
 choice separately from gold-memory retrieval status. Ordered memories,
@@ -70,7 +73,7 @@ that cache.
 
 ## Baseline status
 
-Three baselines are implemented:
+Four baselines are implemented:
 
 - `no_memory` sends only the ordinary prompt and resolved observation to the
   response model. It has no retriever and emits an empty retrieval trace.
@@ -81,13 +84,17 @@ Three baselines are implemented:
 - `naive_output_rag` retrieves from output text without cue selection. Use
   `--output-rag-flow` to choose where output-triggered retrieval runs:
   `tool_output_only`, `model_output_only`, or `tool_then_model_output`.
+- `all_entity_output_rag` extracts every visible output entity, retrieves with
+  exact-match page lookup per extracted entity over the frozen index, merges the flat union, and
+  admits every deduped hit. It does not use `--retrieval-mode`.
 
-Retrieval condition and retrieval mode are separate experiment axes. Every
-memory-using condition must explicitly choose `dense`, `hybrid`, or `enhanced`
-and use the same frozen index for mode-matched comparisons.
+Retrieval condition and retrieval mode are separate experiment axes. The
+mode-matched conditions (`input_rag` and `naive_output_rag`) explicitly choose
+`dense`, `hybrid`, or `enhanced` and use the same frozen index for comparisons.
 For `naive_output_rag`, `--output-rag-flow` is the separate axis for where
 output-triggered retrieval happens; `--retrieval-mode` still controls how
-memories are ranked.
+memories are ranked. `all_entity_output_rag` is a fixed exact-match entity
+baseline, so it requires `--retrieval-index` but rejects `--retrieval-mode`.
 
 Run the five positive/control pairs and score them:
 
@@ -127,6 +134,17 @@ parm-bench run data/benchmark_v1 `
   --out data/benchmark-results/naive-output-rag-tool-output-gpt-5-mini.jsonl
 ```
 
+Run all-entity output-RAG over the observed tool/output text:
+
+```powershell
+parm-bench run data/benchmark_v1 `
+  --baseline all_entity_output_rag `
+  --retrieval-index data\retrieval-indexes\amara-life-v1 `
+  --retrieval-limit 5 `
+  --model gpt-5-mini `
+  --out data/benchmark-results/all-entity-output-rag-gpt-5-mini.jsonl
+```
+
 The CLI automatically loads the ignored repo-root `.env` without overriding
 variables already set in the process. Start from `.env.example`; set
 `OPENAI_API_KEY`, and override `GBRAIN_HOME`, `PARM_GBRAIN_CWD`, or
@@ -134,9 +152,10 @@ variables already set in the process. Start from `.env.example`; set
 index-export command, never during a canonical benchmark run.
 
 Every run writes the common prediction JSONL plus a sibling `.config.json`
-recording its baseline, output-RAG flow where applicable, retrieval mode, fixed
-ranking constants, dependency versions, index-manifest hash, and
-expansion-cache hash where applicable.
+recording its baseline, output-RAG flow where applicable, retrieval mode or
+fixed retrieval condition detail, ranking constants where applicable,
+dependency versions, index-manifest hash, and expansion-cache hash where
+applicable.
 Input-RAG traces retain complete ranking diagnostics and perturbation labels,
 but labels and IDs are not shown to the response model.
 

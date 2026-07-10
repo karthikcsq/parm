@@ -16,8 +16,10 @@ from .baselines import (
     BaselineConfiguration,
     BaselineNotImplementedError,
     OutputRagFlow,
+    RetrievalResourceKind,
     benchmark_input,
     get_baseline,
+    retrieval_resource_kind,
 )
 from .dataset import (
     VARIANTS,
@@ -43,6 +45,7 @@ from .retrieval import (
     RRF_K,
     RRF_WEIGHT,
     CachedOpenAIQueryExpander,
+    EntityExactRetriever,
     ExpansionCacheMissError,
     ExpansionPolicy,
     IndexRetriever,
@@ -272,8 +275,8 @@ def _run(
             ),
         ),
     )
-    retriever: IndexRetriever | None = None
-    if implementation.requires_memory:
+    retrieval_resource: IndexRetriever | EntityExactRetriever | None = None
+    if implementation.retrieval_resource is RetrievalResourceKind.MODE_RETRIEVER:
         assert retrieval_mode is not None
         assert retrieval_index is not None
         mode = RetrievalMode(retrieval_mode)
@@ -285,12 +288,15 @@ def _run(
                 expansion_policy or ExpansionPolicy.FROZEN,
             )
         index = RetrievalIndex.load(retrieval_index)
-        retriever = IndexRetriever(
+        retrieval_resource = IndexRetriever(
             index,
             mode,
             OpenAIEmbedder(),
             expander=expander,
         )
+    elif implementation.retrieval_resource is RetrievalResourceKind.ENTITY_EXACT:
+        assert retrieval_index is not None
+        retrieval_resource = EntityExactRetriever(RetrievalIndex.load(retrieval_index))
     model: OpenAIResponsesModel | CachingLanguageModel = OpenAIResponsesModel(
         _resolve_model(model_name)
     )
@@ -320,7 +326,7 @@ def _run(
                     row = implementation.run(
                         benchmark_input(case),
                         model,
-                        retriever,
+                        retrieval_resource,
                     )
                 except ModelTruncationError as error:
                     truncated += 1
@@ -342,7 +348,7 @@ def _run(
     _write_run_configuration(
         path,
         baseline=baseline,
-        retriever=retriever,
+        retrieval_resource=retrieval_resource,
         output_rag_flow=output_rag_flow,
         retrieval_limit=(
             retrieval_limit if implementation.requires_memory else None
@@ -413,50 +419,60 @@ def _write_run_configuration(
     results_path: Path,
     *,
     baseline: str,
-    retriever: IndexRetriever | None,
+    retrieval_resource: IndexRetriever | EntityExactRetriever | None,
     output_rag_flow: str | None,
     retrieval_limit: int | None,
     requested_model: str,
     response_cache_hash: str | None = None,
     variants: list[str] | None = None,
 ) -> None:
+    index = (
+        retrieval_resource.index if retrieval_resource is not None else None
+    )
+    mode = getattr(retrieval_resource, "mode", None)
+    expander = getattr(retrieval_resource, "expander", None)
     payload = {
         "baseline": baseline,
         "variants": variants,
         "response_cache_hash": response_cache_hash,
         "output_rag_flow": output_rag_flow,
-        "retrieval_mode": retriever.mode.value if retriever is not None else None,
+        "retrieval_mode": mode.value if mode is not None else None,
+        "retrieval_condition_detail": (
+            getattr(retrieval_resource, "retrieval_condition_detail", None)
+            if mode is None
+            else None
+        ),
         "retrieval_index": (
-            str(retriever.index.path) if retriever is not None else None
+            str(index.path) if index is not None else None
         ),
         "retrieval_manifest_hash": (
-            retriever.index.manifest_hash if retriever is not None else None
+            index.manifest_hash if index is not None else None
         ),
         "corpus": (
-            retriever.index.manifest["corpus_id"]
-            if retriever is not None
+            index.manifest["corpus_id"]
+            if index is not None
             else None
         ),
         "gbrain_version": (
-            retriever.index.manifest["gbrain_version"]
-            if retriever is not None
+            index.manifest["gbrain_version"]
+            if index is not None
             else None
         ),
         "chunker_version": (
-            retriever.index.manifest["chunker_version"]
-            if retriever is not None
+            index.manifest["chunker_version"]
+            if index is not None
             else None
         ),
         "embedding_model": (
-            retriever.index.manifest["embedding_model"]
-            if retriever is not None
+            index.manifest["embedding_model"]
+            if index is not None
             else None
         ),
         "retrieval_limit": retrieval_limit,
         "admission_policy": (
-            "all_retrieved" if retriever is not None else None
+            "all_retrieved" if retrieval_resource is not None else None
         ),
-        "perturbation_filtering": False if retriever is not None else None,
+        "perturbation_filtering": False if retrieval_resource is not None else None,
         "requested_model": requested_model,
         "constants": (
             {
@@ -467,28 +483,26 @@ def _write_run_configuration(
                 "graph_min_inbound": GRAPH_MIN_INBOUND,
                 "graph_multiplier": GRAPH_MULTIPLIER,
             }
-            if retriever is not None
+            if mode is not None
             else None
         ),
         "expansion_model": (
             EXPANSION_MODEL
-            if retriever is not None
-            and retriever.mode is RetrievalMode.ENHANCED
+            if mode is RetrievalMode.ENHANCED
             else None
         ),
         "expansion_prompt_version": (
             EXPANSION_PROMPT_VERSION
-            if retriever is not None
-            and retriever.mode is RetrievalMode.ENHANCED
+            if mode is RetrievalMode.ENHANCED
             else None
         ),
         "expansion_cache_hash": (
-            retriever.expander.cache_hash
-            if retriever is not None and retriever.expander is not None
+            expander.cache_hash
+            if expander is not None
             else None
         ),
         "dependency_versions": (
-            _dependency_versions() if retriever is not None else None
+            _dependency_versions() if retrieval_resource is not None else None
         ),
     }
     path = results_path.with_suffix(".config.json")
@@ -518,7 +532,8 @@ def _validate_retrieval_args(args: argparse.Namespace) -> None:
         args, "response_cache", None
     ):
         raise ValueError("--response-policy requires --response-cache")
-    uses_memory = args.baseline != "no_memory"
+    resource_kind = retrieval_resource_kind(args.baseline)
+    uses_memory = resource_kind is not RetrievalResourceKind.NONE
     retrieval_arguments = {
         "--retrieval-mode": args.retrieval_mode,
         "--retrieval-index": args.retrieval_index,
@@ -542,6 +557,22 @@ def _validate_retrieval_args(args: argparse.Namespace) -> None:
         raise ValueError(
             "--output-rag-flow is only valid for naive_output_rag"
         )
+    if resource_kind is RetrievalResourceKind.ENTITY_EXACT:
+        if not args.retrieval_index:
+            raise ValueError("all_entity_output_rag requires --retrieval-index")
+        supplied = []
+        if args.retrieval_mode:
+            supplied.append("--retrieval-mode")
+        if args.expansion_cache:
+            supplied.append("--expansion-cache")
+        if args.expansion_policy:
+            supplied.append("--expansion-policy")
+        if supplied:
+            raise ValueError(
+                "all_entity_output_rag rejects retrieval-mode arguments: "
+                + ", ".join(supplied)
+            )
+        return
     if not args.retrieval_mode or not args.retrieval_index:
         raise ValueError(
             "memory-using baselines require --retrieval-mode and "

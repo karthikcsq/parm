@@ -8,12 +8,13 @@
 
 ## Build, Test, and Development Commands
 
-This project runs on the Anaconda interpreter at `C:\Users\karth\anaconda3\python.exe`, which has the `openai`, `numpy`, and `tiktoken` dependencies installed. The bare `python` on PATH resolves to the msys2 build, which lacks them — invoke the Anaconda interpreter explicitly (or activate its environment) when running or testing. Tests import from `src/`, so set `PYTHONPATH=src` unless the package is installed editable.
+This project runs on the Anaconda interpreter at `C:\Users\karth\anaconda3\python.exe`, which has the `openai`, `numpy`, and `tiktoken` dependencies installed. The bare `python` on PATH resolves to the msys2 build, which lacks them, so invoke the Anaconda interpreter explicitly (or activate its environment) when running or testing. Tests import from `src/`, so set `PYTHONPATH=src` unless the package is installed editable.
 
 Install locally before running commands:
 
 ```powershell
 python -m pip install -e .
+python -m spacy download en_core_web_sm
 ```
 
 Validate and inspect the pilot benchmark:
@@ -46,6 +47,8 @@ Keep PARM benchmark axes separate:
 - `--baseline` controls what condition is being evaluated.
 - `--output-rag-flow` controls where output-triggered retrieval runs within `naive_output_rag`.
 - `--retrieval-mode` controls how retrieved memories are ranked (`dense`, `hybrid`, or `enhanced`).
+
+`all_entity_output_rag` is the exception to the retrieval-mode axis: it is a fixed exact-match entity component baseline over extracted output entities, so it requires `--retrieval-index` and rejects `--retrieval-mode`.
 
 ## Testing Guidelines
 

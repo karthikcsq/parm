@@ -16,6 +16,8 @@ from parm_bench.retrieval import (
     EMBEDDING_MAX_INPUT_TOKENS,
     EMBEDDING_MODEL,
     CachedOpenAIQueryExpander,
+    EntityExactRetriever,
+    EntitySurfaceExtractor,
     ExpansionCacheMissError,
     ExpansionPolicy,
     IndexRetriever,
@@ -72,6 +74,40 @@ class FakeExpander:
         return ("alpha alternate", "alpha memory", "alpha personal")
 
 
+class FakeAutomaton:
+    def __init__(self) -> None:
+        self.words: list[tuple[str, object]] = []
+
+    def add_word(self, word: str, value: object) -> None:
+        self.words.append((word, value))
+
+    def make_automaton(self) -> None:
+        return None
+
+    def iter(self, text: str):
+        for word, value in self.words:
+            start = text.find(word)
+            if start >= 0:
+                yield start + len(word) - 1, value
+
+
+class FakeSpan:
+    def __init__(self, text: str, start_char: int, end_char: int) -> None:
+        self.text = text
+        self.start_char = start_char
+        self.end_char = end_char
+
+
+class FakeNlp:
+    def __call__(self, text: str) -> SimpleNamespace:
+        spans = []
+        for phrase in ("Alpha Project", "Beta Team", "next steps"):
+            start = text.find(phrase)
+            if start >= 0:
+                spans.append(FakeSpan(phrase, start, start + len(phrase)))
+        return SimpleNamespace(noun_chunks=spans)
+
+
 class OpenAIEmbedderTests(unittest.TestCase):
     def test_requests_canonical_model_and_dimensions(self) -> None:
         calls: list[dict[str, object]] = []
@@ -120,6 +156,117 @@ class TokenWindowTests(unittest.TestCase):
         for window in windows:
             self.assertLessEqual(len(encoding.encode(window)), 8)
         self.assertEqual("".join(windows), text)
+
+
+class EntityExactRetrieverTests(unittest.TestCase):
+    def test_extracts_gazetteer_and_noun_phrase_seeds_then_retrieves_exact_matches(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            index = build_index(
+                Path(tmp) / "index",
+                pages=[
+                    {
+                        "id": 1,
+                        "source_id": "source",
+                        "slug": "alpha-project",
+                        "title": "Alpha Project",
+                    },
+                    {
+                        "id": 2,
+                        "source_id": "source",
+                        "slug": "beta-team",
+                        "title": "Beta Team",
+                    },
+                    {
+                        "id": 3,
+                        "source_id": "source",
+                        "slug": "gamma-team",
+                        "title": "Gamma Team",
+                    },
+                ],
+                chunks=[
+                    {
+                        "id": 1,
+                        "page_id": 1,
+                        "chunk_index": 0,
+                        "chunk_text": "Alpha Project weak mention",
+                        "embedding": vector(1.0),
+                        "model": EMBEDDING_MODEL,
+                    },
+                    {
+                        "id": 2,
+                        "page_id": 1,
+                        "chunk_index": 1,
+                        "chunk_text": "Alpha Project Alpha Project decisive",
+                        "embedding": vector(0.9),
+                        "model": EMBEDDING_MODEL,
+                    },
+                    {
+                        "id": 3,
+                        "page_id": 2,
+                        "chunk_index": 0,
+                        "chunk_text": "Beta Team notes",
+                        "embedding": vector(0.1),
+                        "model": EMBEDDING_MODEL,
+                    },
+                    {
+                        "id": 4,
+                        "page_id": 2,
+                        "chunk_index": 1,
+                        "chunk_text": "Beta Team next steps",
+                        "embedding": vector(0.2),
+                        "model": EMBEDDING_MODEL,
+                    },
+                    {
+                        "id": 5,
+                        "page_id": 3,
+                        "chunk_index": 0,
+                        "chunk_text": "Alpha topic without the exact project phrase",
+                        "embedding": vector(0.3),
+                        "model": EMBEDDING_MODEL,
+                    },
+                ],
+            )
+            extractor = EntitySurfaceExtractor(
+                index,
+                nlp=FakeNlp(),
+                automaton_factory=FakeAutomaton,
+            )
+            result = EntityExactRetriever(index, extractor=extractor).retrieve_entities(
+                "Compare Alpha Project with Beta Team next steps.",
+                top_k=2,
+            )
+
+        self.assertEqual(
+            [(seed.surface, seed.source) for seed in result.seeds],
+            [
+                ("Alpha Project", "gazetteer"),
+                ("Beta Team", "gazetteer"),
+                ("next steps", "noun_phrase"),
+            ],
+        )
+        self.assertEqual(
+            [hit.page_id for hit in result.hits],
+            [
+                "source:alpha-project",
+                "source:beta-team",
+                "source:beta-team",
+            ],
+        )
+        self.assertEqual(result.hits[0].chunk_id, "source:alpha-project:0")
+        self.assertNotIn("source:gamma-team", [hit.page_id for hit in result.hits])
+        self.assertEqual(
+            result.trace["retrieval_condition_detail"], "entity_exact_match"
+        )
+        self.assertEqual(
+            result.trace["per_seed_retrievals"][0]["returned_pages"][0]["rank"],
+            1,
+        )
+        self.assertEqual(
+            result.trace["per_seed_retrievals"][2]["returned_pages"][0]["match_type"],
+            "exact",
+        )
 
 
 def build_index(

@@ -1071,6 +1071,7 @@ class SpacyCueConceptExtractor:
 
 class PARMConvergenceRetriever:
     retrieval_condition_detail = "parm_convergence_v1"
+    evidence_projection_version = "semantic_evidence_v1"
     admission_policy = "convergence_threshold"
 
     def __init__(
@@ -1132,6 +1133,9 @@ class PARMConvergenceRetriever:
         self._sentence_page_ids = tuple(
             sentence.page_id for sentence in index.sentences
         )
+        self._sentences_by_page: dict[str, list[SentenceRecord]] = defaultdict(list)
+        for sentence in index.sentences:
+            self._sentences_by_page[sentence.page_id].append(sentence)
 
     def retrieve_observation(
         self,
@@ -1219,6 +1223,7 @@ class PARMConvergenceRetriever:
         )
         trace = {
             "retrieval_condition_detail": self.retrieval_condition_detail,
+            "evidence_projection_version": self.evidence_projection_version,
             "admission_policy": self.admission_policy,
             "task_anchors": list(anchors),
             "regions": [
@@ -1399,6 +1404,29 @@ class PARMConvergenceRetriever:
             ]
             if not multi_concept and not singleton_values:
                 continue
+            evidence_terms = (
+                lexical_concepts
+                if multi_concept
+                else {value["anchor"] for value in singleton_values}
+            )
+            evidence_sentences = [
+                sentence.text
+                for sentence in self._sentences_by_page.get(page_id, [])
+                if any(
+                    _word_present(sentence.text, term)
+                    for term in evidence_terms
+                )
+            ][:3]
+            if not evidence_sentences:
+                evidence_sentences = list(
+                    dict.fromkeys(
+                        value["sentence_text"]
+                        for value in sorted(
+                            best_by_concept.values(),
+                            key=lambda item: (-item["cosine"], item["sentence_id"]),
+                        )
+                    )
+                )[:3]
             score = sum(value["cosine"] for value in best_by_concept.values())
             admissions.append(
                 {
@@ -1414,6 +1442,7 @@ class PARMConvergenceRetriever:
                     "concept_count": len(concepts),
                     "concepts": sorted(concepts),
                     "lexical_concepts": sorted(lexical_concepts),
+                    "evidence_sentences": evidence_sentences,
                     "singleton_queries": [
                         value["query"] for value in singleton_values
                     ],
@@ -1465,6 +1494,9 @@ class PARMConvergenceRetriever:
         page_id = admission["page_id"]
         page = self._page_by_id[page_id]
         _, chunk = self._chunks_by_page[page_id][0]
+        text = chunk.text
+        if admission["channel"].startswith("semantic_"):
+            text = "\n".join(admission.get("evidence_sentences", ())) or text
         diagnostics = {
             key: value
             for key, value in admission.items()
@@ -1476,7 +1508,7 @@ class PARMConvergenceRetriever:
             slug=page.slug,
             title=page.title,
             chunk_id=chunk.chunk_id,
-            text=chunk.text,
+            text=text,
             score=float(admission["score"]),
             rank=rank,
             perturbations=page.perturbations,

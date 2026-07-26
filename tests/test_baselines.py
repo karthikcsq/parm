@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 from parm_bench.baselines import (
@@ -12,6 +12,9 @@ from parm_bench.baselines import (
     NoMemoryBaseline,
     OutputRagFlow,
     PARMBaseline,
+    PARM_JUDGMENT_INSTRUCTIONS,
+    PARM_JUDGMENT_PROMPT_VERSION,
+    PARM_MEMORY_HANDOFF_VERSION,
     PromptedMemoryToolBaseline,
     benchmark_input,
 )
@@ -213,6 +216,12 @@ class RecordingPARMRetriever:
                 "admission_policy": "convergence_threshold",
                 "semantic_seeds": [{"query": "lunch office"}],
                 "entity_seeds": [],
+                "regions": [
+                    {
+                        "region_id": "region-1",
+                        "text": "Result 147 — Garden Table.",
+                    }
+                ],
                 "returned_pages": [],
             },
         )
@@ -545,7 +554,12 @@ class PARMBaselineTests(unittest.TestCase):
         case = benchmark_input(load_cases(DATASET)[0])
         model = RecordingModel()
         retriever = RecordingPARMRetriever(
-            (hit("page/one", "note/one", "Relevant memory", 0.9),)
+            (
+                replace(
+                    hit("page/one", "note/one", "Relevant memory", 0.9),
+                    diagnostics={"region_id": "region-1"},
+                ),
+            )
         )
 
         row = PARMBaseline(retrieval_limit=2).run(case, model, retriever)
@@ -554,12 +568,27 @@ class PARMBaselineTests(unittest.TestCase):
             retriever.calls,
             [(case.prompt, case.observation_text, 2)],
         )
-        self.assertEqual(model.calls[0]["memory_context"], "1. Relevant memory")
-        self.assertEqual(model.calls[0]["instructions"], INPUT_RAG_INSTRUCTIONS)
+        self.assertEqual(
+            model.calls[0]["memory_context"],
+            "1. Triggering observed output:\n"
+            "Result 147 — Garden Table.\n"
+            "Personal memory:\nRelevant memory",
+        )
+        self.assertEqual(
+            model.calls[0]["instructions"], PARM_JUDGMENT_INSTRUCTIONS
+        )
         self.assertEqual(row["trace"]["admitted_source_ids"], ["note/one"])
         self.assertEqual(
             row["trace"]["retrieval_condition_detail"],
             "parm_convergence_v1",
+        )
+        self.assertEqual(
+            row["trace"]["judgment_prompt_version"],
+            PARM_JUDGMENT_PROMPT_VERSION,
+        )
+        self.assertEqual(
+            row["trace"]["memory_handoff_version"],
+            PARM_MEMORY_HANDOFF_VERSION,
         )
 
     def test_empty_selection_uses_no_memory_and_validates_inputs(self) -> None:

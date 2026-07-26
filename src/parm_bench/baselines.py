@@ -49,6 +49,18 @@ INPUT_RAG_INSTRUCTIONS = (
     "explanation."
 )
 
+PARM_JUDGMENT_INSTRUCTIONS = (
+    "Complete the selection task using the supplied observation and retrieved "
+    "personal memory. Reason internally about which visible option directly "
+    "bears on the memory and how that evidence changes the choice. Treat a "
+    "stated concern or unsustainable recurring pattern as decision-relevant: "
+    "prefer an option that investigates or addresses it, and avoid an option "
+    "that repeats it. Return exactly one requested label or name and no "
+    "explanation."
+)
+PARM_JUDGMENT_PROMPT_VERSION = "parm_judgment_v1"
+PARM_MEMORY_HANDOFF_VERSION = "cue_region_memory_v1"
+
 
 class OutputRagFlow(str, Enum):
     TOOL_OUTPUT_ONLY = "tool_output_only"
@@ -485,13 +497,13 @@ class PARMBaseline:
             top_k=self.retrieval_limit,
         )
         hits = list(retrieval.hits)
-        memory_context = _memory_context(hits)
+        memory_context = _parm_memory_context(hits, retrieval.trace)
         response = model.generate(
             prompt=case.prompt,
             observation_kind=case.observation_kind,
             observation_text=case.observation_text,
             instructions=(
-                INPUT_RAG_INSTRUCTIONS
+                PARM_JUDGMENT_INSTRUCTIONS
                 if memory_context
                 else FINAL_ANSWER_INSTRUCTIONS
             ),
@@ -509,6 +521,8 @@ class PARMBaseline:
             "trace": {
                 "detected_cues": retrieval.trace.get("semantic_seeds", [])
                 + retrieval.trace.get("entity_seeds", []),
+                "judgment_prompt_version": PARM_JUDGMENT_PROMPT_VERSION,
+                "memory_handoff_version": PARM_MEMORY_HANDOFF_VERSION,
                 **retrieval.trace,
                 "retrieved_page_ids": page_ids,
                 "retrieved_source_ids": source_ids,
@@ -671,6 +685,27 @@ def _memory_context(hits: list[Any]) -> str:
     return "\n\n".join(
         f"{index}. {hit.text}" for index, hit in enumerate(hits, start=1)
     )
+
+
+def _parm_memory_context(
+    hits: list[Any],
+    retrieval_trace: dict[str, Any],
+) -> str:
+    regions = {
+        region["region_id"]: region["text"]
+        for region in retrieval_trace.get("regions", [])
+    }
+    blocks = []
+    for index, hit in enumerate(hits, start=1):
+        region_text = regions.get(hit.diagnostics.get("region_id"))
+        if region_text:
+            blocks.append(
+                f"{index}. Triggering observed output:\n{region_text}\n"
+                f"Personal memory:\n{hit.text}"
+            )
+        else:
+            blocks.append(f"{index}. Personal memory:\n{hit.text}")
+    return "\n\n".join(blocks)
 
 
 def _dedupe_hits_by_source(hits: list[Any]) -> list[Any]:

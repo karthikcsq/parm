@@ -178,6 +178,8 @@ parm-bench run data/benchmark_v1 `
   --baseline parm `
   --retrieval-index data\retrieval-indexes\amara-life-v1 `
   --retrieval-limit 5 `
+  --response-cache data\response-caches\amara-life-v1 `
+  --response-policy frozen `
   --model gpt-5-mini `
   --out data/benchmark-results/parm-gpt-5-mini.jsonl
 parm-bench score `

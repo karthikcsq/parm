@@ -236,3 +236,17 @@ The experiment cleared the implementation gate:
 These are pilot-tuned, in-sample retrieval results. They establish that the
 mechanism works on the benchmark shape; they are not an out-of-sample
 generalization claim.
+
+The downstream `gpt-5-mini` run also cleared the decision gate:
+
+- 5/5 positives changed to the memory-conditioned choice;
+- 5/5 cue-ablated controls remained correct;
+- 5/5 memory-included ceilings were correct;
+- memory admission precision was `1.0`, with zero spurious, poisoned, or
+  privacy-overexposing admissions on the positive/control pairs.
+
+The response handoff includes the exact triggering observation region beside
+the selected memory. Semantic admissions expose only the evidence sentences
+that cleared convergence, while entity-graph admissions retain their durable
+relation text. This keeps downstream judgment focused without changing
+retrieval admission.

@@ -16,6 +16,8 @@ from .baselines import (
     BaselineConfiguration,
     BaselineNotImplementedError,
     OutputRagFlow,
+    PARM_JUDGMENT_PROMPT_VERSION,
+    PARM_MEMORY_HANDOFF_VERSION,
     RetrievalResourceKind,
     benchmark_input,
     get_baseline,
@@ -460,6 +462,17 @@ def _write_run_configuration(
             getattr(retrieval_resource, "retrieval_condition_detail", None)
             if mode is None
             else None
+        ),
+        "evidence_projection_version": getattr(
+            retrieval_resource,
+            "evidence_projection_version",
+            None,
+        ),
+        "judgment_prompt_version": (
+            PARM_JUDGMENT_PROMPT_VERSION if baseline == "parm" else None
+        ),
+        "memory_handoff_version": (
+            PARM_MEMORY_HANDOFF_VERSION if baseline == "parm" else None
         ),
         "retrieval_index": (
             str(index.path) if index is not None else None

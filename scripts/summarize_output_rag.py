@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from parm_bench.dataset import load_cases  # noqa: E402
+from parm_bench.scoring import score_predictions  # noqa: E402
 
 RESULTS = ROOT / "data" / "benchmark-results"
 
@@ -31,17 +32,28 @@ def load_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def is_correct(variant: str, response: str, output_choice: str, memory_choice: str) -> bool:
-    """Did the model give the correct answer for this variant?
-
-    positive: correct = the memory-conditioned choice, and NOT the default
-              (it had to override the visible default using memory).
-    control : correct = the plain default choice (memory choice == default here).
-    """
-    resp = response.casefold()
-    if variant in ("positive", "memory-included"):
-        return memory_choice.casefold() in resp and output_choice.casefold() not in resp
-    return output_choice.casefold() in resp
+def summarize_predictions(
+    cases: list[dict],
+    predictions: list[dict],
+) -> dict[str, list[int]]:
+    """Tally a run using PARMBench's canonical choice matcher."""
+    cases_by_id = {case["case_id"]: case for case in cases}
+    scored_rows = {
+        row["case_id"]: row
+        for row in score_predictions(cases, predictions)["rows"]
+    }
+    tally = {
+        "positive": [0, 0],
+        "cue-ablated": [0, 0],
+        "memory-included": [0, 0],
+    }
+    for prediction in predictions:
+        case = cases_by_id[prediction["case_id"]]
+        bucket = tally[case["variant"]]
+        bucket[1] += 1
+        if scored_rows[case["case_id"]]["correct_memory_conditioned_decision"]:
+            bucket[0] += 1
+    return tally
 
 
 def main() -> None:
@@ -61,16 +73,10 @@ def main() -> None:
     for file in files:
         name = Path(file).stem.replace("naive-output-", "")
         flow, _, mode = name.rpartition("-")
-        # [correct, total] per variant
-        tally = {"positive": [0, 0], "cue-ablated": [0, 0], "memory-included": [0, 0]}
-        for pred in load_jsonl(Path(file)):
-            case = cases[pred["case_id"]]
-            d = case["decisions"]
-            bucket = tally[case["variant"]]
-            bucket[1] += 1
-            if is_correct(case["variant"], pred["response_text"], d["output_only"]["choice"], d["memory_conditioned"]["choice"]):
-                bucket[0] += 1
-        grid[(flow, mode)] = tally
+        grid[(flow, mode)] = summarize_predictions(
+            list(cases.values()),
+            load_jsonl(Path(file)),
+        )
 
     for (flow, mode), tally in sorted(grid.items()):
         pos = f"{tally['positive'][0]}/{tally['positive'][1]}"

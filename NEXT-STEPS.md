@@ -18,9 +18,13 @@
   comparison. It never called memory on any positive or cue-ablated pilot case,
   so the PARM condition must demonstrate output-cue retrieval without relying
   on the response model to elect tool use.
-- Run the response-model comparison and inspect any remaining decision misses.
-  Retrieval correctness and downstream decision correctness remain separate
-  measurements.
+- Treat the tracked `parm` run as the completed in-sample response-model gate:
+  five of five positive decisions, five of five cue-ablated controls, and five
+  of five memory-included ceilings are correct. Retrieval correctness and
+  downstream decision correctness remain separate measurements.
+- Build a held-out expansion set before changing the claim from pilot
+  convergence to general retrieval quality. Keep thresholds and judgment
+  instructions frozen while scoring that set.
 
 ## Expansion queue
 

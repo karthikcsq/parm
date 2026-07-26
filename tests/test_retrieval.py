@@ -205,6 +205,18 @@ class PARMConvergenceSelectionTests(unittest.TestCase):
             "review": "I ate lunch at my desk all week.",
             "email": "A lunch office logistics message.",
         }
+        retriever._sentences_by_page = {
+            "review": [
+                SentenceRecord(
+                    "sentence-1",
+                    "chunk-1",
+                    "review",
+                    0,
+                    "I ate lunch at my desk all week.",
+                )
+            ],
+            "email": [],
+        }
         contribution = {
             "seed_id": "semantic-1",
             "region_id": "region-1",
@@ -228,6 +240,10 @@ class PARMConvergenceSelectionTests(unittest.TestCase):
         self.assertEqual(admissions[0]["page_id"], "review")
         self.assertEqual(
             admissions[0]["channel"], "semantic_anchored_singleton"
+        )
+        self.assertEqual(
+            admissions[0]["evidence_sentences"],
+            ["I ate lunch at my desk all week."],
         )
 
     def test_graph_selector_can_admit_one_or_zero(self) -> None:

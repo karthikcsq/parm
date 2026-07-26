@@ -5,6 +5,7 @@ from pathlib import Path
 
 from parm_bench.dataset import load_cases
 from parm_bench.scoring import score_predictions
+from scripts.summarize_output_rag import summarize_predictions
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -152,6 +153,24 @@ class ScoringTests(unittest.TestCase):
                 self.assertEqual(
                     metrics["correct_memory_conditioned_decision_rate"], 1.0
                 )
+
+    def test_output_rag_summary_uses_canonical_choice_matching(self) -> None:
+        case = next(
+            case
+            for case in CASES
+            if case["case_id"] == "parm-amara-ai-news-digest-positive"
+        )
+        tally = summarize_predictions(
+            [case],
+            [
+                prediction(
+                    case,
+                    None,
+                    response_text="CoreWeave Reserved-GPU Pricing Revision",
+                )
+            ],
+        )
+        self.assertEqual(tally["positive"], [1, 1])
 
     def test_generic_listing_prefix_is_not_a_choice(self) -> None:
         case = next(

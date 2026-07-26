@@ -9,6 +9,15 @@ from .choice_matching import matches_choice
 def score_predictions(
     cases: list[dict[str, Any]], predictions: list[dict[str, Any]]
 ) -> dict[str, Any]:
+    return _score_predictions(cases, predictions, include_breakdowns=True)
+
+
+def _score_predictions(
+    cases: list[dict[str, Any]],
+    predictions: list[dict[str, Any]],
+    *,
+    include_breakdowns: bool,
+) -> dict[str, Any]:
     predictions_by_id = {row.get("case_id"): row for row in predictions}
     totals = Counter()
     rows = []
@@ -41,7 +50,7 @@ def score_predictions(
     admitted = totals["admitted"] or 1
     gold_total = totals["gold_total"] or 1
     memory_included = totals["memory_included"] or 1
-    return {
+    metrics = {
         "case_count": totals["cases"],
         "memory_included_count": totals["memory_included"],
         "ceiling_accuracy": totals["ceiling_correct"] / memory_included,
@@ -62,6 +71,32 @@ def score_predictions(
         "privacy_overexposure_rate": totals["privacy_overexposure"] / cases_n,
         "rows": rows,
     }
+    if include_breakdowns:
+        splits = sorted(
+            {
+                str(case.get("provenance", {}).get("evaluation_split", "unspecified"))
+                for case in cases
+            }
+        )
+        metrics["by_evaluation_split"] = {
+            split: _score_predictions(
+                [
+                    case
+                    for case in cases
+                    if str(
+                        case.get("provenance", {}).get(
+                            "evaluation_split",
+                            "unspecified",
+                        )
+                    )
+                    == split
+                ],
+                predictions,
+                include_breakdowns=False,
+            )
+            for split in splits
+        }
+    return metrics
 
 def _score_case(case: dict[str, Any], prediction: dict[str, Any]) -> dict[str, Any]:
     response_text = str(prediction.get("response_text", ""))

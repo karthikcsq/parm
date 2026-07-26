@@ -46,6 +46,16 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(metrics["beneficial_decision_change_rate"], 1.0)
         self.assertEqual(metrics["cue_ablated_false_intervention_rate"], 0.0)
         self.assertEqual(metrics["memory_admission_precision"], 1.0)
+        self.assertEqual(
+            set(metrics["by_evaluation_split"]),
+            {"pilot", "expansion"},
+        )
+        self.assertEqual(
+            metrics["by_evaluation_split"]["expansion"][
+                "beneficial_decision_change_rate"
+            ],
+            1.0,
+        )
 
     def test_memory_included_scores_a_ceiling_bucket_only(self) -> None:
         included = [c for c in CASES if c["variant"] == "memory-included"]

@@ -65,6 +65,41 @@ These are fixture-fairness findings, not retrieval wins or losses. Any revised
 fixtures must retain the approved positive memory/cue relationship, keep the
 large-output structure symmetric, and be rerun across every condition.
 
+## Fixture-fairness repair
+
+The `v3-fixture-fairness` revision changes only these three scenario triplets.
+The approved memory prose, gold sources, positive cue relationships, and prompts
+remain unchanged. The phone target now carries the manual setup cost of its
+single-contact scope, the human-factors lead is a credible cross-functional
+safety session, and the weekend control substitutes an ordinary indoor records
+workshop instead of another appealing day outdoors.
+
+The isolated no-memory rerun produced these exact choices:
+
+| Scenario and variant | Frozen v2 choice | Repaired v3 choice |
+| --- | --- | --- |
+| Phone positive | `Feature F-147 — Private Connection Check-In` | `Feature F-004 — Focus Stack` |
+| Phone control | `Feature F-004 — Focus Stack` | `Feature F-004 — Focus Stack` |
+| Phone ceiling | `Feature F-147 — Private Connection Check-In` | `Feature F-147 — Private Connection Check-In` |
+| Weekend positive | `Event E-004 — Saturday Investor Breakfast` | `Event E-004 — Saturday Investor Breakfast` |
+| Weekend control | `Event E-147 — Saturday Field Photography Workshop` | `Event E-004 — Saturday Investor Breakfast` |
+| Weekend ceiling | `Event E-147 — Offline Saturday Field Workshop` | `Event E-147 — Offline Saturday Field Workshop` |
+| Human-factors positive | `Session H-147 — Readable Handoffs Under Low Confidence` | `Session H-004 — Evidence-Based Override Design` |
+| Human-factors control | `Session H-087 — Operator Load During Shift Changes` | `Session H-004 — Evidence-Based Override Design` |
+| Human-factors ceiling | `Session H-147 — Readable Handoffs Under Low Confidence` | `Session H-147 — Readable Handoffs Under Low Confidence` |
+
+Across all 18 scenarios, no-memory positive target selections fell from 2/18
+to 0/18, controls correct rose from 16/18 to 18/18, and the memory-included
+ceiling remained 18/18. Primary positive-plus-control accuracy remains 18/36,
+which is the intended no-memory floor: every positive misses the
+memory-conditioned target and every control selects the output-only lead.
+
+The repaired positive contexts contain 9,010 to 9,023 tokens. Their cue-ablated
+controls differ by 0, -4, and -1 tokens respectively, and every
+memory-included observation is byte-identical to its positive observation.
+Retrieval-backed conditions still require a full rerun under a new result
+namespace before comparing systems on the repaired benchmark.
+
 The frozen PARM trace also exposed two mechanism-specific limits:
 
 - the semantic selector only admitted review/reflection filenames, excluding
@@ -92,4 +127,3 @@ benchmark.
 
 One all-entity attempt stopped after a transient DNS failure. The retry reused
 the isolated response cache and completed all 54 rows without final-run errors.
-

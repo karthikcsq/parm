@@ -2,7 +2,7 @@
 
 Generated fixture. Every listing has a unique natural-language label.
 
-Feature F-004 — Focus Stack. Reviewers call this automatic notification bundling the release's most useful productivity feature.
+Feature F-004 — Focus Stack. Reviewers rank this automatic notification bundling as the best feature to enable first because it requires no setup and reduces missed priority alerts during a typical workday.
 
 Feature 001 — onboarding automation, introduced by Helio North. The update includes a case study with incomplete but promising evidence.
 
@@ -296,7 +296,7 @@ Feature 145 — onboarding automation, introduced by Pioneer Stack. The update i
 
 Feature 146 — customer research. The system uses implementation lessons from a six-month pilot while keeping data on device.
 
-Feature F-147 — Private Connection Check-In. The opt-in feature notices when a recurring personal call has lapsed and privately suggests making time for a check-in without messaging the contact automatically.
+Feature F-147 — Private Connection Check-In. During setup, the user selects one recurring personal call for monitoring. If that interval lapses, the opt-in feature privately flags the gap; it never messages the contact and requires manual schedule maintenance.
 
 Feature 148 — access control. The release note describes new benchmarks alongside several methodological caveats and an opt-in settings control.
 
@@ -713,5 +713,3 @@ Feature 353 — release management, introduced by Harbor Point. The update inclu
 Feature 354 — incident response. The system uses implementation lessons from a six-month pilot while keeping data on device.
 
 Feature 355 — Fieldstone: market structure. Reviewers highlight how teams handled procurement and scheduling constraints for everyday phone use.
-
-Feature 356 — contract reliability. The release note describes new benchmarks alongside several methodological caveats and an opt-in settings control.

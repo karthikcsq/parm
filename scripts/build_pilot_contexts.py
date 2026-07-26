@@ -206,8 +206,8 @@ SPECS = {
     },
     "phone-feature-digest": {
         "title": "Mobile OS Feature Digest",
-        "lead": "Feature F-004 — Focus Stack. Reviewers call this automatic notification bundling the release's most useful productivity feature.",
-        "cue": "Feature F-147 — Private Connection Check-In. The opt-in feature notices when a recurring personal call has lapsed and privately suggests making time for a check-in without messaging the contact automatically.",
+        "lead": "Feature F-004 — Focus Stack. Reviewers rank this automatic notification bundling as the best feature to enable first because it requires no setup and reduces missed priority alerts during a typical workday.",
+        "cue": "Feature F-147 — Private Connection Check-In. During setup, the user selects one recurring personal call for monitoring. If that interval lapses, the opt-in feature privately flags the gap; it never messages the contact and requires manual schedule maintenance.",
         "templates": [
             "Feature {code} — {topic}. The release note describes {detail} and an opt-in settings control.",
             "Feature {code} — {company}: {topic}. Reviewers highlight {detail} for everyday phone use.",
@@ -238,7 +238,7 @@ SPECS = {
     },
     "weekend-events": {
         "title": "Weekend Events Feed",
-        "lead": "Event E-004 — Saturday Investor Breakfast. The feed ranks this founder-and-investor networking event first for professional value.",
+        "lead": "Event E-004 — Saturday Investor Breakfast. The feed ranks this as its best overall recommendation for professional value, convenient timing, and broad appeal.",
         "cue": "Event E-147 — Offline Saturday Field Workshop. A phone-free outdoor program is designed for people who have worked several weekends in succession and need a full day away from work routines.",
         "templates": [
             "Event {code} — {topic}. Hosted by {company}, the listing includes {detail}.",
@@ -286,7 +286,7 @@ SPECS = {
     },
     "human-factors-event": {
         "title": "Human Factors and Product Safety Program",
-        "lead": "Session H-004 — Fully Autonomous Systems at Scale. Attendee voting makes this keynote the program's most popular session.",
+        "lead": "Session H-004 — Evidence-Based Override Design. The program committee ranks this as the strongest cross-functional session because it combines incident evidence, manual-override testing, and safety-case review across product and operations.",
         "cue": "Session H-147 — Readable Handoffs Under Low Confidence. The talk covers interpretable decision logs and operator cognitive load when automation confidence drops and control returns to a person.",
         "templates": [
             "Session {code} — {topic}. {speaker} of {company} presents {detail}.",

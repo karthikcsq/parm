@@ -2,7 +2,7 @@
 
 Generated fixture. Every listing has a unique natural-language label.
 
-Session H-004 — Fully Autonomous Systems at Scale. Attendee voting makes this keynote the program's most popular session.
+Session H-004 — Evidence-Based Override Design. The program committee ranks this as the strongest cross-functional session because it combines incident evidence, manual-override testing, and safety-case review across product and operations.
 
 Workshop 001 — onboarding automation. Facilitators examine a case study with incomplete but promising evidence.
 

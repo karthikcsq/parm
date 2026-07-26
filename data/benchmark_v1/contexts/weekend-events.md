@@ -2,7 +2,7 @@
 
 Generated fixture. Every listing has a unique natural-language label.
 
-Event E-004 — Saturday Investor Breakfast. The feed ranks this founder-and-investor networking event first for professional value.
+Event E-004 — Saturday Investor Breakfast. The feed ranks this as its best overall recommendation for professional value, convenient timing, and broad appeal.
 
 Event 001 — onboarding automation. The weekend guide notes a case study with incomplete but promising evidence.
 

@@ -110,6 +110,46 @@ class DatasetValidationTests(unittest.TestCase):
                     case["observation_text"].casefold().count(choice.casefold()), 1
                 )
 
+    def test_repaired_fairness_cases_keep_symmetric_output_leads(self) -> None:
+        cases = {case["case_id"]: case for case in load_cases(DATASET)}
+        expected = {
+            "parm-amara-phone-feature-digest": (
+                "Feature F-004 — Focus Stack",
+                "Feature F-147 — Private Connection Check-In",
+                ("personal call",),
+            ),
+            "parm-amara-weekend-events": (
+                "Event E-004 — Saturday Investor Breakfast",
+                "Event E-147 — Offline Saturday Field Workshop",
+                ("phone-free", "work routines"),
+            ),
+            "parm-amara-human-factors-event": (
+                "Session H-004 — Evidence-Based Override Design",
+                "Session H-147 — Readable Handoffs Under Low Confidence",
+                ("interpretable", "cognitive load", "automation confidence"),
+            ),
+        }
+        for base_case_id, (
+            output_lead,
+            memory_target,
+            control_forbidden_phrases,
+        ) in expected.items():
+            positive = cases[f"{base_case_id}-positive"]
+            control = cases[f"{base_case_id}-cue-ablated"]
+            included = cases[f"{base_case_id}-memory-included"]
+            self.assertEqual(
+                positive["decisions"]["output_only"]["choice"], output_lead
+            )
+            self.assertEqual(
+                control["decisions"]["memory_conditioned"]["choice"], output_lead
+            )
+            self.assertEqual(
+                included["decisions"]["memory_conditioned"]["choice"], memory_target
+            )
+            control_text = control["observation"]["replacements"][0]["new"].casefold()
+            for phrase in control_forbidden_phrases:
+                self.assertNotIn(phrase, control_text)
+
     def test_memory_is_readable_prose_not_an_opaque_answer_id(self) -> None:
         for case in load_cases(DATASET):
             memory_text = case["memory"]["text"]

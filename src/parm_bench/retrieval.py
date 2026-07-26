@@ -1212,6 +1212,7 @@ class PARMConvergenceRetriever:
             for page_id in self._eligible_pages
             if self._page_by_id[page_id].slug.startswith("notes/")
         }
+        self._direct_note_bm25 = _BM25Corpus(self._direct_note_text)
         self._inbound: dict[str, set[str]] = defaultdict(set)
         for link in index.links:
             if link.source_page_id in self._eligible_pages:
@@ -1561,7 +1562,12 @@ class PARMConvergenceRetriever:
         if len(self._direct_note_text) < 2:
             return [], candidates
         for region in regions:
-            scores = _bm25_scores(region["text"], self._direct_note_text)
+            bm25 = getattr(self, "_direct_note_bm25", None)
+            scores = (
+                bm25.scores(region["text"])
+                if bm25 is not None
+                else _bm25_scores(region["text"], self._direct_note_text)
+            )
             ordered = _rank_scores(scores, 2)
             if len(ordered) < 2:
                 continue
@@ -1979,40 +1985,62 @@ def _tokenize(text: str) -> list[str]:
     return re.findall(r"[a-z0-9]+", text.casefold())
 
 
+class _BM25Corpus:
+    """Pre-tokenized BM25 corpus for repeated queries over fixed documents."""
+
+    def __init__(self, documents: dict[str, str]):
+        self._tokens = {
+            document_id: _tokenize(text)
+            for document_id, text in documents.items()
+        }
+        self._frequencies = {
+            document_id: Counter(tokens)
+            for document_id, tokens in self._tokens.items()
+        }
+        self._count = len(self._tokens)
+        self._average_length = (
+            sum(len(tokens) for tokens in self._tokens.values()) / self._count
+            if self._count
+            else 0.0
+        )
+        self._document_frequency: Counter[str] = Counter()
+        for tokens in self._tokens.values():
+            self._document_frequency.update(set(tokens))
+
+    def scores(self, query: str) -> dict[str, float]:
+        query_tokens = _tokenize(query)
+        if not query_tokens:
+            return {}
+        scores: dict[str, float] = {}
+        k1 = 1.5
+        b = 0.75
+        for document_id, tokens in self._tokens.items():
+            frequencies = self._frequencies[document_id]
+            score = 0.0
+            for term in query_tokens:
+                frequency = frequencies[term]
+                if frequency == 0:
+                    continue
+                df = self._document_frequency[term]
+                inverse_frequency = math.log(
+                    1 + (self._count - df + 0.5) / (df + 0.5)
+                )
+                length_ratio = (
+                    len(tokens) / self._average_length
+                    if self._average_length
+                    else 0.0
+                )
+                score += inverse_frequency * (
+                    frequency * (k1 + 1)
+                    / (frequency + k1 * (1 - b + b * length_ratio))
+                )
+            if score > 0:
+                scores[document_id] = score
+        return scores
+
+
 def _bm25_scores(query: str, documents: dict[str, str]) -> dict[str, float]:
-    tokens_by_id = {
-        document_id: _tokenize(text) for document_id, text in documents.items()
-    }
-    query_tokens = _tokenize(query)
-    if not query_tokens:
-        return {}
-    count = len(tokens_by_id)
-    average_length = (
-        sum(len(tokens) for tokens in tokens_by_id.values()) / count if count else 0
-    )
-    document_frequency: Counter[str] = Counter()
-    for tokens in tokens_by_id.values():
-        document_frequency.update(set(tokens))
-    scores: dict[str, float] = {}
-    k1 = 1.5
-    b = 0.75
-    for document_id, tokens in tokens_by_id.items():
-        frequencies = Counter(tokens)
-        score = 0.0
-        for term in query_tokens:
-            frequency = frequencies[term]
-            if frequency == 0:
-                continue
-            df = document_frequency[term]
-            inverse_frequency = math.log(1 + (count - df + 0.5) / (df + 0.5))
-            length_ratio = len(tokens) / average_length if average_length else 0.0
-            score += inverse_frequency * (
-                frequency * (k1 + 1)
-                / (frequency + k1 * (1 - b + b * length_ratio))
-            )
-        if score > 0:
-            scores[document_id] = score
-    return scores
+    return _BM25Corpus(documents).scores(query)
 
 
 def _bm25_rank(

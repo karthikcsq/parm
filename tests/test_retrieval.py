@@ -32,7 +32,9 @@ from parm_bench.retrieval import (
     RetrievalRequest,
     RetrievalValidationError,
     SentenceRecord,
+    _BM25Corpus,
     _bm25_rank,
+    _bm25_scores,
     _rrf,
     _token_windows,
 )
@@ -745,6 +747,18 @@ class RetrievalIndexTests(unittest.TestCase):
 
 
 class RankingTests(unittest.TestCase):
+    def test_precomputed_bm25_matches_one_shot_scores(self) -> None:
+        documents = {
+            "a": "conviction reason forty eight hour meeting",
+            "b": "ordinary meeting notes",
+            "c": "unrelated durable note",
+        }
+
+        expected = _bm25_scores("reason for conviction", documents)
+        actual = _BM25Corpus(documents).scores("reason for conviction")
+
+        self.assertEqual(actual, expected)
+
     def test_bm25_order_and_one_based_rrf(self) -> None:
         ranking = _bm25_rank(
             "orange climate",

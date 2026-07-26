@@ -55,10 +55,14 @@ PARM_JUDGMENT_INSTRUCTIONS = (
     "bears on the memory and how that evidence changes the choice. Treat a "
     "stated concern or unsustainable recurring pattern as decision-relevant: "
     "prefer an option that investigates or addresses it, and avoid an option "
-    "that repeats it. Return exactly one requested label or name and no "
-    "explanation."
+    "that repeats it. The triggering observed output identifies where the "
+    "memory applies. Prefer the option in that trigger when it directly "
+    "addresses the memory instead of substituting a merely related option "
+    "elsewhere. Choose only among labels or names visible in the observation; "
+    "never answer with an entity mentioned only in memory. Return exactly one "
+    "requested label or name and no explanation."
 )
-PARM_JUDGMENT_PROMPT_VERSION = "parm_judgment_v1"
+PARM_JUDGMENT_PROMPT_VERSION = "parm_judgment_v2"
 PARM_MEMORY_HANDOFF_VERSION = "cue_region_memory_v1"
 
 

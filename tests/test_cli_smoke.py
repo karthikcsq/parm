@@ -604,7 +604,7 @@ class CliSmokeTests(unittest.TestCase):
             )
             self.assertEqual(
                 configuration["judgment_prompt_version"],
-                "parm_judgment_v1",
+                "parm_judgment_v2",
             )
             self.assertEqual(
                 configuration["memory_handoff_version"],

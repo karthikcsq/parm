@@ -73,7 +73,7 @@ that cache.
 
 ## Baseline status
 
-Five baselines are implemented:
+Six baselines are implemented:
 
 - `no_memory` sends only the ordinary prompt and resolved observation to the
   response model. It has no retriever and emits an empty retrieval trace.
@@ -92,14 +92,19 @@ Five baselines are implemented:
 - `all_entity_output_rag` extracts every visible output entity, retrieves with
   exact-match page lookup per extracted entity over the frozen index, merges the flat union, and
   admits every deduped hit. It does not use `--retrieval-mode`.
+- `parm` extracts store-backed entities and rare, task-conditioned concepts
+  from each output region. Entity cues converge through inbound graph links;
+  behavioral cues converge against the frozen sentence matrix. It admits only
+  threshold-clearing durable memories, filters perturbed pages, and may admit
+  zero. It does not use `--retrieval-mode`.
 
 Retrieval condition and retrieval mode are separate experiment axes. The
 mode-matched conditions (`input_rag` and `naive_output_rag`) explicitly choose
 `dense`, `hybrid`, or `enhanced` and use the same frozen index for comparisons.
 For `naive_output_rag`, `--output-rag-flow` is the separate axis for where
 output-triggered retrieval happens; `--retrieval-mode` still controls how
-memories are ranked. `all_entity_output_rag` is a fixed exact-match entity
-baseline, so it requires `--retrieval-index` but rejects `--retrieval-mode`.
+memories are ranked. `all_entity_output_rag` and `parm` are fixed retrieval
+conditions, so they require `--retrieval-index` but reject `--retrieval-mode`.
 
 Run the five positive/control pairs and score them:
 
@@ -164,6 +169,21 @@ parm-bench run data/benchmark_v1 `
   --retrieval-limit 5 `
   --model gpt-5-mini `
   --out data/benchmark-results/all-entity-output-rag-gpt-5-mini.jsonl
+```
+
+Run PARM convergence retrieval:
+
+```powershell
+parm-bench run data/benchmark_v1 `
+  --baseline parm `
+  --retrieval-index data\retrieval-indexes\amara-life-v1 `
+  --retrieval-limit 5 `
+  --model gpt-5-mini `
+  --out data/benchmark-results/parm-gpt-5-mini.jsonl
+parm-bench score `
+  data/benchmark-results/parm-gpt-5-mini.jsonl `
+  --gold data/benchmark_v1 `
+  --out data/benchmark-results/parm-gpt-5-mini.metrics.json
 ```
 
 The CLI automatically loads the ignored repo-root `.env` without overriding

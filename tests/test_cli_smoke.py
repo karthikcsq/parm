@@ -163,11 +163,52 @@ class FakeEntityRetriever:
         )
 
 
+class FakePARMRetriever:
+    instances: list["FakePARMRetriever"] = []
+    retrieval_condition_detail = "parm_convergence_v1"
+    admission_policy = "convergence_threshold"
+
+    def __init__(self, index: FakeIndex, embedder: object):
+        self.index = index
+        self.calls: list[tuple[str, str, int]] = []
+        self.__class__.instances.append(self)
+
+    def retrieve_observation(
+        self,
+        prompt: str,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> RetrievalResult:
+        self.calls.append((prompt, observation_text, top_k))
+        hit = RetrievalHit(
+            page_id="page/parm",
+            source_id="fixture-source",
+            slug="notes/parm",
+            title="PARM memory",
+            chunk_id="page/parm:0",
+            text="PARM memory",
+            score=2.0,
+            rank=1,
+        )
+        return RetrievalResult(
+            (hit,),
+            {
+                "retrieval_condition_detail": self.retrieval_condition_detail,
+                "admission_policy": self.admission_policy,
+                "entity_seeds": [],
+                "semantic_seeds": [],
+                "returned_pages": [],
+            },
+        )
+
+
 class CliSmokeTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeOpenAIModel.instances.clear()
         FakeRetriever.instances.clear()
         FakeEntityRetriever.instances.clear()
+        FakePARMRetriever.instances.clear()
 
     def test_validate_and_inspect(self) -> None:
         self.assertEqual(main(["validate", str(DATASET)]), 0)
@@ -195,6 +236,7 @@ class CliSmokeTests(unittest.TestCase):
                 "prompted_memory_tool",
                 "naive_output_rag",
                 "all_entity_output_rag",
+                "parm",
             },
         )
 
@@ -502,6 +544,53 @@ class CliSmokeTests(unittest.TestCase):
             )
             self.assertEqual(configuration["retrieval_limit"], 4)
 
+    def test_parm_uses_convergence_resource_without_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            with (
+                patch("parm_bench.cli.OpenAIResponsesModel", FakeOpenAIModel),
+                patch(
+                    "parm_bench.cli.RetrievalIndex.load",
+                    return_value=FakeIndex(),
+                ),
+                patch(
+                    "parm_bench.cli.PARMConvergenceRetriever",
+                    FakePARMRetriever,
+                ),
+                patch(
+                    "parm_bench.cli.IndexRetriever",
+                    side_effect=AssertionError("mode retriever must not be used"),
+                ),
+            ):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "parm",
+                        "--retrieval-index",
+                        "fixture-index",
+                        "--out",
+                        str(result),
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            self.assertEqual(len(FakePARMRetriever.instances[0].calls), 15)
+            configuration = json.loads(
+                result.with_suffix(".config.json").read_text(encoding="utf-8")
+            )
+            self.assertIsNone(configuration["retrieval_mode"])
+            self.assertEqual(
+                configuration["retrieval_condition_detail"],
+                "parm_convergence_v1",
+            )
+            self.assertEqual(
+                configuration["admission_policy"],
+                "convergence_threshold",
+            )
+            self.assertTrue(configuration["perturbation_filtering"])
+
     def test_memory_run_requires_explicit_mode_and_index(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
             status = main(
@@ -524,6 +613,24 @@ class CliSmokeTests(unittest.TestCase):
                     str(DATASET),
                     "--baseline",
                     "all_entity_output_rag",
+                    "--retrieval-mode",
+                    "dense",
+                    "--retrieval-index",
+                    "fixture-index",
+                    "--out",
+                    str(Path(tmp) / "result.jsonl"),
+                ]
+            )
+        self.assertEqual(status, 2)
+
+    def test_parm_rejects_retrieval_mode(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
+            status = main(
+                [
+                    "run",
+                    str(DATASET),
+                    "--baseline",
+                    "parm",
                     "--retrieval-mode",
                     "dense",
                     "--retrieval-index",

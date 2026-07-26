@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -21,11 +22,15 @@ from parm_bench.retrieval import (
     ExpansionCacheMissError,
     ExpansionPolicy,
     IndexRetriever,
+    LinkRecord,
     OpenAIEmbedder,
+    PageRecord,
+    PARMConvergenceRetriever,
     RetrievalIndex,
     RetrievalMode,
     RetrievalRequest,
     RetrievalValidationError,
+    SentenceRecord,
     _bm25_rank,
     _rrf,
     _token_windows,
@@ -108,6 +113,32 @@ class FakeNlp:
         return SimpleNamespace(noun_chunks=spans)
 
 
+class FakePARMEntityExtractor:
+    def __init__(self, seeds: tuple[EntitySeed, ...]) -> None:
+        self.seeds = seeds
+
+    def extract_gazetteer(self, observation_text: str) -> tuple[EntitySeed, ...]:
+        return self.seeds
+
+
+class FakeConceptExtractor:
+    def __init__(
+        self,
+        anchors: tuple[str, ...],
+        concepts: tuple[tuple[str, ...], ...],
+    ) -> None:
+        self.anchors = anchors
+        self.concepts = concepts
+
+    def task_anchors(self, prompt: str) -> tuple[str, ...]:
+        return self.anchors
+
+    def rare_region_concepts(
+        self, descriptions: list[str]
+    ) -> tuple[tuple[str, ...], ...]:
+        return self.concepts
+
+
 class OpenAIEmbedderTests(unittest.TestCase):
     def test_requests_canonical_model_and_dimensions(self) -> None:
         calls: list[dict[str, object]] = []
@@ -156,6 +187,70 @@ class TokenWindowTests(unittest.TestCase):
         for window in windows:
             self.assertLessEqual(len(encoding.encode(window)), 8)
         self.assertEqual("".join(windows), text)
+
+
+class PARMConvergenceSelectionTests(unittest.TestCase):
+    def test_semantic_selector_admits_reflective_anchor_association(self) -> None:
+        retriever = object.__new__(PARMConvergenceRetriever)
+        retriever._page_by_id = {
+            "review": PageRecord(
+                "review",
+                "source",
+                "notes/weekly-review",
+                "Weekly Review",
+            ),
+            "email": PageRecord("email", "source", "emails/e1", "Email"),
+        }
+        retriever._page_text = {
+            "review": "I ate lunch at my desk all week.",
+            "email": "A lunch office logistics message.",
+        }
+        contribution = {
+            "seed_id": "semantic-1",
+            "region_id": "region-1",
+            "anchor": "lunch",
+            "concept": "office",
+            "query": "lunch office",
+            "rank": 1,
+            "cosine": 0.40,
+            "sentence_id": "sentence-1",
+            "sentence_text": "I ate lunch at my desk all week.",
+        }
+
+        admissions = retriever._select_semantic_admissions(
+            {
+                ("region-1", "review"): [contribution],
+                ("region-1", "email"): [contribution],
+            }
+        )
+
+        self.assertEqual(len(admissions), 1)
+        self.assertEqual(admissions[0]["page_id"], "review")
+        self.assertEqual(
+            admissions[0]["channel"], "semantic_anchored_singleton"
+        )
+
+    def test_graph_selector_can_admit_one_or_zero(self) -> None:
+        retriever = object.__new__(PARMConvergenceRetriever)
+        contributions = {
+            ("region-1", "gold"): [
+                {"seed_id": "entity-1"},
+                {"seed_id": "entity-2"},
+            ],
+            ("region-1", "other"): [{"seed_id": "entity-1"}],
+        }
+
+        admitted = retriever._select_graph_admissions(
+            contributions,
+            {"region-1": {"gold": 0.61, "other": 0.80}},
+        )
+        empty = retriever._select_graph_admissions(
+            contributions,
+            {"region-1": {"gold": 0.20, "other": 0.10}},
+        )
+
+        self.assertEqual([item["page_id"] for item in admitted], ["gold"])
+        self.assertEqual(empty, [])
 
 
 class EntityExactRetrieverTests(unittest.TestCase):

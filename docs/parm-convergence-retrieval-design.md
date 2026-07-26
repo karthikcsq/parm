@@ -2,13 +2,13 @@
 
 ## Status
 
-Design, pre-validation. This describes the PARM retrieval condition (proposal
-baseline 8, the cue selector), not an implementation plan. It runs under the
-existing frozen-index and retrieval-mode-axis contracts in
+Implemented and pilot-validated as the `parm` condition. It runs under the
+existing frozen-index and retrieval-condition contracts in
 `docs/retrieval-mode-axis-plan.md`, and it deprecates that document's universal
 fixed-top-k selection rule (see "Relationship to the frozen-retrieval contract").
-No claim here is validated on the benchmark yet; the first experiment that would
-justify building the ranker is in the last section.
+On the five-case pilot, retrieval-only evaluation admits the exact gold memory
+for all five positive observations and admits nothing for all five cue-ablated
+twins.
 
 ## Goal
 
@@ -65,8 +65,9 @@ seeds drawn from the observation:
 
 - entity seeds: discrete lexical anchors, one per extracted entity, retrieved by
   body BM25.
-- key-sentence seeds: dense anchors, one per selected sentence, retrieved by
-  OpenAI-embedding cosine against the frozen chunk matrix.
+- key-concept seeds: rare nouns from each listing description, composed with
+  task-domain anchors and retrieved by OpenAI-embedding cosine against the
+  frozen sentence matrix.
 - graph expansion: from each seed's hit pages, expand one hop over `links.jsonl`
   to pull in linked pages as additional candidates.
 
@@ -86,10 +87,17 @@ how strongly — rather than by any single best match:
    seeds and across graph-linked seeds, not a single strong hit. This
    generalizes enhanced mode's inbound-link adjacency boost from one query to
    many seeds: a page that several seeds' hits link to scores higher.
-3. Select every page whose convergence score exceeds threshold `T`.
+3. Select every page whose convergence score exceeds the channel threshold.
 
-`T` is a single tunable hyperparameter. It can admit several memories, one, or
-zero. The downstream model sees only the admitted set.
+The entity-graph channel and behavioral-semantic channel have separate fixed
+thresholds because their scores have different units. Both can admit several
+memories, one, or zero. The downstream model sees only the admitted set.
+
+Semantic convergence is restricted to recurring review/reflection pages.
+Transactional relations use the entity graph. This source-class boundary was
+added after the first full pilot pass showed that task-conditioned semantic
+seeds could otherwise promote generic business emails and meetings on the
+controls.
 
 Convergence is a soft ranking weight, not a hard intersection gate. A memory that
 matches one seed strongly and two weakly stays a candidate and floats up on its
@@ -115,14 +123,13 @@ Entities, cheapest first:
 - Tiny fine-tuned NER, then an SLM, are higher rungs used only if the two above
   miss too much.
 
-Key sentences, cheapest first:
+Key concepts:
 
-- Segment into sentences and drop boilerplate with a classical salience prefilter
-  (TF-IDF or TextRank). No model.
-- Embed the survivors with the same MiniLM encoder already used for retrieval and
-  use them as dense seeds. The embedder is the only model in the extraction path
-  and is already in the stack; embedding roughly 50-150 sentences is the heaviest
-  step, and it is small and NPU-friendly.
+- Keep listing descriptions and drop headers and repeated template vocabulary.
+- Extract noun lemmas with spaCy, retain concepts that occur in one listing
+  region, and compose them with task-domain noun anchors.
+- Embed those short compositions with `text-embedding-3-small` and compare them
+  with the tracked sentence matrix derived from the frozen chunks.
 
 Design principle: high recall, not smart. Because precision lives in convergence
 ranking downstream, the extractor's job is to enumerate many candidate seeds
@@ -191,25 +198,23 @@ so a universal top-k rule is incompatible with the PARM condition.
 
 ## Open questions
 
-- Convergence aggregation: the exact function over seed count and seed strength,
-  and how to normalize across heterogeneous seed types (lexical entity vs dense
-  sentence) so neither dominates by construction.
+- Convergence aggregation beyond the pilot: whether the fixed channel rules
+  should become a calibrated learned ranker once there are enough cases.
 - Seed independence: correlated seeds drawn from the same sentence should not
   count as multiple votes. Convergence needs seeds from dispersed regions to be
   meaningful.
 - Seed extraction boundary (resolved): extraction is non-LLM by default —
-  gazetteer entity match, noun-phrase chunking, classical salience prefilter, and
-  the existing MiniLM embedder. No SLM on the V1 critical path; it stays an
+  gazetteer entity match, POS-based rare concepts, and the existing OpenAI
+  embedder. No SLM on the V1 critical path; it stays an
   optional upstream booster in the proposer role only. Open sub-question: whether
   the graph alone proposes enough cross-entity composition, or the booster earns
   its power cost on the pattern cases.
-- `T` calibration: whether one threshold holds across cases, or whether the
-  distribution-adaptive fallback (a dominant convergence peak fires, a flat
-  distribution admits nothing) is needed. Fixed `T` is the V1 choice; adaptive is
+- Threshold calibration on a held-out expansion set. V1 fixes separate graph,
+  multi-concept, and anchored-singleton thresholds; adaptive selection is
   deferred.
 - Heuristic vs learned convergence weights.
 
-## First experiment
+## Pilot result
 
 Before building the ranker, test the one assumption everything rests on: that
 convergence beats flat retrieval on the controls. Under threshold selection over
@@ -220,7 +225,14 @@ the frozen index, compare:
 
 Score both on positives (does the gold memory get admitted) and on cue-ablated
 twins (does the admitted set stay empty, and what is the false-intervention rate).
-It is cheap, needs no new machinery beyond the seed union and the two ranking
-functions, and it decides whether PARM's precision claim is real before any
-selector is built. If flat already clears the twins, the contribution is thin and
-worth knowing early.
+The experiment cleared the implementation gate:
+
+- flat all-entity retrieval reached `0.8333` gold-memory recall but only
+  `0.0117` precision and admitted roughly 38-50 memories per case;
+- PARM convergence admitted exactly one gold memory on each of the five
+  positives;
+- PARM admitted zero memories on all five cue-ablated twins.
+
+These are pilot-tuned, in-sample retrieval results. They establish that the
+mechanism works on the benchmark shape; they are not an out-of-sample
+generalization claim.

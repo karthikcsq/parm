@@ -10,7 +10,12 @@ from .models import (
     MemoryToolDecision,
     ModelResponse,
 )
-from .retrieval import EntityRetriever, RetrievalRequest, Retriever
+from .retrieval import (
+    EntityRetriever,
+    PARMObservationRetriever,
+    RetrievalRequest,
+    Retriever,
+)
 
 
 class BaselineNotImplementedError(LookupError):
@@ -34,7 +39,7 @@ class Baseline(Protocol):
         self,
         case: BenchmarkInput,
         model: LanguageModel,
-        retriever: Retriever | EntityRetriever | None,
+        retriever: Retriever | EntityRetriever | PARMObservationRetriever | None,
     ) -> dict[str, Any]: ...
 
 
@@ -55,6 +60,7 @@ class RetrievalResourceKind(str, Enum):
     NONE = "none"
     MODE_RETRIEVER = "mode_retriever"
     ENTITY_EXACT = "entity_exact"
+    PARM_CONVERGENCE = "parm_convergence"
 
 
 class NoMemoryBaseline:
@@ -455,6 +461,69 @@ class AllEntityOutputRagBaseline:
 
 
 @dataclass(frozen=True)
+class PARMBaseline:
+    retrieval_limit: int = 5
+    name = "parm"
+    requires_memory = True
+    retrieval_resource = RetrievalResourceKind.PARM_CONVERGENCE
+
+    def __post_init__(self) -> None:
+        if self.retrieval_limit < 1:
+            raise ValueError("retrieval_limit must be at least 1")
+
+    def run(
+        self,
+        case: BenchmarkInput,
+        model: LanguageModel,
+        retriever: PARMObservationRetriever | None,
+    ) -> dict[str, Any]:
+        if retriever is None or not hasattr(retriever, "retrieve_observation"):
+            raise ValueError("parm baseline requires a PARM observation retriever")
+        retrieval = retriever.retrieve_observation(
+            case.prompt,
+            case.observation_text,
+            top_k=self.retrieval_limit,
+        )
+        hits = list(retrieval.hits)
+        memory_context = _memory_context(hits)
+        response = model.generate(
+            prompt=case.prompt,
+            observation_kind=case.observation_kind,
+            observation_text=case.observation_text,
+            instructions=(
+                INPUT_RAG_INSTRUCTIONS
+                if memory_context
+                else FINAL_ANSWER_INSTRUCTIONS
+            ),
+            memory_context=memory_context or None,
+        )
+        source_ids = [hit.slug for hit in hits]
+        page_ids = [hit.page_id for hit in hits]
+        return {
+            "case_id": case.case_id,
+            "response_text": response.text,
+            "requested_model": model.model_name,
+            "resolved_model": response.resolved_model,
+            "provider_response_id": response.response_id,
+            "usage": response.usage,
+            "trace": {
+                "detected_cues": retrieval.trace.get("semantic_seeds", [])
+                + retrieval.trace.get("entity_seeds", []),
+                **retrieval.trace,
+                "retrieved_page_ids": page_ids,
+                "retrieved_source_ids": source_ids,
+                "admitted_page_ids": page_ids,
+                "admitted_source_ids": source_ids,
+                "admitted_perturbations": {
+                    hit.slug: list(hit.perturbations)
+                    for hit in hits
+                    if hit.perturbations
+                },
+            },
+        }
+
+
+@dataclass(frozen=True)
 class PlannedBaseline:
     """Design inventory only. A planned baseline is not executable."""
 
@@ -490,6 +559,11 @@ PLANNED_BASELINES = (
     PlannedBaseline(
         "oracle_cue",
         "Is the gold memory recoverable when the correct cue is supplied?",
+    ),
+    PlannedBaseline(
+        "parm",
+        "Can non-LLM convergence admit the decision-relevant memory and stay "
+        "empty on the cue-ablated twin?",
     ),
 )
 
@@ -565,6 +639,10 @@ register_baseline(
     lambda configuration: AllEntityOutputRagBaseline(
         configuration.retrieval_limit,
     ),
+)
+register_baseline(
+    "parm",
+    lambda configuration: PARMBaseline(configuration.retrieval_limit),
 )
 
 

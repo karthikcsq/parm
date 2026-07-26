@@ -42,6 +42,11 @@ from .retrieval import (
     GRAPH_MIN_INBOUND,
     GRAPH_MULTIPLIER,
     OFFICIAL_TOP_K,
+    PARM_MIN_CONVERGING_CONCEPTS,
+    PARM_MIN_LEXICAL_CONCEPTS,
+    PARM_SEMANTIC_DEPTH,
+    PARM_SEMANTIC_MIN_COSINE,
+    PARM_SINGLETON_MIN_COSINE,
     RRF_K,
     RRF_WEIGHT,
     CachedOpenAIQueryExpander,
@@ -50,6 +55,7 @@ from .retrieval import (
     ExpansionPolicy,
     IndexRetriever,
     OpenAIEmbedder,
+    PARMConvergenceRetriever,
     RetrievalIndex,
     RetrievalMode,
     RetrievalValidationError,
@@ -275,7 +281,9 @@ def _run(
             ),
         ),
     )
-    retrieval_resource: IndexRetriever | EntityExactRetriever | None = None
+    retrieval_resource: (
+        IndexRetriever | EntityExactRetriever | PARMConvergenceRetriever | None
+    ) = None
     if implementation.retrieval_resource is RetrievalResourceKind.MODE_RETRIEVER:
         assert retrieval_mode is not None
         assert retrieval_index is not None
@@ -297,6 +305,15 @@ def _run(
     elif implementation.retrieval_resource is RetrievalResourceKind.ENTITY_EXACT:
         assert retrieval_index is not None
         retrieval_resource = EntityExactRetriever(RetrievalIndex.load(retrieval_index))
+    elif (
+        implementation.retrieval_resource
+        is RetrievalResourceKind.PARM_CONVERGENCE
+    ):
+        assert retrieval_index is not None
+        retrieval_resource = PARMConvergenceRetriever(
+            RetrievalIndex.load(retrieval_index),
+            OpenAIEmbedder(),
+        )
     model: OpenAIResponsesModel | CachingLanguageModel = OpenAIResponsesModel(
         _resolve_model(model_name)
     )
@@ -419,7 +436,9 @@ def _write_run_configuration(
     results_path: Path,
     *,
     baseline: str,
-    retrieval_resource: IndexRetriever | EntityExactRetriever | None,
+    retrieval_resource: (
+        IndexRetriever | EntityExactRetriever | PARMConvergenceRetriever | None
+    ),
     output_rag_flow: str | None,
     retrieval_limit: int | None,
     requested_model: str,
@@ -470,9 +489,15 @@ def _write_run_configuration(
         ),
         "retrieval_limit": retrieval_limit,
         "admission_policy": (
-            "all_retrieved" if retrieval_resource is not None else None
+            getattr(retrieval_resource, "admission_policy", "all_retrieved")
+            if retrieval_resource is not None
+            else None
         ),
-        "perturbation_filtering": False if retrieval_resource is not None else None,
+        "perturbation_filtering": (
+            isinstance(retrieval_resource, PARMConvergenceRetriever)
+            if retrieval_resource is not None
+            else None
+        ),
         "requested_model": requested_model,
         "constants": (
             {
@@ -484,7 +509,19 @@ def _write_run_configuration(
                 "graph_multiplier": GRAPH_MULTIPLIER,
             }
             if mode is not None
-            else None
+            else (
+                {
+                    "semantic_depth": PARM_SEMANTIC_DEPTH,
+                    "semantic_min_cosine": PARM_SEMANTIC_MIN_COSINE,
+                    "singleton_min_cosine": PARM_SINGLETON_MIN_COSINE,
+                    "minimum_converging_concepts": (
+                        PARM_MIN_CONVERGING_CONCEPTS
+                    ),
+                    "minimum_lexical_concepts": PARM_MIN_LEXICAL_CONCEPTS,
+                }
+                if isinstance(retrieval_resource, PARMConvergenceRetriever)
+                else None
+            )
         ),
         "expansion_model": (
             EXPANSION_MODEL
@@ -571,6 +608,21 @@ def _validate_retrieval_args(args: argparse.Namespace) -> None:
             raise ValueError(
                 "all_entity_output_rag rejects retrieval-mode arguments: "
                 + ", ".join(supplied)
+            )
+        return
+    if resource_kind is RetrievalResourceKind.PARM_CONVERGENCE:
+        if not args.retrieval_index:
+            raise ValueError("parm requires --retrieval-index")
+        supplied = []
+        if args.retrieval_mode:
+            supplied.append("--retrieval-mode")
+        if args.expansion_cache:
+            supplied.append("--expansion-cache")
+        if args.expansion_policy:
+            supplied.append("--expansion-policy")
+        if supplied:
+            raise ValueError(
+                "parm rejects retrieval-mode arguments: " + ", ".join(supplied)
             )
         return
     if not args.retrieval_mode or not args.retrieval_index:

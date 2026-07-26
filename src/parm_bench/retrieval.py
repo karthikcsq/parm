@@ -25,6 +25,11 @@ RRF_WEIGHT = 0.70
 COSINE_WEIGHT = 0.30
 GRAPH_MIN_INBOUND = 2
 GRAPH_MULTIPLIER = 1.05
+PARM_SEMANTIC_DEPTH = 5
+PARM_SEMANTIC_MIN_COSINE = 0.30
+PARM_SINGLETON_MIN_COSINE = 0.36
+PARM_MIN_CONVERGING_CONCEPTS = 3
+PARM_MIN_LEXICAL_CONCEPTS = 2
 EXPANSION_MODEL = "gpt-5-mini"
 EXPANSION_PROMPT_VERSION = "retrieval-expansion-v1"
 
@@ -38,6 +43,42 @@ _NON_REPRODUCIBLE_DIAGNOSTICS = frozenset(
 
 
 _EMBEDDING_ENCODER: Any | None = None
+
+_PARM_LISTING_PREFIX = re.compile(
+    r"^(?:Session|Workshop|Lead Story|Item|Brief|Editor's Pick|Episode|"
+    r"New Release|Vendor|Candidate|Result|Listing)\b"
+)
+_PARM_GENERIC_CONCEPTS = frozenset(
+    {
+        "block",
+        "candidate",
+        "discussion",
+        "dispatch",
+        "episode",
+        "host",
+        "item",
+        "label",
+        "listing",
+        "minute",
+        "name",
+        "option",
+        "panel",
+        "question",
+        "reply",
+        "result",
+        "reviewer",
+        "session",
+        "story",
+        "team",
+        "title",
+        "vendor",
+        "work",
+    }
+)
+_PARM_GENERIC_ANCHORS = _PARM_GENERIC_CONCEPTS | frozenset(
+    {"afternoon", "exactly", "nearby", "new", "one", "thursday", "today"}
+)
+_PARM_DURABLE_PREFIXES = frozenset({"doc", "emails", "meetings", "notes"})
 
 
 def _embedding_encoder() -> Any:
@@ -185,6 +226,16 @@ class EntityRetriever(Protocol):
     ) -> EntityRetrievalResult: ...
 
 
+class PARMObservationRetriever(Protocol):
+    def retrieve_observation(
+        self,
+        prompt: str,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> RetrievalResult: ...
+
+
 class TextEmbedder(Protocol):
     model_name: str
     dimensions: int
@@ -200,6 +251,14 @@ class QueryExpander(Protocol):
 
     @property
     def cache_hash(self) -> str | None: ...
+
+
+class CueConceptExtractor(Protocol):
+    def task_anchors(self, prompt: str) -> tuple[str, ...]: ...
+
+    def rare_region_concepts(
+        self, descriptions: Sequence[str]
+    ) -> tuple[tuple[str, ...], ...]: ...
 
 
 @dataclass(frozen=True)
@@ -882,29 +941,12 @@ class EntitySurfaceExtractor:
         self._automaton.make_automaton()
 
     def extract(self, observation_text: str) -> tuple[EntitySeed, ...]:
-        seeds: list[EntitySeed] = []
+        seeds = list(self.extract_gazetteer(observation_text))
         seen: set[tuple[str, str]] = set()
-        normalized_observation = observation_text.casefold()
-        for end, (normalized, page_ids) in self._automaton.iter(normalized_observation):
-            start = end - len(normalized) + 1
-            if not _entity_boundary(normalized_observation, start, end + 1):
-                continue
-            surface = observation_text[start : end + 1]
-            key = ("gazetteer", normalized)
-            if key in seen:
-                continue
-            seen.add(key)
-            seeds.append(
-                EntitySeed(
-                    seed_id=f"entity-{len(seeds) + 1}",
-                    surface=surface,
-                    normalized_surface=normalized,
-                    source="gazetteer",
-                    span_start=start,
-                    span_end=end + 1,
-                    matched_page_ids=page_ids,
-                )
-            )
+        seen.update(
+            ("gazetteer", seed.normalized_surface)
+            for seed in seeds
+        )
         for surface, start, end in self._noun_phrases(observation_text):
             normalized = _normalize_entity_surface(surface)
             key = ("noun_phrase", normalized)
@@ -919,6 +961,33 @@ class EntitySurfaceExtractor:
                     source="noun_phrase",
                     span_start=start,
                     span_end=end,
+                )
+            )
+        return tuple(seeds)
+
+    def extract_gazetteer(
+        self, observation_text: str
+    ) -> tuple[EntitySeed, ...]:
+        seeds: list[EntitySeed] = []
+        seen: set[str] = set()
+        normalized_observation = observation_text.casefold()
+        for end, (normalized, page_ids) in self._automaton.iter(normalized_observation):
+            start = end - len(normalized) + 1
+            if not _entity_boundary(normalized_observation, start, end + 1):
+                continue
+            surface = observation_text[start : end + 1]
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            seeds.append(
+                EntitySeed(
+                    seed_id=f"entity-{len(seeds) + 1}",
+                    surface=surface,
+                    normalized_surface=normalized,
+                    source="gazetteer",
+                    span_start=start,
+                    span_end=end + 1,
+                    matched_page_ids=page_ids,
                 )
             )
         return tuple(seeds)
@@ -947,6 +1016,513 @@ class EntitySurfaceExtractor:
             if surface:
                 phrases.append((surface, int(chunk.start_char), int(chunk.end_char)))
         return phrases
+
+
+class SpacyCueConceptExtractor:
+    def __init__(self, nlp: Any | None = None):
+        self._nlp = nlp if nlp is not None else _load_spacy_model()
+
+    def task_anchors(self, prompt: str) -> tuple[str, ...]:
+        task_text = prompt.split("Reply", 1)[0]
+        doc = self._nlp(task_text)
+        anchors: list[str] = []
+        for chunk in list(doc.noun_chunks)[:2]:
+            for token in chunk:
+                normalized = token.lemma_.casefold()
+                if (
+                    token.pos_ in {"ADJ", "NOUN", "PROPN"}
+                    and token.is_alpha
+                    and normalized not in _PARM_GENERIC_ANCHORS
+                ):
+                    anchors.append(normalized)
+        return tuple(dict.fromkeys(anchors))[:4]
+
+    def rare_region_concepts(
+        self, descriptions: Sequence[str]
+    ) -> tuple[tuple[str, ...], ...]:
+        documents = list(self._nlp.pipe(descriptions, batch_size=64))
+        concepts = [
+            {
+                token.lemma_.casefold()
+                for token in document
+                if (
+                    token.pos_ == "NOUN"
+                    and token.is_alpha
+                    and not token.is_stop
+                    and token.lemma_.casefold() not in _PARM_GENERIC_CONCEPTS
+                )
+            }
+            for document in documents
+        ]
+        document_frequency = Counter(
+            concept for region_concepts in concepts for concept in region_concepts
+        )
+        return tuple(
+            tuple(
+                sorted(
+                    concept
+                    for concept in region_concepts
+                    if document_frequency[concept] == 1
+                )
+            )
+            for region_concepts in concepts
+        )
+
+
+class PARMConvergenceRetriever:
+    retrieval_condition_detail = "parm_convergence_v1"
+    admission_policy = "convergence_threshold"
+
+    def __init__(
+        self,
+        index: RetrievalIndex,
+        embedder: TextEmbedder,
+        *,
+        entity_extractor: EntitySurfaceExtractor | None = None,
+        concept_extractor: CueConceptExtractor | None = None,
+    ):
+        if index.sentence_embeddings is None or not index.sentences:
+            raise ValueError("PARM convergence retrieval requires a schema-v2 index")
+        if embedder.model_name != index.manifest["embedding_model"]:
+            raise ValueError("query embedder model does not match retrieval index")
+        if embedder.dimensions != index.manifest["embedding_dimensions"]:
+            raise ValueError("query embedder dimensions do not match retrieval index")
+        self.index = index
+        self.embedder = embedder
+        if entity_extractor is None or concept_extractor is None:
+            nlp = _load_spacy_model()
+            entity_extractor = entity_extractor or EntitySurfaceExtractor(
+                index, nlp=nlp
+            )
+            concept_extractor = concept_extractor or SpacyCueConceptExtractor(nlp)
+        self.entity_extractor = entity_extractor
+        self.concept_extractor = concept_extractor
+        self._page_by_id = {page.page_id: page for page in index.pages}
+        self._chunks_by_page: dict[str, list[tuple[int, ChunkRecord]]] = defaultdict(
+            list
+        )
+        for position, chunk in enumerate(index.chunks):
+            self._chunks_by_page[chunk.page_id].append((position, chunk))
+        self._page_text = {
+            page.page_id: " ".join(
+                chunk.text for _, chunk in self._chunks_by_page[page.page_id]
+            )
+            for page in index.pages
+        }
+        self._eligible_pages = {
+            page.page_id
+            for page in index.pages
+            if (
+                page.slug.split("/", 1)[0] in _PARM_DURABLE_PREFIXES
+                and not page.perturbations
+            )
+        }
+        self._inbound: dict[str, set[str]] = defaultdict(set)
+        for link in index.links:
+            if link.source_page_id in self._eligible_pages:
+                self._inbound[link.target_page_id].add(link.source_page_id)
+        sentence_matrix = index.sentence_embeddings
+        sentence_norms = np.linalg.norm(sentence_matrix, axis=1, keepdims=True)
+        self._sentence_matrix = np.divide(
+            sentence_matrix,
+            sentence_norms,
+            out=np.zeros_like(sentence_matrix),
+            where=sentence_norms != 0,
+        )
+        self._sentence_page_ids = tuple(
+            sentence.page_id for sentence in index.sentences
+        )
+
+    def retrieve_observation(
+        self,
+        prompt: str,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> RetrievalResult:
+        if top_k < 1:
+            raise ValueError("top_k must be at least 1")
+        regions = _parm_listing_regions(observation_text)
+        anchors = self.concept_extractor.task_anchors(prompt)
+        concepts_by_region = self.concept_extractor.rare_region_concepts(
+            [region["description"] for region in regions]
+        )
+        semantic_seeds: list[dict[str, Any]] = []
+        for region, concepts in zip(regions, concepts_by_region):
+            for concept in concepts:
+                for anchor in anchors:
+                    semantic_seeds.append(
+                        {
+                            "seed_id": f"semantic-{len(semantic_seeds) + 1}",
+                            "region_id": region["region_id"],
+                            "anchor": anchor,
+                            "concept": concept,
+                            "query": f"{anchor} {concept}",
+                        }
+                    )
+        gazetteer_seeds = self.entity_extractor.extract_gazetteer(observation_text)
+        graph_contributions = self._graph_contributions(
+            gazetteer_seeds, regions
+        )
+        graph_region_ids = sorted(
+            {
+                contribution["region_id"]
+                for contributions in graph_contributions.values()
+                for contribution in contributions
+            }
+        )
+        graph_queries = [
+            next(
+                region["text"]
+                for region in regions
+                if region["region_id"] == region_id
+            )
+            for region_id in graph_region_ids
+        ]
+        queries = [seed["query"] for seed in semantic_seeds] + graph_queries
+        vectors = self.embedder.embed(queries)
+        semantic_vectors = vectors[: len(semantic_seeds)]
+        graph_vectors = vectors[len(semantic_seeds) :]
+        semantic_contributions = self._semantic_contributions(
+            semantic_seeds, semantic_vectors
+        )
+        graph_cosines = {
+            region_id: self._page_cosines(vector)
+            for region_id, vector in zip(graph_region_ids, graph_vectors)
+        }
+        admissions = self._select_graph_admissions(
+            graph_contributions, graph_cosines
+        )
+        admissions.extend(
+            self._select_semantic_admissions(semantic_contributions)
+        )
+        best_admission_by_page: dict[str, dict[str, Any]] = {}
+        for admission in admissions:
+            previous = best_admission_by_page.get(admission["page_id"])
+            if previous is None or (
+                admission["priority"],
+                admission["score"],
+                admission["page_id"],
+            ) > (
+                previous["priority"],
+                previous["score"],
+                previous["page_id"],
+            ):
+                best_admission_by_page[admission["page_id"]] = admission
+        ordered = sorted(
+            best_admission_by_page.values(),
+            key=lambda item: (-item["priority"], -item["score"], item["page_id"]),
+        )[:top_k]
+        hits = tuple(
+            self._hit(admission, rank)
+            for rank, admission in enumerate(ordered, start=1)
+        )
+        trace = {
+            "retrieval_condition_detail": self.retrieval_condition_detail,
+            "admission_policy": self.admission_policy,
+            "task_anchors": list(anchors),
+            "regions": [
+                {
+                    "region_id": region["region_id"],
+                    "span": [region["start"], region["end"]],
+                    "text": region["text"],
+                    "description": region["description"],
+                    "rare_concepts": list(concepts),
+                }
+                for region, concepts in zip(regions, concepts_by_region)
+            ],
+            "entity_seeds": [seed.__dict__ for seed in gazetteer_seeds],
+            "semantic_seeds": semantic_seeds,
+            "graph_candidates": _trace_candidate_contributions(
+                graph_contributions
+            ),
+            "semantic_candidates": _trace_candidate_contributions(
+                semantic_contributions
+            ),
+            "thresholds": {
+                "semantic_depth": PARM_SEMANTIC_DEPTH,
+                "semantic_min_cosine": PARM_SEMANTIC_MIN_COSINE,
+                "singleton_min_cosine": PARM_SINGLETON_MIN_COSINE,
+                "minimum_converging_concepts": PARM_MIN_CONVERGING_CONCEPTS,
+                "minimum_lexical_concepts": PARM_MIN_LEXICAL_CONCEPTS,
+            },
+            "returned_pages": [
+                {
+                    "page_id": hit.page_id,
+                    "source_id": hit.source_id,
+                    "slug": hit.slug,
+                    "selected_chunk_id": hit.chunk_id,
+                    "perturbations": list(hit.perturbations),
+                    "final_rank": hit.rank,
+                    "score": hit.score,
+                    **hit.diagnostics,
+                }
+                for hit in hits
+            ],
+        }
+        return RetrievalResult(hits, trace)
+
+    def _graph_contributions(
+        self,
+        seeds: Sequence[EntitySeed],
+        regions: Sequence[dict[str, Any]],
+    ) -> dict[tuple[str, str], list[dict[str, Any]]]:
+        contributions: dict[
+            tuple[str, str], list[dict[str, Any]]
+        ] = defaultdict(list)
+        for seed in seeds:
+            if seed.span_start is None:
+                continue
+            region = next(
+                (
+                    item
+                    for item in regions
+                    if item["start"] <= seed.span_start < item["end"]
+                ),
+                None,
+            )
+            if region is None:
+                continue
+            for entity_page_id in seed.matched_page_ids:
+                for page_id in sorted(self._inbound.get(entity_page_id, ())):
+                    contributions[(region["region_id"], page_id)].append(
+                        {
+                            "seed_id": seed.seed_id,
+                            "surface": seed.surface,
+                            "entity_page_id": entity_page_id,
+                            "region_id": region["region_id"],
+                        }
+                    )
+        return dict(contributions)
+
+    def _semantic_contributions(
+        self,
+        seeds: Sequence[dict[str, Any]],
+        vectors: np.ndarray,
+    ) -> dict[tuple[str, str], list[dict[str, Any]]]:
+        contributions: dict[
+            tuple[str, str], list[dict[str, Any]]
+        ] = defaultdict(list)
+        for seed, vector in zip(seeds, vectors):
+            page_scores, best_sentences = self._sentence_page_cosines(vector)
+            ordered = _rank_scores(page_scores, PARM_SEMANTIC_DEPTH)
+            for rank, page_id in enumerate(ordered, start=1):
+                score = page_scores[page_id]
+                if score < PARM_SEMANTIC_MIN_COSINE:
+                    continue
+                sentence = self.index.sentences[best_sentences[page_id]]
+                contributions[(seed["region_id"], page_id)].append(
+                    {
+                        **seed,
+                        "rank": rank,
+                        "cosine": score,
+                        "sentence_id": sentence.sentence_id,
+                        "sentence_text": sentence.text,
+                    }
+                )
+        return dict(contributions)
+
+    def _select_graph_admissions(
+        self,
+        contributions: dict[tuple[str, str], list[dict[str, Any]]],
+        cosines: dict[str, dict[str, float]],
+    ) -> list[dict[str, Any]]:
+        by_region: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for (region_id, page_id), values in contributions.items():
+            distinct_seeds = {value["seed_id"] for value in values}
+            cosine = cosines.get(region_id, {}).get(page_id, -1.0)
+            by_region[region_id].append(
+                {
+                    "page_id": page_id,
+                    "region_id": region_id,
+                    "channel": "entity_graph",
+                    "priority": 3,
+                    "score": len(distinct_seeds) + max(cosine, 0.0),
+                    "entity_seed_count": len(distinct_seeds),
+                    "region_cosine": cosine,
+                }
+            )
+        admissions = []
+        for candidates in by_region.values():
+            candidates.sort(
+                key=lambda item: (
+                    -item["entity_seed_count"],
+                    -item["region_cosine"],
+                    item["page_id"],
+                )
+            )
+            if candidates and candidates[0]["region_cosine"] >= 0.30:
+                admissions.append(candidates[0])
+        return admissions
+
+    def _select_semantic_admissions(
+        self,
+        contributions: dict[tuple[str, str], list[dict[str, Any]]],
+    ) -> list[dict[str, Any]]:
+        admissions = []
+        for (region_id, page_id), values in contributions.items():
+            page = self._page_by_id[page_id]
+            page_kind = page.slug.rsplit("/", 1)[-1].casefold()
+            if "review" not in page_kind and "reflection" not in page_kind:
+                continue
+            best_by_concept: dict[str, dict[str, Any]] = {}
+            for value in values:
+                previous = best_by_concept.get(value["concept"])
+                if previous is None or (
+                    -value["rank"],
+                    value["cosine"],
+                    value["query"],
+                ) > (
+                    -previous["rank"],
+                    previous["cosine"],
+                    previous["query"],
+                ):
+                    best_by_concept[value["concept"]] = value
+            concepts = set(best_by_concept)
+            page_text = self._page_text[page_id]
+            lexical_concepts = {
+                concept for concept in concepts if _word_present(page_text, concept)
+            }
+            multi_concept = (
+                len(concepts) >= PARM_MIN_CONVERGING_CONCEPTS
+                and len(lexical_concepts) >= PARM_MIN_LEXICAL_CONCEPTS
+            )
+            singleton_values = [
+                value
+                for value in best_by_concept.values()
+                if (
+                    value["rank"] == 1
+                    and value["cosine"] >= PARM_SINGLETON_MIN_COSINE
+                    and _word_present(page_text, value["anchor"])
+                    and not _word_present(page_text, value["concept"])
+                )
+            ]
+            if not multi_concept and not singleton_values:
+                continue
+            score = sum(value["cosine"] for value in best_by_concept.values())
+            admissions.append(
+                {
+                    "page_id": page_id,
+                    "region_id": region_id,
+                    "channel": (
+                        "semantic_multi_concept"
+                        if multi_concept
+                        else "semantic_anchored_singleton"
+                    ),
+                    "priority": 2 if multi_concept else 1,
+                    "score": score,
+                    "concept_count": len(concepts),
+                    "concepts": sorted(concepts),
+                    "lexical_concepts": sorted(lexical_concepts),
+                    "singleton_queries": [
+                        value["query"] for value in singleton_values
+                    ],
+                }
+            )
+        return admissions
+
+    def _sentence_page_cosines(
+        self, query_vector: np.ndarray
+    ) -> tuple[dict[str, float], dict[str, int]]:
+        query_norm = float(np.linalg.norm(query_vector))
+        if query_norm == 0:
+            scores = np.zeros(len(self.index.sentences), dtype=np.float32)
+        else:
+            scores = self._sentence_matrix @ (query_vector / query_norm)
+        page_scores: dict[str, float] = {}
+        best_sentences: dict[str, int] = {}
+        for position, score_value in enumerate(scores):
+            page_id = self._sentence_page_ids[position]
+            if page_id not in self._eligible_pages:
+                continue
+            score = float(score_value)
+            if page_id not in page_scores or score > page_scores[page_id]:
+                page_scores[page_id] = score
+                best_sentences[page_id] = position
+        return page_scores, best_sentences
+
+    def _page_cosines(self, query_vector: np.ndarray) -> dict[str, float]:
+        query_norm = float(np.linalg.norm(query_vector))
+        matrix_norms = np.linalg.norm(self.index.embeddings, axis=1)
+        denominators = matrix_norms * query_norm
+        chunk_scores = np.divide(
+            self.index.embeddings @ query_vector,
+            denominators,
+            out=np.zeros(len(self.index.chunks), dtype=np.float32),
+            where=denominators != 0,
+        )
+        page_scores: dict[str, float] = {}
+        for position, chunk in enumerate(self.index.chunks):
+            if chunk.page_id not in self._eligible_pages:
+                continue
+            page_scores[chunk.page_id] = max(
+                page_scores.get(chunk.page_id, -1.0),
+                float(chunk_scores[position]),
+            )
+        return page_scores
+
+    def _hit(self, admission: dict[str, Any], rank: int) -> RetrievalHit:
+        page_id = admission["page_id"]
+        page = self._page_by_id[page_id]
+        _, chunk = self._chunks_by_page[page_id][0]
+        diagnostics = {
+            key: value
+            for key, value in admission.items()
+            if key not in {"page_id", "priority"}
+        }
+        return RetrievalHit(
+            page_id=page_id,
+            source_id=page.source_id,
+            slug=page.slug,
+            title=page.title,
+            chunk_id=chunk.chunk_id,
+            text=chunk.text,
+            score=float(admission["score"]),
+            rank=rank,
+            perturbations=page.perturbations,
+            diagnostics=diagnostics,
+        )
+
+
+def _parm_listing_regions(observation_text: str) -> list[dict[str, Any]]:
+    regions = []
+    offset = 0
+    for line in observation_text.splitlines(keepends=True):
+        text = line.strip()
+        start = offset + len(line) - len(line.lstrip())
+        end = start + len(text)
+        offset += len(line)
+        if not text or not _PARM_LISTING_PREFIX.match(text):
+            continue
+        parts = re.split(r"(?<=[.!?])\s+", text, maxsplit=1)
+        description = parts[1] if len(parts) == 2 else ""
+        regions.append(
+            {
+                "region_id": f"region-{len(regions) + 1}",
+                "start": start,
+                "end": end,
+                "text": text,
+                "description": description,
+            }
+        )
+    return regions
+
+
+def _word_present(text: str, word: str) -> bool:
+    return re.search(rf"(?<!\w){re.escape(word)}(?!\w)", text, re.IGNORECASE) is not None
+
+
+def _trace_candidate_contributions(
+    contributions: dict[tuple[str, str], list[dict[str, Any]]],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "region_id": region_id,
+            "page_id": page_id,
+            "contributions": values,
+        }
+        for (region_id, page_id), values in sorted(contributions.items())
+    ]
 
 
 class EntityExactRetriever:

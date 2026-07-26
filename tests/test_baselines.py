@@ -11,6 +11,7 @@ from parm_bench.baselines import (
     NaiveOutputRagBaseline,
     NoMemoryBaseline,
     OutputRagFlow,
+    PARMBaseline,
     PromptedMemoryToolBaseline,
     benchmark_input,
 )
@@ -188,6 +189,31 @@ class RecordingEntityRetriever:
                 "retrieval_condition_detail": "entity_exact_match",
                 "entity_seeds": [seed.__dict__ for seed in self.seeds],
                 "per_seed_retrievals": [],
+            },
+        )
+
+
+class RecordingPARMRetriever:
+    def __init__(self, hits: tuple[RetrievalHit, ...]) -> None:
+        self.hits = hits
+        self.calls: list[tuple[str, str, int]] = []
+
+    def retrieve_observation(
+        self,
+        prompt: str,
+        observation_text: str,
+        *,
+        top_k: int,
+    ) -> RetrievalResult:
+        self.calls.append((prompt, observation_text, top_k))
+        return RetrievalResult(
+            self.hits[:top_k],
+            {
+                "retrieval_condition_detail": "parm_convergence_v1",
+                "admission_policy": "convergence_threshold",
+                "semantic_seeds": [{"query": "lunch office"}],
+                "entity_seeds": [],
+                "returned_pages": [],
             },
         )
 
@@ -512,6 +538,43 @@ class AllEntityOutputRagBaselineTests(unittest.TestCase):
             AllEntityOutputRagBaseline().run(case, RecordingModel(), None)
         with self.assertRaisesRegex(ValueError, "at least 1"):
             AllEntityOutputRagBaseline(retrieval_limit=0)
+
+
+class PARMBaselineTests(unittest.TestCase):
+    def test_runs_observation_retrieval_and_admits_selected_memory(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+        retriever = RecordingPARMRetriever(
+            (hit("page/one", "note/one", "Relevant memory", 0.9),)
+        )
+
+        row = PARMBaseline(retrieval_limit=2).run(case, model, retriever)
+
+        self.assertEqual(
+            retriever.calls,
+            [(case.prompt, case.observation_text, 2)],
+        )
+        self.assertEqual(model.calls[0]["memory_context"], "1. Relevant memory")
+        self.assertEqual(model.calls[0]["instructions"], INPUT_RAG_INSTRUCTIONS)
+        self.assertEqual(row["trace"]["admitted_source_ids"], ["note/one"])
+        self.assertEqual(
+            row["trace"]["retrieval_condition_detail"],
+            "parm_convergence_v1",
+        )
+
+    def test_empty_selection_uses_no_memory_and_validates_inputs(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+
+        row = PARMBaseline().run(case, model, RecordingPARMRetriever(()))
+
+        self.assertIsNone(model.calls[0]["memory_context"])
+        self.assertEqual(model.calls[0]["instructions"], FINAL_ANSWER_INSTRUCTIONS)
+        self.assertEqual(row["trace"]["admitted_source_ids"], [])
+        with self.assertRaisesRegex(ValueError, "requires a PARM"):
+            PARMBaseline().run(case, RecordingModel(), None)
+        with self.assertRaisesRegex(ValueError, "at least 1"):
+            PARMBaseline(retrieval_limit=0)
 
 
 if __name__ == "__main__":

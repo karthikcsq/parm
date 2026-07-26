@@ -6,6 +6,7 @@ from pathlib import Path
 
 from parm_bench.models import (
     CachingLanguageModel,
+    MemoryToolDecision,
     ModelResponse,
     ResponseCacheMissError,
     ResponsePolicy,
@@ -31,6 +32,22 @@ class FakeModel:
         return ModelResponse(
             text=f"answer-{self.calls}",
             response_id=f"resp-{self.calls}",
+            resolved_model="fake-model-2025",
+            usage={"output_tokens": self.calls},
+        )
+
+    def decide_memory_search(
+        self,
+        *,
+        prompt: str,
+        observation_kind: str,
+        observation_text: str,
+    ) -> MemoryToolDecision:
+        self.calls += 1
+        return MemoryToolDecision(
+            query=f"query-{self.calls}",
+            direct_answer=None,
+            response_id=f"tool-{self.calls}",
             resolved_model="fake-model-2025",
             usage={"output_tokens": self.calls},
         )
@@ -77,6 +94,31 @@ class ResponseCacheTests(unittest.TestCase):
             model.generate(**_request(), memory_context="a retrieved note")
             self.assertEqual(base.calls, 2)
             self.assertEqual(len(list(Path(tmp).glob("*.json"))), 2)
+
+    def test_memory_tool_decision_populates_and_replays(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = FakeModel()
+            populate = CachingLanguageModel(base, tmp, ResponsePolicy.POPULATE)
+            first = populate.decide_memory_search(
+                prompt="pick one",
+                observation_kind="tool_result",
+                observation_text="listing text",
+            )
+            self.assertEqual(base.calls, 1)
+
+            frozen_base = FakeModel()
+            frozen = CachingLanguageModel(
+                frozen_base, tmp, ResponsePolicy.FROZEN
+            )
+            replayed = frozen.decide_memory_search(
+                prompt="pick one",
+                observation_kind="tool_result",
+                observation_text="listing text",
+            )
+
+            self.assertEqual(frozen_base.calls, 0)
+            self.assertEqual(replayed, first)
+            self.assertIsNotNone(frozen.cache_hash)
 
     def test_tampered_entry_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

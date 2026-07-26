@@ -12,6 +12,35 @@ from openai import OpenAI
 
 RESPONSE_CACHE_SCHEMA = 1
 
+MEMORY_SEARCH_TOOL_NAME = "search_personal_memory"
+MEMORY_SEARCH_TOOL = {
+    "type": "function",
+    "name": MEMORY_SEARCH_TOOL_NAME,
+    "description": (
+        "Search the user's personal memory for facts or preferences that may "
+        "change the current decision."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "A concise standalone memory search query.",
+            }
+        },
+        "required": ["query"],
+        "additionalProperties": False,
+    },
+    "strict": True,
+}
+
+MEMORY_TOOL_INSTRUCTIONS = (
+    "Complete the selection task. A personal-memory search tool is available. "
+    "Call it only when the supplied observation contains a concrete cue that "
+    "could connect to personal memory and change the choice. If no search is "
+    "needed, return exactly one requested label or name and no explanation."
+)
+
 
 FINAL_ANSWER_INSTRUCTIONS = (
     "Follow the selection task using only the supplied observation. "
@@ -47,6 +76,15 @@ class ModelResponse:
     usage: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class MemoryToolDecision:
+    query: str | None
+    direct_answer: str | None
+    response_id: str
+    resolved_model: str
+    usage: dict[str, Any]
+
+
 class LanguageModel(Protocol):
     model_name: str
 
@@ -59,6 +97,14 @@ class LanguageModel(Protocol):
         instructions: str = FINAL_ANSWER_INSTRUCTIONS,
         memory_context: str | None = None,
     ) -> ModelResponse: ...
+
+    def decide_memory_search(
+        self,
+        *,
+        prompt: str,
+        observation_kind: str,
+        observation_text: str,
+    ) -> MemoryToolDecision: ...
 
 
 class OpenAIResponsesModel:
@@ -93,6 +139,57 @@ class OpenAIResponsesModel:
             raise ModelTruncationError(reason, response.id)
         return ModelResponse(
             text=response.output_text,
+            response_id=response.id,
+            resolved_model=response.model,
+            usage=_usage_dict(response.usage),
+        )
+
+    def decide_memory_search(
+        self,
+        *,
+        prompt: str,
+        observation_kind: str,
+        observation_text: str,
+    ) -> MemoryToolDecision:
+        response = self.client.responses.create(
+            model=self.model_name,
+            instructions=MEMORY_TOOL_INSTRUCTIONS,
+            input=_render_input(
+                prompt,
+                observation_kind,
+                observation_text,
+            ),
+            tools=[MEMORY_SEARCH_TOOL],
+            tool_choice="auto",
+            max_output_tokens=MAX_OUTPUT_TOKENS,
+            store=False,
+        )
+        if getattr(response, "status", None) == "incomplete":
+            details = getattr(response, "incomplete_details", None)
+            reason = getattr(details, "reason", None) or "unknown"
+            raise ModelTruncationError(reason, response.id)
+        calls = [
+            item
+            for item in response.output
+            if getattr(item, "type", None) == "function_call"
+            and getattr(item, "name", None) == MEMORY_SEARCH_TOOL_NAME
+        ]
+        if len(calls) > 1:
+            raise RuntimeError("memory-tool agent emitted more than one search call")
+        query = None
+        if calls:
+            try:
+                arguments = json.loads(calls[0].arguments)
+            except (json.JSONDecodeError, TypeError) as exc:
+                raise RuntimeError("memory-tool agent emitted invalid arguments") from exc
+            query = arguments.get("query")
+            if not isinstance(query, str) or not query.strip():
+                raise RuntimeError("memory-tool agent emitted an empty search query")
+            query = query.strip()
+        direct_answer = None if query is not None else response.output_text.strip()
+        return MemoryToolDecision(
+            query=query,
+            direct_answer=direct_answer,
             response_id=response.id,
             resolved_model=response.model,
             usage=_usage_dict(response.usage),
@@ -153,6 +250,26 @@ def _response_request_hash(
         "observation_text": observation_text,
         "instructions": instructions,
         "memory_context": memory_context or "",
+    }
+    encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _memory_tool_request_hash(
+    model_name: str,
+    prompt: str,
+    observation_kind: str,
+    observation_text: str,
+) -> str:
+    payload = {
+        "schema": RESPONSE_CACHE_SCHEMA,
+        "request_kind": "memory_tool_decision",
+        "model": model_name,
+        "prompt": prompt,
+        "observation_kind": observation_kind,
+        "observation_text": observation_text,
+        "instructions": MEMORY_TOOL_INSTRUCTIONS,
+        "tool": MEMORY_SEARCH_TOOL,
     }
     encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -253,6 +370,62 @@ class CachingLanguageModel:
         )
         self._used_cache_files.append(path)
         return response
+
+    def decide_memory_search(
+        self,
+        *,
+        prompt: str,
+        observation_kind: str,
+        observation_text: str,
+    ) -> MemoryToolDecision:
+        request_hash = _memory_tool_request_hash(
+            self.base.model_name,
+            prompt,
+            observation_kind,
+            observation_text,
+        )
+        path = self.cache_dir / f"{request_hash}.json"
+        if path.exists():
+            payload = json.loads(path.read_text(encoding="utf-8"))
+            if (
+                payload.get("request_hash") != request_hash
+                or payload.get("model") != self.base.model_name
+                or payload.get("request_kind") != "memory_tool_decision"
+            ):
+                raise RuntimeError(f"invalid response cache entry: {path}")
+            self._used_cache_files.append(path)
+            return MemoryToolDecision(
+                query=payload.get("query"),
+                direct_answer=payload.get("direct_answer"),
+                response_id=payload["response_id"],
+                resolved_model=payload["resolved_model"],
+                usage=payload.get("usage", {}),
+            )
+        if self.policy is ResponsePolicy.FROZEN:
+            raise ResponseCacheMissError(request_hash)
+        if not hasattr(self.base, "decide_memory_search"):
+            raise TypeError("base model does not support memory-tool decisions")
+        decision = self.base.decide_memory_search(
+            prompt=prompt,
+            observation_kind=observation_kind,
+            observation_text=observation_text,
+        )
+        _atomic_write_json(
+            path,
+            {
+                "schema": RESPONSE_CACHE_SCHEMA,
+                "request_kind": "memory_tool_decision",
+                "request_hash": request_hash,
+                "model": self.base.model_name,
+                "query": decision.query,
+                "direct_answer": decision.direct_answer,
+                "response_id": decision.response_id,
+                "resolved_model": decision.resolved_model,
+                "usage": decision.usage,
+            },
+        )
+        self._used_cache_files.append(path)
+        return decision
 
     @property
     def cache_hash(self) -> str | None:

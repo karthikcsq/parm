@@ -15,8 +15,10 @@
   ordering and scores.
 - Treat the earlier live-`gbrain search` `input_rag` result as historical only.
   Canonical comparisons now rank the frozen substrate inside PARM.
-- Design `prompted_memory_tool` next without letting the visible prompt ask for
-  memory use.
+- Use the tracked `prompted_memory_tool × enhanced` run as the naive-agent
+  comparison. It never called memory on any positive or cue-ablated pilot case,
+  so the PARM condition must demonstrate output-cue retrieval without relying
+  on the response model to elect tool use.
 - Build later comparisons one at a time; do not recreate heuristic stand-ins
   to fill out the baseline table.
 

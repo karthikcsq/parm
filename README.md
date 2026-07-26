@@ -73,7 +73,7 @@ that cache.
 
 ## Baseline status
 
-Four baselines are implemented:
+Five baselines are implemented:
 
 - `no_memory` sends only the ordinary prompt and resolved observation to the
   response model. It has no retriever and emits an empty retrieval trace.
@@ -81,6 +81,11 @@ Four baselines are implemented:
   retriever, admits every top-k page, and appends each selected chunk in a
   separate retrieved-memory section. It does not retrieve from the later
   observation.
+- `prompted_memory_tool` gives the response model one optional
+  `search_personal_memory` tool call after it sees the observation. If the
+  model calls the tool, its query runs through the selected shared retriever
+  and every top-k page is admitted before a final model pass. If it does not
+  call the tool, its first-pass answer is final.
 - `naive_output_rag` retrieves from output text without cue selection. Use
   `--output-rag-flow` to choose where output-triggered retrieval runs:
   `tool_output_only`, `model_output_only`, or `tool_then_model_output`.
@@ -132,6 +137,22 @@ parm-bench run data/benchmark_v1 `
   --retrieval-limit 5 `
   --model gpt-5-mini `
   --out data/benchmark-results/naive-output-rag-tool-output-gpt-5-mini.jsonl
+```
+
+Run the naive memory-tool agent with enhanced retrieval:
+
+```powershell
+parm-bench run data/benchmark_v1 `
+  --baseline prompted_memory_tool `
+  --retrieval-mode enhanced `
+  --retrieval-index data\retrieval-indexes\amara-life-v1 `
+  --retrieval-limit 5 `
+  --expansion-cache data\expansion-caches\amara-life-v1 `
+  --expansion-policy frozen `
+  --response-cache data\response-caches\amara-life-v1 `
+  --response-policy frozen `
+  --model gpt-5-mini `
+  --out data\benchmark-results\prompted-memory-tool-enhanced-gpt-5-mini.jsonl
 ```
 
 Run all-entity output-RAG over the observed tool/output text:

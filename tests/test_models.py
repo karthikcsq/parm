@@ -6,6 +6,8 @@ from types import SimpleNamespace
 from parm_bench.models import (
     FINAL_ANSWER_INSTRUCTIONS,
     MAX_OUTPUT_TOKENS,
+    MEMORY_SEARCH_TOOL,
+    MEMORY_TOOL_INSTRUCTIONS,
     ModelTruncationError,
     OpenAIResponsesModel,
 )
@@ -108,6 +110,69 @@ class OpenAIResponsesModelTests(unittest.TestCase):
             responses.calls[0]["input"],
             "Task:\nExplain the recommendation.",
         )
+
+    def test_memory_tool_decision_parses_search_call(self) -> None:
+        class ToolResponses(FakeResponses):
+            def create(self, **kwargs: object) -> SimpleNamespace:
+                self.calls.append(kwargs)
+                return SimpleNamespace(
+                    output_text="",
+                    output=[
+                        SimpleNamespace(
+                            type="function_call",
+                            name="search_personal_memory",
+                            arguments='{"query":"NovaMind pilot evidence"}',
+                        )
+                    ],
+                    id="resp_tool",
+                    model="gpt-5-mini-resolved",
+                    usage=FakeUsage(),
+                )
+
+        responses = ToolResponses()
+        model = OpenAIResponsesModel(
+            "gpt-5-mini", client=SimpleNamespace(responses=responses)
+        )
+
+        decision = model.decide_memory_search(
+            prompt="Pick one.",
+            observation_kind="tool_result",
+            observation_text="NovaMind session",
+        )
+
+        self.assertEqual(decision.query, "NovaMind pilot evidence")
+        self.assertIsNone(decision.direct_answer)
+        self.assertEqual(responses.calls[0]["tools"], [MEMORY_SEARCH_TOOL])
+        self.assertEqual(
+            responses.calls[0]["instructions"], MEMORY_TOOL_INSTRUCTIONS
+        )
+        self.assertEqual(responses.calls[0]["tool_choice"], "auto")
+
+    def test_memory_tool_decision_uses_direct_answer_without_tool_call(self) -> None:
+        class DirectResponses(FakeResponses):
+            def create(self, **kwargs: object) -> SimpleNamespace:
+                self.calls.append(kwargs)
+                return SimpleNamespace(
+                    output_text="Choice A",
+                    output=[],
+                    id="resp_direct",
+                    model="gpt-5-mini-resolved",
+                    usage=FakeUsage(),
+                )
+
+        model = OpenAIResponsesModel(
+            "gpt-5-mini",
+            client=SimpleNamespace(responses=DirectResponses()),
+        )
+
+        decision = model.decide_memory_search(
+            prompt="Pick one.",
+            observation_kind="tool_result",
+            observation_text="Choice A\nChoice B",
+        )
+
+        self.assertIsNone(decision.query)
+        self.assertEqual(decision.direct_answer, "Choice A")
 
 
     def test_generate_raises_on_incomplete_truncated_response(self) -> None:

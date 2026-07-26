@@ -11,10 +11,15 @@ from parm_bench.baselines import (
     NaiveOutputRagBaseline,
     NoMemoryBaseline,
     OutputRagFlow,
+    PromptedMemoryToolBaseline,
     benchmark_input,
 )
 from parm_bench.dataset import load_cases
-from parm_bench.models import FINAL_ANSWER_INSTRUCTIONS, ModelResponse
+from parm_bench.models import (
+    FINAL_ANSWER_INSTRUCTIONS,
+    MemoryToolDecision,
+    ModelResponse,
+)
 from parm_bench.retrieval import (
     EntityRetrievalResult,
     EntitySeed,
@@ -35,6 +40,8 @@ class RecordingModel:
     def __init__(self) -> None:
         self.calls: list[dict[str, object]] = []
         self.responses: list[str] = []
+        self.memory_tool_calls: list[dict[str, str]] = []
+        self.memory_tool_decisions: list[MemoryToolDecision] = []
 
     def generate(
         self,
@@ -62,6 +69,30 @@ class RecordingModel:
         return ModelResponse(
             text=text,
             response_id=f"resp_{len(self.calls)}",
+            resolved_model="test-model-2026-01-01",
+            usage={"input_tokens": 10, "output_tokens": 2, "total_tokens": 12},
+        )
+
+    def decide_memory_search(
+        self,
+        *,
+        prompt: str,
+        observation_kind: str,
+        observation_text: str,
+    ) -> MemoryToolDecision:
+        self.memory_tool_calls.append(
+            {
+                "prompt": prompt,
+                "observation_kind": observation_kind,
+                "observation_text": observation_text,
+            }
+        )
+        if self.memory_tool_decisions:
+            return self.memory_tool_decisions.pop(0)
+        return MemoryToolDecision(
+            query=None,
+            direct_answer="Visible Choice from agent",
+            response_id="resp_tool_1",
             resolved_model="test-model-2026-01-01",
             usage={"input_tokens": 10, "output_tokens": 2, "total_tokens": 12},
         )
@@ -362,6 +393,59 @@ class NaiveOutputRagBaselineTests(unittest.TestCase):
             NaiveOutputRagBaseline().run(case, RecordingModel(), None)
         with self.assertRaisesRegex(ValueError, "at least 1"):
             NaiveOutputRagBaseline(retrieval_limit=0)
+
+
+class PromptedMemoryToolBaselineTests(unittest.TestCase):
+    def test_agent_searches_then_answers_with_retrieved_memory(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+        model.memory_tool_decisions = [
+            MemoryToolDecision(
+                query="NovaMind Texas grid pilot",
+                direct_answer=None,
+                response_id="resp_tool",
+                resolved_model="test-model-2026-01-01",
+                usage={"total_tokens": 12},
+            )
+        ]
+        retriever = RecordingRetriever(
+            [hit("page/one", "note/one", "Relevant memory", 0.9)]
+        )
+
+        row = PromptedMemoryToolBaseline(retrieval_limit=2).run(
+            case, model, retriever
+        )
+
+        self.assertEqual(
+            retriever.calls,
+            [RetrievalRequest("NovaMind Texas grid pilot", top_k=2)],
+        )
+        self.assertEqual(len(model.memory_tool_calls), 1)
+        self.assertEqual(len(model.calls), 1)
+        self.assertEqual(model.calls[0]["memory_context"], "1. Relevant memory")
+        self.assertEqual(model.calls[0]["instructions"], INPUT_RAG_INSTRUCTIONS)
+        self.assertTrue(row["trace"]["memory_tool_called"])
+        self.assertEqual(row["trace"]["admitted_source_ids"], ["note/one"])
+
+    def test_agent_can_answer_without_calling_memory_tool(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        model = RecordingModel()
+        retriever = RecordingRetriever([])
+
+        row = PromptedMemoryToolBaseline().run(case, model, retriever)
+
+        self.assertEqual(retriever.calls, [])
+        self.assertEqual(model.calls, [])
+        self.assertEqual(row["response_text"], "Visible Choice from agent")
+        self.assertFalse(row["trace"]["memory_tool_called"])
+        self.assertEqual(row["trace"]["admitted_source_ids"], [])
+
+    def test_requires_capable_model_retriever_and_positive_limit(self) -> None:
+        case = benchmark_input(load_cases(DATASET)[0])
+        with self.assertRaisesRegex(ValueError, "requires a retriever"):
+            PromptedMemoryToolBaseline().run(case, RecordingModel(), None)
+        with self.assertRaisesRegex(ValueError, "at least 1"):
+            PromptedMemoryToolBaseline(retrieval_limit=0)
 
 
 class AllEntityOutputRagBaselineTests(unittest.TestCase):

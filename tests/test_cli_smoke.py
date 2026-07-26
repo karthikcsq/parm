@@ -192,6 +192,7 @@ class CliSmokeTests(unittest.TestCase):
             {
                 "no_memory",
                 "input_rag",
+                "prompted_memory_tool",
                 "naive_output_rag",
                 "all_entity_output_rag",
             },

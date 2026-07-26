@@ -4,7 +4,12 @@ from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Any, Callable, Protocol
 
-from .models import FINAL_ANSWER_INSTRUCTIONS, LanguageModel, ModelResponse
+from .models import (
+    FINAL_ANSWER_INSTRUCTIONS,
+    LanguageModel,
+    MemoryToolDecision,
+    ModelResponse,
+)
 from .retrieval import EntityRetriever, RetrievalRequest, Retriever
 
 
@@ -295,6 +300,90 @@ class NaiveOutputRagBaseline:
 
 
 @dataclass(frozen=True)
+class PromptedMemoryToolBaseline:
+    retrieval_limit: int = 5
+    name = "prompted_memory_tool"
+    requires_memory = True
+    retrieval_resource = RetrievalResourceKind.MODE_RETRIEVER
+
+    def __post_init__(self) -> None:
+        if self.retrieval_limit < 1:
+            raise ValueError("retrieval_limit must be at least 1")
+
+    def run(
+        self,
+        case: BenchmarkInput,
+        model: LanguageModel,
+        retriever: Retriever | None,
+    ) -> dict[str, Any]:
+        if retriever is None:
+            raise ValueError("prompted_memory_tool baseline requires a retriever")
+        if not hasattr(model, "decide_memory_search"):
+            raise TypeError("prompted_memory_tool requires a memory-tool-capable model")
+
+        decision: MemoryToolDecision = model.decide_memory_search(
+            prompt=case.prompt,
+            observation_kind=case.observation_kind,
+            observation_text=case.observation_text,
+        )
+        hits = []
+        retrieval_trace: dict[str, Any] | None = None
+        if decision.query is not None:
+            retrieval = retriever.retrieve(
+                RetrievalRequest(decision.query, top_k=self.retrieval_limit)
+            )
+            hits = list(retrieval.hits)
+            retrieval_trace = retrieval.trace
+            response = model.generate(
+                prompt=case.prompt,
+                observation_kind=case.observation_kind,
+                observation_text=case.observation_text,
+                instructions=(
+                    INPUT_RAG_INSTRUCTIONS if hits else FINAL_ANSWER_INSTRUCTIONS
+                ),
+                memory_context=_memory_context(hits) or None,
+            )
+        else:
+            response = ModelResponse(
+                text=decision.direct_answer or "",
+                response_id=decision.response_id,
+                resolved_model=decision.resolved_model,
+                usage=decision.usage,
+            )
+
+        source_ids = [hit.slug for hit in hits]
+        page_ids = [hit.page_id for hit in hits]
+        return {
+            "case_id": case.case_id,
+            "response_text": response.text,
+            "requested_model": model.model_name,
+            "resolved_model": response.resolved_model,
+            "provider_response_id": response.response_id,
+            "usage": response.usage,
+            "trace": {
+                "detected_cues": [],
+                "memory_tool_called": decision.query is not None,
+                "memory_tool_query": decision.query,
+                "memory_tool_decision": {
+                    "provider_response_id": decision.response_id,
+                    "resolved_model": decision.resolved_model,
+                    "usage": decision.usage,
+                },
+                "retrieval": retrieval_trace,
+                "retrieved_page_ids": page_ids,
+                "retrieved_source_ids": source_ids,
+                "admitted_page_ids": page_ids,
+                "admitted_source_ids": source_ids,
+                "admitted_perturbations": {
+                    hit.slug: list(hit.perturbations)
+                    for hit in hits
+                    if hit.perturbations
+                },
+            },
+        }
+
+
+@dataclass(frozen=True)
 class AllEntityOutputRagBaseline:
     retrieval_limit: int = 5
     name = "all_entity_output_rag"
@@ -463,6 +552,12 @@ register_baseline(
     lambda configuration: NaiveOutputRagBaseline(
         configuration.retrieval_limit,
         configuration.output_rag_flow,
+    ),
+)
+register_baseline(
+    "prompted_memory_tool",
+    lambda configuration: PromptedMemoryToolBaseline(
+        configuration.retrieval_limit,
     ),
 )
 register_baseline(

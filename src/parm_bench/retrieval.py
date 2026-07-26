@@ -79,6 +79,84 @@ _PARM_GENERIC_CONCEPTS = frozenset(
 _PARM_GENERIC_ANCHORS = _PARM_GENERIC_CONCEPTS | frozenset(
     {"afternoon", "exactly", "nearby", "new", "one", "thursday", "today"}
 )
+_PARM_GRAPH_LEXICAL_STOPWORDS = frozenset(
+    {
+        "after",
+        "also",
+        "and",
+        "are",
+        "been",
+        "before",
+        "being",
+        "but",
+        "can",
+        "could",
+        "did",
+        "does",
+        "doing",
+        "for",
+        "from",
+        "had",
+        "has",
+        "have",
+        "having",
+        "her",
+        "hers",
+        "him",
+        "his",
+        "how",
+        "into",
+        "its",
+        "may",
+        "might",
+        "more",
+        "most",
+        "not",
+        "only",
+        "other",
+        "our",
+        "ours",
+        "out",
+        "over",
+        "same",
+        "she",
+        "should",
+        "some",
+        "such",
+        "than",
+        "that",
+        "the",
+        "their",
+        "theirs",
+        "them",
+        "then",
+        "there",
+        "these",
+        "they",
+        "this",
+        "those",
+        "through",
+        "too",
+        "under",
+        "until",
+        "very",
+        "was",
+        "were",
+        "what",
+        "when",
+        "where",
+        "which",
+        "while",
+        "who",
+        "whom",
+        "why",
+        "will",
+        "with",
+        "would",
+        "you",
+        "your",
+    }
+)
 _PARM_DURABLE_PREFIXES = frozenset({"doc", "emails", "meetings", "notes"})
 
 
@@ -1119,6 +1197,14 @@ class PARMConvergenceRetriever:
                 and not page.perturbations
             )
         }
+        self._graph_page_tokens = {
+            page_id: frozenset(_tokenize(self._page_text[page_id]))
+            for page_id in self._eligible_pages
+        }
+        self._graph_term_document_frequency: Counter[str] = Counter()
+        for tokens in self._graph_page_tokens.values():
+            self._graph_term_document_frequency.update(tokens)
+        self._graph_document_count = len(self._graph_page_tokens)
         self._inbound: dict[str, set[str]] = defaultdict(set)
         for link in index.links:
             if link.source_page_id in self._eligible_pages:
@@ -1196,7 +1282,12 @@ class PARMConvergenceRetriever:
             for region_id, vector in zip(graph_region_ids, graph_vectors)
         }
         admissions = self._select_graph_admissions(
-            graph_contributions, graph_cosines
+            graph_contributions,
+            graph_cosines,
+            {
+                region["region_id"]: region["text"]
+                for region in regions
+            },
         )
         admissions.extend(
             self._select_semantic_admissions(semantic_contributions)
@@ -1332,11 +1423,30 @@ class PARMConvergenceRetriever:
         self,
         contributions: dict[tuple[str, str], list[dict[str, Any]]],
         cosines: dict[str, dict[str, float]],
+        region_texts: dict[str, str] | None = None,
     ) -> list[dict[str, Any]]:
         by_region: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        region_texts = region_texts or {}
+        lexical_evidence = {
+            region_id: self._graph_lexical_evidence(
+                region_texts.get(region_id, ""),
+                [
+                    page_id
+                    for candidate_region_id, page_id in contributions
+                    if candidate_region_id == region_id
+                ],
+            )
+            for region_id in {
+                candidate_region_id
+                for candidate_region_id, _ in contributions
+            }
+        }
         for (region_id, page_id), values in contributions.items():
             distinct_seeds = {value["seed_id"] for value in values}
             cosine = cosines.get(region_id, {}).get(page_id, -1.0)
+            lexical_score, lexical_terms = lexical_evidence[region_id].get(
+                page_id, (0.0, ())
+            )
             by_region[region_id].append(
                 {
                     "page_id": page_id,
@@ -1346,20 +1456,76 @@ class PARMConvergenceRetriever:
                     "score": len(distinct_seeds) + max(cosine, 0.0),
                     "entity_seed_count": len(distinct_seeds),
                     "region_cosine": cosine,
+                    "graph_lexical_score": lexical_score,
+                    "graph_lexical_terms": list(lexical_terms),
                 }
             )
         admissions = []
         for candidates in by_region.values():
+            candidates = [
+                candidate
+                for candidate in candidates
+                if candidate["region_cosine"] >= 0.30
+            ]
             candidates.sort(
                 key=lambda item: (
                     -item["entity_seed_count"],
+                    -item["graph_lexical_score"],
+                    -len(item["graph_lexical_terms"]),
                     -item["region_cosine"],
                     item["page_id"],
                 )
             )
-            if candidates and candidates[0]["region_cosine"] >= 0.30:
+            if candidates:
                 admissions.append(candidates[0])
         return admissions
+
+    def _graph_lexical_evidence(
+        self,
+        region_text: str,
+        candidate_page_ids: Sequence[str],
+    ) -> dict[str, tuple[float, tuple[str, ...]]]:
+        query_terms = []
+        for token in _tokenize(region_text):
+            singular = token[:-1] if token.endswith("s") else token
+            if (
+                len(token) < 3
+                or token.isdigit()
+                or token in _PARM_GRAPH_LEXICAL_STOPWORDS
+                or token in _PARM_GENERIC_CONCEPTS
+                or singular in _PARM_GENERIC_CONCEPTS
+                or token in query_terms
+            ):
+                continue
+            query_terms.append(token)
+        evidence = {}
+        for page_id in candidate_page_ids:
+            page_tokens = self._graph_page_tokens.get(page_id, frozenset())
+            matches = [
+                (
+                    math.log(
+                        1
+                        + (
+                            self._graph_document_count
+                            - self._graph_term_document_frequency[token]
+                            + 0.5
+                        )
+                        / (
+                            self._graph_term_document_frequency[token]
+                            + 0.5
+                        )
+                    ),
+                    token,
+                )
+                for token in query_terms
+                if token in page_tokens
+            ]
+            matches.sort(key=lambda item: (-item[0], item[1]))
+            evidence[page_id] = (
+                matches[0][0] if matches else 0.0,
+                tuple(token for _, token in matches[:8]),
+            )
+        return evidence
 
     def _select_semantic_admissions(
         self,

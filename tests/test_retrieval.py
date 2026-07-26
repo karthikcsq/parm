@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from collections import Counter
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
@@ -248,6 +249,12 @@ class PARMConvergenceSelectionTests(unittest.TestCase):
 
     def test_graph_selector_can_admit_one_or_zero(self) -> None:
         retriever = object.__new__(PARMConvergenceRetriever)
+        retriever._graph_page_tokens = {
+            "gold": frozenset(),
+            "other": frozenset(),
+        }
+        retriever._graph_term_document_frequency = Counter()
+        retriever._graph_document_count = 2
         contributions = {
             ("region-1", "gold"): [
                 {"seed_id": "entity-1"},
@@ -267,6 +274,78 @@ class PARMConvergenceSelectionTests(unittest.TestCase):
 
         self.assertEqual([item["page_id"] for item in admitted], ["gold"])
         self.assertEqual(empty, [])
+
+    def test_graph_selector_uses_rare_region_term_to_break_entity_tie(
+        self,
+    ) -> None:
+        retriever = object.__new__(PARMConvergenceRetriever)
+        retriever._graph_page_tokens = {
+            "procurement": frozenset({"marcus", "reid", "procurement"}),
+            "scaling": frozenset({"marcus", "reid", "scaling"}),
+            "background": frozenset({"marcus", "reid"}),
+        }
+        retriever._graph_term_document_frequency = Counter(
+            {
+                "marcus": 3,
+                "reid": 3,
+                "procurement": 1,
+                "scaling": 1,
+            }
+        )
+        retriever._graph_document_count = 3
+        contributions = {
+            ("region-1", page_id): [{"seed_id": "entity-1"}]
+            for page_id in ("procurement", "scaling", "background")
+        }
+
+        admitted = retriever._select_graph_admissions(
+            contributions,
+            {
+                "region-1": {
+                    "procurement": 0.41,
+                    "scaling": 0.75,
+                    "background": 0.80,
+                }
+            },
+            {
+                "region-1": (
+                    "Demo P-147 by Marcus Reid. Procurement workflow review."
+                )
+            },
+        )
+
+        self.assertEqual([item["page_id"] for item in admitted], ["procurement"])
+        self.assertGreater(admitted[0]["graph_lexical_score"], 0.0)
+        self.assertEqual(
+            admitted[0]["graph_lexical_terms"][:1], ["procurement"]
+        )
+
+    def test_graph_selector_falls_back_to_cosine_without_lexical_overlap(
+        self,
+    ) -> None:
+        retriever = object.__new__(PARMConvergenceRetriever)
+        retriever._graph_page_tokens = {
+            "near": frozenset({"alpha"}),
+            "far": frozenset({"beta"}),
+        }
+        retriever._graph_term_document_frequency = Counter(
+            {"alpha": 1, "beta": 1}
+        )
+        retriever._graph_document_count = 2
+        contributions = {
+            ("region-1", "near"): [{"seed_id": "entity-1"}],
+            ("region-1", "far"): [{"seed_id": "entity-1"}],
+        }
+
+        admitted = retriever._select_graph_admissions(
+            contributions,
+            {"region-1": {"near": 0.72, "far": 0.44}},
+            {"region-1": "Unmatched listing terms only"},
+        )
+
+        self.assertEqual([item["page_id"] for item in admitted], ["near"])
+        self.assertEqual(admitted[0]["graph_lexical_score"], 0.0)
+        self.assertEqual(admitted[0]["graph_lexical_terms"], [])
 
 
 class EntityExactRetrieverTests(unittest.TestCase):

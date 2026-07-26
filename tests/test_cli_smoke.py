@@ -170,8 +170,8 @@ class FakeEntityRetriever:
 
 class FakePARMRetriever:
     instances: list["FakePARMRetriever"] = []
-    retrieval_condition_detail = "parm_convergence_v1"
-    evidence_projection_version = "semantic_evidence_v1"
+    retrieval_condition_detail = "parm_convergence_v2"
+    evidence_projection_version = "convergent_evidence_v2"
     admission_policy = "convergence_threshold"
 
     def __init__(self, index: FakeIndex, embedder: object):
@@ -592,7 +592,7 @@ class CliSmokeTests(unittest.TestCase):
             self.assertIsNone(configuration["retrieval_mode"])
             self.assertEqual(
                 configuration["retrieval_condition_detail"],
-                "parm_convergence_v1",
+                "parm_convergence_v2",
             )
             self.assertEqual(
                 configuration["admission_policy"],
@@ -600,7 +600,7 @@ class CliSmokeTests(unittest.TestCase):
             )
             self.assertEqual(
                 configuration["evidence_projection_version"],
-                "semantic_evidence_v1",
+                "convergent_evidence_v2",
             )
             self.assertEqual(
                 configuration["judgment_prompt_version"],

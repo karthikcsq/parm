@@ -45,6 +45,8 @@ from .retrieval import (
     GRAPH_MULTIPLIER,
     OFFICIAL_TOP_K,
     PARM_MIN_CONVERGING_CONCEPTS,
+    PARM_DIRECT_NOTE_MIN_PAGE_CONTRAST,
+    PARM_DIRECT_NOTE_MIN_REGION_CONTRAST,
     PARM_MIN_LEXICAL_CONCEPTS,
     PARM_SEMANTIC_DEPTH,
     PARM_SEMANTIC_MIN_COSINE,
@@ -531,6 +533,12 @@ def _write_run_configuration(
                         PARM_MIN_CONVERGING_CONCEPTS
                     ),
                     "minimum_lexical_concepts": PARM_MIN_LEXICAL_CONCEPTS,
+                    "direct_note_min_page_contrast": (
+                        PARM_DIRECT_NOTE_MIN_PAGE_CONTRAST
+                    ),
+                    "direct_note_min_region_contrast": (
+                        PARM_DIRECT_NOTE_MIN_REGION_CONTRAST
+                    ),
                 }
                 if isinstance(retrieval_resource, PARMConvergenceRetriever)
                 else None

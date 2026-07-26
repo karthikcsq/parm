@@ -191,6 +191,79 @@ class TokenWindowTests(unittest.TestCase):
 
 
 class PARMConvergenceSelectionTests(unittest.TestCase):
+    def direct_note_retriever(self) -> PARMConvergenceRetriever:
+        retriever = object.__new__(PARMConvergenceRetriever)
+        retriever._direct_note_text = {
+            "gold": "conviction reason forty eight hour meeting",
+            "other": "ordinary meeting notes",
+            "decoy": "unrelated durable note",
+        }
+        retriever._sentences_by_page = {
+            "gold": [
+                SentenceRecord(
+                    "sentence-1",
+                    "chunk-1",
+                    "gold",
+                    0,
+                    "Record a concrete reason for conviction within 48 hours.",
+                )
+            ]
+        }
+        return retriever
+
+    def test_direct_note_selector_requires_page_and_region_contrast(self) -> None:
+        retriever = self.direct_note_retriever()
+        regions = [
+            {"region_id": "region-1", "text": "ordinary general option"},
+            {
+                "region_id": "region-2",
+                "text": "record a reason for conviction within 48 hours",
+            },
+            {"region_id": "region-3", "text": "another general option"},
+        ]
+        score_sets = [
+            {"other": 4.0, "decoy": 3.0},
+            {"gold": 20.0, "other": 5.0},
+            {"decoy": 3.5, "other": 3.0},
+            {"sentence-1": 1.0},
+        ]
+
+        with mock.patch(
+            "parm_bench.retrieval._bm25_scores",
+            side_effect=score_sets,
+        ):
+            admissions, trace = retriever._select_direct_note_admissions(
+                regions
+            )
+
+        self.assertEqual([item["page_id"] for item in admissions], ["gold"])
+        self.assertEqual(admissions[0]["channel"], "direct_note_contrast")
+        self.assertEqual(admissions[0]["region_id"], "region-2")
+        self.assertEqual(admissions[0]["page_contrast"], 4.0)
+        self.assertEqual(admissions[0]["region_contrast"], 5.0)
+        self.assertEqual(trace[0]["runner_region_id"], "region-1")
+
+    def test_direct_note_selector_rejects_when_another_region_is_close(self) -> None:
+        retriever = self.direct_note_retriever()
+        regions = [
+            {"region_id": "region-1", "text": "strong decoy"},
+            {"region_id": "region-2", "text": "cue-shaped option"},
+        ]
+
+        with mock.patch(
+            "parm_bench.retrieval._bm25_scores",
+            side_effect=[
+                {"other": 15.3, "decoy": 8.0},
+                {"gold": 13.8, "other": 4.9},
+            ],
+        ):
+            admissions, trace = retriever._select_direct_note_admissions(
+                regions
+            )
+
+        self.assertEqual(admissions, [])
+        self.assertAlmostEqual(trace[0]["region_contrast"], 15.3 / 13.8)
+
     def test_semantic_selector_admits_reflective_anchor_association(self) -> None:
         retriever = object.__new__(PARMConvergenceRetriever)
         retriever._page_by_id = {

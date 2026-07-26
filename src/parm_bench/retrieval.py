@@ -30,6 +30,8 @@ PARM_SEMANTIC_MIN_COSINE = 0.30
 PARM_SINGLETON_MIN_COSINE = 0.36
 PARM_MIN_CONVERGING_CONCEPTS = 3
 PARM_MIN_LEXICAL_CONCEPTS = 2
+PARM_DIRECT_NOTE_MIN_PAGE_CONTRAST = 1.25
+PARM_DIRECT_NOTE_MIN_REGION_CONTRAST = 1.25
 EXPANSION_MODEL = "gpt-5-mini"
 EXPANSION_PROMPT_VERSION = "retrieval-expansion-v1"
 
@@ -1149,8 +1151,8 @@ class SpacyCueConceptExtractor:
 
 
 class PARMConvergenceRetriever:
-    retrieval_condition_detail = "parm_convergence_v1"
-    evidence_projection_version = "semantic_evidence_v1"
+    retrieval_condition_detail = "parm_convergence_v2"
+    evidence_projection_version = "convergent_evidence_v2"
     admission_policy = "convergence_threshold"
 
     def __init__(
@@ -1205,6 +1207,11 @@ class PARMConvergenceRetriever:
         for tokens in self._graph_page_tokens.values():
             self._graph_term_document_frequency.update(tokens)
         self._graph_document_count = len(self._graph_page_tokens)
+        self._direct_note_text = {
+            page_id: self._page_text[page_id]
+            for page_id in self._eligible_pages
+            if self._page_by_id[page_id].slug.startswith("notes/")
+        }
         self._inbound: dict[str, set[str]] = defaultdict(set)
         for link in index.links:
             if link.source_page_id in self._eligible_pages:
@@ -1292,6 +1299,10 @@ class PARMConvergenceRetriever:
         admissions.extend(
             self._select_semantic_admissions(semantic_contributions)
         )
+        direct_note_admissions, direct_note_trace = (
+            self._select_direct_note_admissions(regions)
+        )
+        admissions.extend(direct_note_admissions)
         best_admission_by_page: dict[str, dict[str, Any]] = {}
         for admission in admissions:
             previous = best_admission_by_page.get(admission["page_id"])
@@ -1336,12 +1347,19 @@ class PARMConvergenceRetriever:
             "semantic_candidates": _trace_candidate_contributions(
                 semantic_contributions
             ),
+            "direct_note_candidates": direct_note_trace,
             "thresholds": {
                 "semantic_depth": PARM_SEMANTIC_DEPTH,
                 "semantic_min_cosine": PARM_SEMANTIC_MIN_COSINE,
                 "singleton_min_cosine": PARM_SINGLETON_MIN_COSINE,
                 "minimum_converging_concepts": PARM_MIN_CONVERGING_CONCEPTS,
                 "minimum_lexical_concepts": PARM_MIN_LEXICAL_CONCEPTS,
+                "direct_note_min_page_contrast": (
+                    PARM_DIRECT_NOTE_MIN_PAGE_CONTRAST
+                ),
+                "direct_note_min_region_contrast": (
+                    PARM_DIRECT_NOTE_MIN_REGION_CONTRAST
+                ),
             },
             "returned_pages": [
                 {
@@ -1527,6 +1545,93 @@ class PARMConvergenceRetriever:
             )
         return evidence
 
+    def _select_direct_note_admissions(
+        self,
+        regions: Sequence[dict[str, Any]],
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Admit one durable note when two independent BM25 contrasts agree.
+
+        The page contrast requires one note to explain a region substantially
+        better than the next note. The region contrast requires that region to
+        stand out from every other listing in the observation. This lets
+        durable notes outside the review/reflection naming convention
+        participate without opening a broad semantic admission path.
+        """
+        candidates: list[dict[str, Any]] = []
+        if len(self._direct_note_text) < 2:
+            return [], candidates
+        for region in regions:
+            scores = _bm25_scores(region["text"], self._direct_note_text)
+            ordered = _rank_scores(scores, 2)
+            if len(ordered) < 2:
+                continue
+            page_id, runner_page_id = ordered
+            page_score = scores[page_id]
+            runner_page_score = scores[runner_page_id]
+            if runner_page_score <= 0:
+                continue
+            candidates.append(
+                {
+                    "page_id": page_id,
+                    "region_id": region["region_id"],
+                    "page_score": page_score,
+                    "runner_page_id": runner_page_id,
+                    "runner_page_score": runner_page_score,
+                    "page_contrast": page_score / runner_page_score,
+                    "region_text": region["text"],
+                }
+            )
+        candidates.sort(
+            key=lambda item: (
+                -item["page_score"],
+                item["region_id"],
+                item["page_id"],
+            )
+        )
+        trace = [
+            {
+                key: value
+                for key, value in candidate.items()
+                if key != "region_text"
+            }
+            for candidate in candidates[:2]
+        ]
+        if len(candidates) < 2:
+            return [], trace
+        best, runner = candidates[:2]
+        region_contrast = best["page_score"] / runner["page_score"]
+        trace[0]["region_contrast"] = region_contrast
+        trace[0]["runner_region_id"] = runner["region_id"]
+        if (
+            best["page_contrast"] < PARM_DIRECT_NOTE_MIN_PAGE_CONTRAST
+            or region_contrast < PARM_DIRECT_NOTE_MIN_REGION_CONTRAST
+        ):
+            return [], trace
+        sentences = {
+            sentence.sentence_id: sentence.text
+            for sentence in self._sentences_by_page.get(best["page_id"], ())
+        }
+        evidence_sentence_ids = _bm25_rank(
+            best["region_text"], sentences, 3
+        )
+        evidence_sentences = [
+            sentences[sentence_id] for sentence_id in evidence_sentence_ids
+        ]
+        return [
+            {
+                "page_id": best["page_id"],
+                "region_id": best["region_id"],
+                "channel": "direct_note_contrast",
+                "priority": 4,
+                "score": best["page_score"],
+                "page_contrast": best["page_contrast"],
+                "region_contrast": region_contrast,
+                "runner_page_id": best["runner_page_id"],
+                "runner_region_id": runner["region_id"],
+                "evidence_sentences": evidence_sentences,
+            }
+        ], trace
+
     def _select_semantic_admissions(
         self,
         contributions: dict[tuple[str, str], list[dict[str, Any]]],
@@ -1662,7 +1767,10 @@ class PARMConvergenceRetriever:
         page = self._page_by_id[page_id]
         _, chunk = self._chunks_by_page[page_id][0]
         text = chunk.text
-        if admission["channel"].startswith("semantic_"):
+        if (
+            admission["channel"].startswith("semantic_")
+            or admission["channel"] == "direct_note_contrast"
+        ):
             text = "\n".join(admission.get("evidence_sentences", ())) or text
         diagnostics = {
             key: value

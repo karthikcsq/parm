@@ -26,10 +26,11 @@
   convergence to general retrieval quality. Keep thresholds and judgment
   instructions frozen while scoring that set.
 
-## Expansion queue
+## Expansion evaluation
 
-The approved examples not yet executable are 4, 6-11, 13-20 in
-`docs/parm-output-cued-memory-examples.md`. Add them one at a time with:
+Examples 4, 6-11, and 13-18 are now executable as the frozen `expansion`
+split. Evaluate them without changing the pilot-tuned retrieval thresholds or
+judgment instructions before inspecting per-case failures. Each includes:
 
 - an ordinary prompt;
 - one 8-12K-token observation;
@@ -43,6 +44,6 @@ The approved examples not yet executable are 4, 6-11, 13-20 in
 - authoritative Amara provenance; and
 - at least three plausible memory distractors.
 
-Examples 19 and 20 require proposed personal-memory additions and must remain
-separate from the existing-corpus set until those additions are explicitly
-versioned.
+Examples 19 and 20 still require proposed personal-memory additions and must
+remain separate from the existing-corpus set until those additions are
+explicitly versioned.

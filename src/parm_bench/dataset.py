@@ -29,6 +29,17 @@ LISTING_PREFIXES = (
     "Candidate ",
     "Result ",
     "Listing ",
+    "Demo ",
+    "Webinar ",
+    "Company ",
+    "Case Study ",
+    "Article ",
+    "Automation ",
+    "Feature ",
+    "Film ",
+    "Event ",
+    "Essay ",
+    "Chart ",
 )
 REQUIRED_FIELDS = {
     "case_id",

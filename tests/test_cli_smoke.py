@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from parm_bench.baselines import available_baselines
 from parm_bench.cli import _resolve_model, main
+from parm_bench.dataset import load_cases
 from parm_bench.models import (
     FINAL_ANSWER_INSTRUCTIONS,
     ModelResponse,
@@ -28,6 +29,10 @@ from parm_bench.retrieval import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data" / "benchmark_v1"
+CASE_COUNT = len(load_cases(DATASET))
+BASE_CASE_COUNT = len(
+    {case["base_case_id"] for case in load_cases(DATASET)}
+)
 
 
 class FakeOpenAIModel:
@@ -287,12 +292,12 @@ class CliSmokeTests(unittest.TestCase):
             self.assertEqual(status, 0)
             model = FakeOpenAIModel.instances[0]
             self.assertEqual(model.model_name, "chosen-model")
-            self.assertEqual(len(model.calls), 15)
+            self.assertEqual(len(model.calls), CASE_COUNT)
             rows = [
                 json.loads(line)
                 for line in result.read_text(encoding="utf-8").splitlines()
             ]
-            self.assertEqual(len(rows), 15)
+            self.assertEqual(len(rows), CASE_COUNT)
             self.assertTrue(all(row["baseline"] == "no_memory" for row in rows))
             self.assertTrue(
                 all(row["trace"]["admitted_source_ids"] == [] for row in rows)
@@ -331,7 +336,7 @@ class CliSmokeTests(unittest.TestCase):
                 json.loads(line)
                 for line in result.read_text(encoding="utf-8").splitlines()
             ]
-            self.assertEqual(len(rows), 5)
+            self.assertEqual(len(rows), BASE_CASE_COUNT)
             self.assertTrue(
                 all(
                     row["case_id"].endswith("-memory-included") for row in rows
@@ -384,7 +389,7 @@ class CliSmokeTests(unittest.TestCase):
 
             self.assertEqual(status, 0)
             retriever = FakeRetriever.instances[0]
-            self.assertEqual(len(retriever.calls), 15)
+            self.assertEqual(len(retriever.calls), CASE_COUNT)
             self.assertTrue(all(call.top_k == 3 for call in retriever.calls))
             model = FakeOpenAIModel.instances[0]
             self.assertTrue(
@@ -458,7 +463,7 @@ class CliSmokeTests(unittest.TestCase):
 
             self.assertEqual(status, 0)
             retriever = FakeRetriever.instances[0]
-            self.assertEqual(len(retriever.calls), 15)
+            self.assertEqual(len(retriever.calls), CASE_COUNT)
             self.assertTrue(
                 all(call.top_k == 2 for call in retriever.calls)
             )
@@ -521,7 +526,7 @@ class CliSmokeTests(unittest.TestCase):
 
             self.assertEqual(status, 0)
             entity_retriever = FakeEntityRetriever.instances[0]
-            self.assertEqual(len(entity_retriever.calls), 15)
+            self.assertEqual(len(entity_retriever.calls), CASE_COUNT)
             self.assertTrue(all(top_k == 4 for _, top_k in entity_retriever.calls))
             rows = [
                 json.loads(line)
@@ -577,7 +582,10 @@ class CliSmokeTests(unittest.TestCase):
                 )
 
             self.assertEqual(status, 0)
-            self.assertEqual(len(FakePARMRetriever.instances[0].calls), 15)
+            self.assertEqual(
+                len(FakePARMRetriever.instances[0].calls),
+                CASE_COUNT,
+            )
             configuration = json.loads(
                 result.with_suffix(".config.json").read_text(encoding="utf-8")
             )
@@ -808,7 +816,7 @@ class CliSmokeTests(unittest.TestCase):
                 json.loads(line)
                 for line in result.read_text(encoding="utf-8").splitlines()
             ]
-            self.assertEqual(len(rows), 15)
+            self.assertEqual(len(rows), CASE_COUNT)
             truncated = [row for row in rows if row.get("truncated")]
             self.assertEqual(len(truncated), 1)
             self.assertEqual(truncated[0]["response_text"], "")

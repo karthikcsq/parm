@@ -1,8 +1,9 @@
 # PARM Output Cue-Triggered Memory Examples
 
-**Status:** Canonical expansion specification. Examples 1, 2, 3, 5, and 12
-are implemented in the executable V1 pilot; the other 15 remain approved
-expansion candidates.
+**Status:** Canonical expansion specification. Examples 1-18 are implemented
+in the executable benchmark. Examples 1, 2, 3, 5, and 12 retain the `pilot`
+split; the other 13 existing-memory examples form the frozen `expansion`
+split. Examples 19 and 20 remain proposed additions.
 
 This document begins with 20 approved examples developed against the local
 Amara Life GBrain corpus. It is intentionally extensible: future examples
@@ -274,12 +275,14 @@ Unless noted otherwise, each mock output should be 8-12K tokens.
 | Existing Amara memory | 1-18 |
 | Proposed addition | 19-20 |
 
-## Executable pilot
+## Executable benchmark
 
-The committed pilot under `data/benchmark_v1/` implements examples 1, 2, 3, 5,
-and 12. Each has a 8-12K-token observation plus a cue-ablated control. The
-remaining examples should be promoted only after receiving the same context,
-provenance, distractor, and counterfactual treatment.
+The committed dataset under `data/benchmark_v1/` implements examples 1-18.
+Each has an 8-12K-token observation, a cue-ablated control, and a
+memory-included ceiling. The original five examples remain identifiable as the
+`pilot` split; the thirteen new existing-memory examples are the `expansion`
+split. Examples 19 and 20 require an explicitly versioned corpus addition
+before promotion.
 
 ## Shared evaluation rule
 

@@ -46,7 +46,8 @@ _EMBEDDING_ENCODER: Any | None = None
 
 _PARM_LISTING_PREFIX = re.compile(
     r"^(?:Session|Workshop|Lead Story|Item|Brief|Editor's Pick|Episode|"
-    r"New Release|Vendor|Candidate|Result|Listing)\b"
+    r"New Release|Vendor|Candidate|Result|Listing|Demo|Webinar|Company|"
+    r"Case Study|Article|Automation|Feature|Film|Event|Essay|Chart)\b"
 )
 _PARM_GENERIC_CONCEPTS = frozenset(
     {

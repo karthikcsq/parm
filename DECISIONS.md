@@ -2,6 +2,23 @@
 
 A running log of non-obvious choices and the reasoning behind them. Newest first.
 
+## 2026-07-26
+
+### Freeze the first expansion pass against the completed pilot
+
+**Why:** Reusing the five pilot cases for further tuning would turn a perfect
+in-sample score into a weak quality claim. Thirteen approved examples already
+have authoritative Amara sources and can test the frozen mechanism on new cue
+shapes. The two remaining health examples require memories that do not exist in
+the corpus.
+
+**What:** Promoted examples 4, 6-11, and 13-18 into `data/benchmark_v1` with the
+same generated context, cue-ablation, memory-included, provenance, distractor,
+and camouflage procedure as the pilot. Marked them as the `expansion` split,
+kept examples 1, 2, 3, 5, and 12 as `pilot`, and excluded examples 19 and 20.
+The first expansion score must use retrieval and judgment behavior frozen at
+commit `b0e9410`.
+
 ## 2026-07-08
 
 ### PARM condition selects by convergence threshold, not fixed top-k

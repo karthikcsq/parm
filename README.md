@@ -106,7 +106,7 @@ output-triggered retrieval happens; `--retrieval-mode` still controls how
 memories are ranked. `all_entity_output_rag` and `parm` are fixed retrieval
 conditions, so they require `--retrieval-index` but reject `--retrieval-mode`.
 
-Run the five positive/control pairs and score them:
+Run all 18 positive/control/ceiling triplets and score them:
 
 ```powershell
 parm-bench run data/benchmark_v1 `

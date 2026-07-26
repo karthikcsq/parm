@@ -22,8 +22,8 @@ class DatasetValidationTests(unittest.TestCase):
     def test_pilot_dataset_is_valid(self) -> None:
         cases = load_cases(DATASET)
         validate_cases(cases)
-        self.assertEqual(len(cases), 15)
-        self.assertEqual(len({case["base_case_id"] for case in cases}), 5)
+        self.assertEqual(len(cases), 54)
+        self.assertEqual(len({case["base_case_id"] for case in cases}), 18)
 
     def test_every_base_case_has_all_three_variants(self) -> None:
         cases = load_cases(DATASET)
@@ -36,6 +36,15 @@ class DatasetValidationTests(unittest.TestCase):
                 for value in by_base.values()
             )
         )
+
+    def test_pilot_and_expansion_splits_are_complete(self) -> None:
+        cases = load_cases(DATASET)
+        counts: dict[str, set[str]] = {}
+        for case in cases:
+            split = case["provenance"]["evaluation_split"]
+            counts.setdefault(split, set()).add(case["base_case_id"])
+        self.assertEqual(len(counts["pilot"]), 5)
+        self.assertEqual(len(counts["expansion"]), 13)
 
     def test_memory_included_injects_memory_and_reuses_positive_observation(
         self,
@@ -115,6 +124,19 @@ class DatasetValidationTests(unittest.TestCase):
             "parm-amara-podcast-feed": "burnout",
             "parm-amara-vendor-report": "novatech labs",
             "parm-amara-lunch-search": "lunch at my desk",
+            "parm-amara-startup-expo": "marcus reid",
+            "parm-amara-webinar-catalog": "vp of sales with utility sector experience",
+            "parm-amara-robotics-market-map": "vela robotics",
+            "parm-amara-growth-case-studies": "vespera dynamics",
+            "parm-amara-venture-law-roundup": "participating preferred",
+            "parm-amara-workflow-marketplace": "48-hour flag system",
+            "parm-amara-phone-feature-digest": "called my mother",
+            "parm-amara-documentary-catalog": "infrastructure engineer",
+            "parm-amara-weekend-events": "three consecutive saturdays",
+            "parm-amara-essay-digest": "founders pre-term sheet",
+            "parm-amara-market-chart-pack": "compute costs",
+            "parm-amara-human-factors-event": "interpretable decision logs",
+            "parm-amara-austin-tech-roundup": "hannah liu",
         }
         corpus = ROOT / "data" / "amara-life-v1" / "source"
         for case in load_cases(DATASET):

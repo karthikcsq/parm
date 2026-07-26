@@ -112,6 +112,15 @@ class LinkRecord:
 
 
 @dataclass(frozen=True)
+class SentenceRecord:
+    sentence_id: str
+    chunk_id: str
+    page_id: str
+    sentence_index: int
+    text: str
+
+
+@dataclass(frozen=True)
 class RetrievalRequest:
     query: str
     top_k: int = OFFICIAL_TOP_K
@@ -202,6 +211,8 @@ class RetrievalIndex:
     chunks: tuple[ChunkRecord, ...]
     embeddings: np.ndarray
     links: tuple[LinkRecord, ...]
+    sentences: tuple[SentenceRecord, ...] = ()
+    sentence_embeddings: np.ndarray | None = None
 
     @classmethod
     def load(
@@ -212,13 +223,14 @@ class RetrievalIndex:
         expected_dimensions: int = EMBEDDING_DIMENSIONS,
     ) -> "RetrievalIndex":
         root = Path(path)
-        required = (
+        core_artifacts = (
             "manifest.json",
             "pages.jsonl",
             "chunks.jsonl",
             "embeddings.npy",
             "links.jsonl",
         )
+        required = core_artifacts
         missing = [name for name in required if not (root / name).is_file()]
         if missing:
             raise RetrievalValidationError(
@@ -232,8 +244,17 @@ class RetrievalIndex:
             raise RetrievalValidationError("manifest.json is not valid JSON") from exc
         if not isinstance(manifest, dict):
             raise RetrievalValidationError("manifest.json must contain an object")
-        if manifest.get("schema_version") != 1:
+        schema_version = manifest.get("schema_version")
+        if schema_version not in {1, 2}:
             raise RetrievalValidationError("unsupported retrieval index schema")
+        artifact_names = list(core_artifacts[1:])
+        if schema_version == 2:
+            artifact_names.extend(("sentences.jsonl", "sentence_embeddings.npy"))
+            missing = [name for name in artifact_names if not (root / name).is_file()]
+            if missing:
+                raise RetrievalValidationError(
+                    f"retrieval index is missing: {', '.join(missing)}"
+                )
         if manifest.get("embedding_model") != expected_model:
             raise RetrievalValidationError(
                 f"unexpected embedding model: {manifest.get('embedding_model')!r}"
@@ -247,13 +268,13 @@ class RetrievalIndex:
         hashes = manifest.get("artifact_hashes")
         if not isinstance(hashes, dict):
             raise RetrievalValidationError("manifest artifact_hashes must be an object")
-        for name in required[1:]:
+        for name in artifact_names:
             expected = hashes.get(name)
             actual = _sha256_file(root / name)
             if expected != actual:
                 raise RetrievalValidationError(f"artifact hash mismatch: {name}")
         content_digest = hashlib.sha256()
-        for name in required[1:]:
+        for name in artifact_names:
             content_digest.update((root / name).read_bytes())
         if manifest.get("content_hash") != content_digest.hexdigest():
             raise RetrievalValidationError("retrieval index content hash mismatch")
@@ -289,9 +310,26 @@ class RetrievalIndex:
             )
             for row in links_data
         )
+        sentences: tuple[SentenceRecord, ...] = ()
+        if schema_version == 2:
+            sentences_data = _read_jsonl(root / "sentences.jsonl")
+            sentences = tuple(
+                SentenceRecord(
+                    sentence_id=_required_text(row, "sentence_id"),
+                    chunk_id=_required_text(row, "chunk_id"),
+                    page_id=_required_text(row, "page_id"),
+                    sentence_index=_required_int(row, "sentence_index"),
+                    text=_required_text(row, "text"),
+                )
+                for row in sentences_data
+            )
         _reject_duplicates("page", [page.page_id for page in pages])
         _reject_duplicates("chunk", [chunk.chunk_id for chunk in chunks])
+        _reject_duplicates(
+            "sentence", [sentence.sentence_id for sentence in sentences]
+        )
         page_ids = {page.page_id for page in pages}
+        chunk_ids = {chunk.chunk_id for chunk in chunks}
         for chunk in chunks:
             if chunk.page_id not in page_ids:
                 raise RetrievalValidationError(
@@ -313,6 +351,17 @@ class RetrievalIndex:
                     "link references a missing page: "
                     f"{link.source_page_id} -> {link.target_page_id}"
                 )
+        for sentence in sentences:
+            if sentence.page_id not in page_ids:
+                raise RetrievalValidationError(
+                    f"sentence {sentence.sentence_id} references missing page "
+                    f"{sentence.page_id}"
+                )
+            if sentence.chunk_id not in chunk_ids:
+                raise RetrievalValidationError(
+                    f"sentence {sentence.sentence_id} references missing chunk "
+                    f"{sentence.chunk_id}"
+                )
         try:
             embeddings = np.load(root / "embeddings.npy", allow_pickle=False)
         except (OSError, ValueError) as exc:
@@ -327,6 +376,33 @@ class RetrievalIndex:
             raise RetrievalValidationError("embeddings must use a floating dtype")
         if not np.isfinite(embeddings).all():
             raise RetrievalValidationError("embeddings contain non-finite values")
+        sentence_embeddings: np.ndarray | None = None
+        if schema_version == 2:
+            try:
+                sentence_embeddings = np.load(
+                    root / "sentence_embeddings.npy", allow_pickle=False
+                )
+            except (OSError, ValueError) as exc:
+                raise RetrievalValidationError(
+                    "sentence_embeddings.npy is invalid"
+                ) from exc
+            if sentence_embeddings.ndim != 2:
+                raise RetrievalValidationError(
+                    "sentence embeddings must be a two-dimensional matrix"
+                )
+            if sentence_embeddings.shape != (len(sentences), expected_dimensions):
+                raise RetrievalValidationError(
+                    "sentence embedding matrix shape does not match sentences "
+                    "and dimensions"
+                )
+            if not np.issubdtype(sentence_embeddings.dtype, np.floating):
+                raise RetrievalValidationError(
+                    "sentence embeddings must use a floating dtype"
+                )
+            if not np.isfinite(sentence_embeddings).all():
+                raise RetrievalValidationError(
+                    "sentence embeddings contain non-finite values"
+                )
         counts = manifest.get("counts", {})
         actual_counts = {
             "pages": len(pages),
@@ -334,6 +410,14 @@ class RetrievalIndex:
             "links": len(links),
             "vectors": int(embeddings.shape[0]),
         }
+        if schema_version == 2:
+            assert sentence_embeddings is not None
+            actual_counts.update(
+                {
+                    "sentences": len(sentences),
+                    "sentence_vectors": int(sentence_embeddings.shape[0]),
+                }
+            )
         if counts != actual_counts:
             raise RetrievalValidationError("manifest counts do not match artifacts")
         return cls(
@@ -344,7 +428,29 @@ class RetrievalIndex:
             chunks=chunks,
             embeddings=np.asarray(embeddings, dtype=np.float32),
             links=links,
+            sentences=sentences,
+            sentence_embeddings=(
+                np.asarray(sentence_embeddings, dtype=np.float32)
+                if sentence_embeddings is not None
+                else None
+            ),
         )
+
+
+def segment_memory_sentences(text: str) -> tuple[str, ...]:
+    """Create stable semantic units from a frozen memory chunk."""
+    sentences: list[str] = []
+    for paragraph in re.split(r"\r?\n\s*\r?\n", text):
+        normalized = " ".join(
+            line.strip() for line in paragraph.splitlines() if line.strip()
+        )
+        if not normalized:
+            continue
+        for sentence in re.split(r"(?<=[.!?])\s+", normalized):
+            sentence = sentence.strip()
+            if len(sentence.split()) >= 3:
+                sentences.append(sentence)
+    return tuple(sentences)
 
 
 class OpenAIEmbedder:

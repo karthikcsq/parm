@@ -337,6 +337,58 @@ def build_index(
 
 
 class RetrievalIndexTests(unittest.TestCase):
+    def test_loader_accepts_schema_v2_sentence_vectors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "index"
+            build_index(root)
+            rows = [
+                {
+                    "sentence_id": "source:p1:0:sentence:0",
+                    "chunk_id": "source:p1:0",
+                    "page_id": "source:p1",
+                    "sentence_index": 0,
+                    "text": "alpha weak",
+                }
+            ]
+            (root / "sentences.jsonl").write_text(
+                json.dumps(rows[0]) + "\n", encoding="utf-8"
+            )
+            np.save(
+                root / "sentence_embeddings.npy",
+                np.asarray([vector(1.0)], dtype=np.float32),
+                allow_pickle=False,
+            )
+            manifest = json.loads(
+                (root / "manifest.json").read_text(encoding="utf-8")
+            )
+            artifact_names = (
+                "pages.jsonl",
+                "chunks.jsonl",
+                "embeddings.npy",
+                "links.jsonl",
+                "sentences.jsonl",
+                "sentence_embeddings.npy",
+            )
+            manifest["schema_version"] = 2
+            manifest["counts"].update({"sentences": 1, "sentence_vectors": 1})
+            manifest["artifact_hashes"] = {
+                name: hashlib.sha256((root / name).read_bytes()).hexdigest()
+                for name in artifact_names
+            }
+            content = hashlib.sha256()
+            for name in artifact_names:
+                content.update((root / name).read_bytes())
+            manifest["content_hash"] = content.hexdigest()
+            (root / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+
+            index = RetrievalIndex.load(root)
+
+        self.assertEqual(index.sentences[0].text, "alpha weak")
+        assert index.sentence_embeddings is not None
+        self.assertEqual(index.sentence_embeddings.shape, (1, EMBEDDING_DIMENSIONS))
+
     def test_loader_and_dense_best_chunk_page_deduplication(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             index = build_index(Path(tmp) / "index")

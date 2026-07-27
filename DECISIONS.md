@@ -30,9 +30,9 @@ false-intervention test. Fixed top-k structurally always admits k, so a universa
 top-k rule is incompatible with the condition PARM exists to measure.
 
 **What:** Deprecated those rules as universal in
-`docs/retrieval-mode-axis-plan.md` and made selection condition-dependent: the
+`docs/history/retrieval-mode-axis-plan.md` and made selection condition-dependent: the
 mode-matched baselines keep fixed top-k for comparability; PARM selects by a
-convergence-score threshold `T`. Wrote `docs/parm-convergence-retrieval-design.md`
+convergence-score threshold `T`. Wrote `docs/history/parm-convergence-retrieval-v1.md`
 for the full condition.
 
 ### PARM's contribution is non-LLM convergence retrieval, not a smarter judge

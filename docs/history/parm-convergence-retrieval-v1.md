@@ -1,10 +1,13 @@
 # PARM Convergence Retrieval Design
 
+> Historical design record. See
+> [the current architecture guide](../architecture.md) for implemented behavior.
+
 ## Status
 
 Implemented and pilot-validated as the `parm` condition. It runs under the
 existing frozen-index and retrieval-condition contracts in
-`docs/retrieval-mode-axis-plan.md`, and it deprecates that document's universal
+`retrieval-mode-axis-plan.md`, and it deprecates that document's universal
 fixed-top-k selection rule (see "Relationship to the frozen-retrieval contract").
 On the five-case pilot, retrieval-only evaluation admits the exact gold memory
 for all five positive observations and admits nothing for all five cue-ablated
@@ -177,7 +180,7 @@ required for the twin to come back empty.
 
 ## Relationship to the frozen-retrieval contract
 
-PARM runs under `docs/retrieval-mode-axis-plan.md` with these points of contact:
+PARM runs under `retrieval-mode-axis-plan.md` with these points of contact:
 
 - Same frozen artifact: `pages.jsonl`, `chunks.jsonl`, `embeddings.npy`,
   `links.jsonl`. No canonical run invokes `gbrain search`.

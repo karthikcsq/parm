@@ -1,228 +1,103 @@
 # PARM
 
-PARM evaluates output cue-triggered personal memory: an ordinary prompt is
-followed by one large agent output or tool result, an incidental cue makes a
-stored memory newly relevant, and that memory should materially improve the
-final decision.
+PARM evaluates output cue-triggered personal memory. An ordinary prompt is
+followed by a large tool result or agent output. A small incidental cue inside
+that output makes a stored memory newly useful, and the memory should improve
+the final decision without changing the cue-ablated control.
 
-## Benchmark V1 pilot
+PARMBench currently contains 18 scenarios and 54 cases:
 
-The executable pilot contains five approved Amara Life cases and five
-cue-ablated controls:
+- 18 positive cases with a decision-relevant cue;
+- 18 cue-ablated controls; and
+- 18 memory-included ceilings.
 
-1. conference agenda -> unresolved NovaMind diligence;
-2. AI news digest -> CoreWeave dependency;
-3. podcast feed -> personal burnout pattern;
-4. vendor report -> NovaTech counterparty risk; and
-5. lunch search -> interrupt the desk-lunch pattern.
+The comparison conditions include no memory, input RAG, naive output RAG,
+all-entity output RAG, a prompted memory-tool agent, and PARM convergence
+retrieval. Every condition uses the same frozen `amara-life-v1` memory
+substrate.
 
-Each observation is 8,000-12,000 `cl100k_base` tokens. Prompts do not ask for
-memory, cues appear only in the later observation, and success requires a
-different decision rather than a relevant-sounding aside.
+## Quick start
 
-Every case asks for exactly one final choice in ordinary language. The answer
-key is the option's visible title, company, or restaurant name, not an opaque
-benchmark ID. The same identifying entity or pattern is readable in the Amara
-memory prose, so a model can connect memory to the noisy output without access
-to hidden metadata.
-
-The compact raw Amara fixture is tracked under `data/amara-life-v1/`. GBrain
-prepares the neutral memory substrate; PARM owns ranking, cue selection,
-retrieval timing, admission, and decision evaluation.
-
-## Run
-
-Install the repository once in editable mode:
+Use the Anaconda interpreter in this checkout:
 
 ```powershell
-python -m pip install -e .
-python -m spacy download en_core_web_sm
+$python = 'C:\Users\karth\anaconda3\python.exe'
+& $python -m pip install -e .
+& $python -m spacy download en_core_web_sm
+
+parm-bench validate data\benchmark_v1
+parm-bench inspect data\benchmark_v1 `
+  --case parm-amara-conference-agenda-positive
+
+$env:PYTHONPATH = 'src'
+& $python -m unittest discover -s tests
 ```
 
-Then use the installed command without setting `PYTHONPATH`:
+Run and score PARM:
 
 ```powershell
-parm-bench validate data/benchmark_v1
-parm-bench inspect data/benchmark_v1 --case parm-amara-conference-agenda-positive
-python -m unittest discover -s tests
-```
-
-### Inspect one prompt in the browser
-
-Start the local retrieval workbench with a validated frozen index:
-
-```powershell
-parm-bench serve-workbench `
-  --retrieval-index data\retrieval-indexes\amara-life-v1 `
-  --expansion-cache data\expansion-caches\amara-life-v1
-```
-
-The browser opens automatically. Choose one of the benchmark cases or enter a
-custom prompt, compare `no_memory`, `input_rag`, `naive_output_rag`, and
-`all_entity_output_rag`. Mode-matched conditions expose `dense`, `hybrid`, or
-`enhanced` ranking; all-entity output RAG instead extracts entities from the
-case observation and runs fixed exact-match retrieval per entity. A selected case runs
-with its complete observation. The result leads with the generated response,
-then reports decision pass/fail against the condition-appropriate expected
-choice separately from gold-memory retrieval status. Ordered memories,
-selected chunks, score diagnostics, and complete run JSON remain available
-below. Enhanced mode is enabled when the server is started with
-`--expansion-cache PATH`; use the tracked `data\expansion-caches\amara-life-v1`
-cache for replay, or add `--expansion-policy populate` only while rebuilding
-that cache.
-
-## Baseline status
-
-Six baselines are implemented:
-
-- `no_memory` sends only the ordinary prompt and resolved observation to the
-  response model. It has no retriever and emits an empty retrieval trace.
-- `input_rag` sends only the original sanitized prompt to the shared PARM
-  retriever, admits every top-k page, and appends each selected chunk in a
-  separate retrieved-memory section. It does not retrieve from the later
-  observation.
-- `prompted_memory_tool` gives the response model one optional
-  `search_personal_memory` tool call after it sees the observation. If the
-  model calls the tool, its query runs through the selected shared retriever
-  and every top-k page is admitted before a final model pass. If it does not
-  call the tool, its first-pass answer is final.
-- `naive_output_rag` retrieves from output text without cue selection. Use
-  `--output-rag-flow` to choose where output-triggered retrieval runs:
-  `tool_output_only`, `model_output_only`, or `tool_then_model_output`.
-- `all_entity_output_rag` extracts every visible output entity, retrieves with
-  exact-match page lookup per extracted entity over the frozen index, merges the flat union, and
-  admits every deduped hit. It does not use `--retrieval-mode`.
-- `parm` extracts store-backed entities and rare, task-conditioned concepts
-  from each output region. Entity cues converge through inbound graph links;
-  behavioral cues converge against the frozen sentence matrix. It admits only
-  threshold-clearing durable memories, filters perturbed pages, and may admit
-  zero. It does not use `--retrieval-mode`.
-
-Retrieval condition and retrieval mode are separate experiment axes. The
-mode-matched conditions (`input_rag` and `naive_output_rag`) explicitly choose
-`dense`, `hybrid`, or `enhanced` and use the same frozen index for comparisons.
-For `naive_output_rag`, `--output-rag-flow` is the separate axis for where
-output-triggered retrieval happens; `--retrieval-mode` still controls how
-memories are ranked. `all_entity_output_rag` and `parm` are fixed retrieval
-conditions, so they require `--retrieval-index` but reject `--retrieval-mode`.
-
-Run all 18 positive/control/ceiling triplets and score them:
-
-```powershell
-parm-bench run data/benchmark_v1 `
-  --baseline no_memory `
-  --model gpt-5-mini `
-  --out data/benchmark-results/no-memory-gpt-5-mini.jsonl
-parm-bench score `
-  data/benchmark-results/no-memory-gpt-5-mini.jsonl `
-  --gold data/benchmark_v1 `
-  --out data/benchmark-results/no-memory-gpt-5-mini.metrics.json
-```
-
-Run input-RAG over the same cases:
-
-```powershell
-parm-bench run data/benchmark_v1 `
-  --baseline input_rag `
-  --retrieval-mode dense `
-  --retrieval-index data\retrieval-indexes\amara-life-v1 `
-  --retrieval-limit 5 `
-  --model gpt-5-mini `
-  --out data/benchmark-results/input-rag-gpt-5-mini.jsonl
-```
-
-Run naive output-RAG with retrieval on the observed tool/output text:
-
-```powershell
-parm-bench run data/benchmark_v1 `
-  --baseline naive_output_rag `
-  --output-rag-flow tool_output_only `
-  --retrieval-mode dense `
-  --retrieval-index data\retrieval-indexes\amara-life-v1 `
-  --retrieval-limit 5 `
-  --model gpt-5-mini `
-  --out data/benchmark-results/naive-output-rag-tool-output-gpt-5-mini.jsonl
-```
-
-Run the naive memory-tool agent with enhanced retrieval:
-
-```powershell
-parm-bench run data/benchmark_v1 `
-  --baseline prompted_memory_tool `
-  --retrieval-mode enhanced `
-  --retrieval-index data\retrieval-indexes\amara-life-v1 `
-  --retrieval-limit 5 `
-  --expansion-cache data\expansion-caches\amara-life-v1 `
-  --expansion-policy frozen `
-  --response-cache data\response-caches\amara-life-v1 `
-  --response-policy frozen `
-  --model gpt-5-mini `
-  --out data\benchmark-results\prompted-memory-tool-enhanced-gpt-5-mini.jsonl
-```
-
-Run all-entity output-RAG over the observed tool/output text:
-
-```powershell
-parm-bench run data/benchmark_v1 `
-  --baseline all_entity_output_rag `
-  --retrieval-index data\retrieval-indexes\amara-life-v1 `
-  --retrieval-limit 5 `
-  --model gpt-5-mini `
-  --out data/benchmark-results/all-entity-output-rag-gpt-5-mini.jsonl
-```
-
-Run PARM convergence retrieval:
-
-```powershell
-parm-bench run data/benchmark_v1 `
+parm-bench run data\benchmark_v1 `
   --baseline parm `
   --retrieval-index data\retrieval-indexes\amara-life-v1 `
   --retrieval-limit 5 `
-  --response-cache data\response-caches\amara-life-v1 `
-  --response-policy frozen `
+  --response-cache data\response-caches\amara-life-v4\parm `
+  --response-policy populate `
   --model gpt-5-mini `
-  --out data/benchmark-results/parm-gpt-5-mini.jsonl
+  --out data\benchmark-results\parm-v4-gpt-5-mini.jsonl
+
 parm-bench score `
-  data/benchmark-results/parm-gpt-5-mini.jsonl `
-  --gold data/benchmark_v1 `
-  --out data/benchmark-results/parm-gpt-5-mini.metrics.json
+  data\benchmark-results\parm-v4-gpt-5-mini.jsonl `
+  --gold data\benchmark_v1 `
+  --out data\benchmark-results\parm-v4-gpt-5-mini.metrics.json
 ```
 
-The CLI automatically loads the ignored repo-root `.env` without overriding
-variables already set in the process. Start from `.env.example`; set
-`OPENAI_API_KEY`, and override `GBRAIN_HOME`, `PARM_GBRAIN_CWD`, or
-`PARM_OPENAI_MODEL` only when needed. GBrain is contacted only by the explicit
-index-export command, never during a canonical benchmark run.
+See [How to Run PARMBench](docs/running-parmbench.md) for replay caches,
+comparison commands, the browser workbench, and troubleshooting.
 
-Every run writes the common prediction JSONL plus a sibling `.config.json`
-recording its baseline, output-RAG flow where applicable, retrieval mode or
-fixed retrieval condition detail, ranking constants where applicable,
-dependency versions, index-manifest hash, and expansion-cache hash where
-applicable.
-Input-RAG traces retain complete ranking diagnostics and perturbation labels,
-but labels and IDs are not shown to the response model.
+## How the system fits together
 
-Canonical benchmark replay does not require a live GBrain checkout or PGLite
-database. It reads the tracked frozen index under
-`data\retrieval-indexes\amara-life-v1`, the tracked expansion cache under
-`data\expansion-caches\amara-life-v1`, and writes or compares tracked result
-artifacts under `data/benchmark-results`.
+GBrain prepares a neutral memory substrate: pages, chunks, embeddings, and
+links. Canonical runs use its tracked frozen export and never call GBrain
+search.
 
-Use GBrain only when rebuilding the frozen retrieval artifact from source:
+Each baseline controls when retrieval happens, what becomes a query, and which
+memories are admitted. PARM splits the later observation into listing regions,
+combines store-backed entity links, task-conditioned semantic evidence, and
+contrastive durable-note matching, then may admit one memory, several, or
+none. The response model receives the triggering listing beside focused memory
+evidence.
 
-```powershell
-parm-bench prepare-amara
-parm-bench export-retrieval-index `
-  --out data\retrieval-indexes\amara-life-v1 `
-  --chunker-version gbrain-0.42.53.0-default
+Read [Architecture](docs/architecture.md) for the complete waterfall and
+module map.
+
+## Documentation
+
+- [Documentation index](docs/README.md)
+- [Architecture](docs/architecture.md)
+- [How to Run PARMBench](docs/running-parmbench.md)
+- [How to Construct a Scenario](docs/benchmark-construction.md)
+- [Evaluation Contract](docs/benchmark-evaluation.md)
+- [Real-World Evaluation Strategy](docs/real-world-evaluation.md)
+- [Output-Cued Memory Examples](docs/parm-output-cued-memory-examples.md)
+- [Expanded Benchmark First Pass](docs/results/benchmark-expansion-first-pass.md)
+- [Benchmark Result Artifacts](data/benchmark-results/README.md)
+- [GBrain and Amara Setup](docs/gbrain-amara-local-setup.md)
+- [Research Proposal](parm-proposal.md)
+- [Decision Log](DECISIONS.md)
+
+## Repository map
+
+```text
+src/parm_bench/               benchmark package and CLI
+tests/                        unit and CLI smoke tests
+scripts/                      dataset and retrieval-artifact builders
+data/benchmark_v1/            54 executable cases and large contexts
+data/retrieval-indexes/       frozen neutral memory substrate
+data/expansion-caches/        frozen enhanced-mode query expansions
+data/response-caches/         replayable model calls
+data/benchmark-results/       predictions, configs, and metrics
+docs/                         current guides, results, and history
 ```
 
-The exporter rejects a brain whose stored vectors are not 512-dimensional
-`openai:text-embedding-3-small` embeddings. Query embeddings use the same
-model and dimensions through the OpenAI API. Enhanced runs additionally
-require `--expansion-cache`; official runs use `--expansion-policy frozen`.
-
-Later baselines will be developed and reviewed one at a time.
-
-See `docs/benchmark-evaluation.md` for the scoring contract and
-`docs/parm-output-cued-memory-examples.md` for the 20-example expansion set.
+The root `.env` is ignored. Start from `.env.example` and set
+`OPENAI_API_KEY` for live model-backed runs.

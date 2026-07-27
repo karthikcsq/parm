@@ -1,49 +1,37 @@
 # Next Steps
 
-## Current
+## Preserve the current evidence
 
-- Review the real `no_memory` run as the response-model floor for all later
-  comparisons. Do not interpret it as a retrieval result: its trace is empty by
-  construction.
-- Review the five 9K-token contexts for realism, scheduling consistency, and
-  whether each output-only decision is genuinely defensible.
-- Treat the tracked schema-v2 Amara index as the canonical substrate. It holds
-  600 chunk vectors and 2,498 deterministic sentence vectors at 512
-  dimensions using `text-embedding-3-small`.
-- Keep the retrieval-only PARM acceptance bar at five of five gold positives
-  admitted and five of five cue-ablated controls empty. Recheck that table
-  whenever the seed extractor, sentence segmenter, graph policy, or thresholds
-  change.
-- Use the tracked `prompted_memory_tool × enhanced` run as the naive-agent
-  comparison. It never called memory on any positive or cue-ablated pilot case,
-  so the PARM condition must demonstrate output-cue retrieval without relying
-  on the response model to elect tool use.
-- Treat the tracked `parm` run as the completed in-sample response-model gate:
-  five of five positive decisions, five of five cue-ablated controls, and five
-  of five memory-included ceilings are correct. Retrieval correctness and
-  downstream decision correctness remain separate measurements.
-- Build a held-out expansion set before changing the claim from pilot
-  convergence to general retrieval quality. Keep thresholds and judgment
-  instructions frozen while scoring that set.
+- Keep the `*-v2-gpt-5-mini` artifacts as the immutable first expansion pass.
+- Treat all revised-fixture and post-analysis runs as development results.
+- Keep the no-memory fixture-fairness run as the floor for the repaired 54-case
+  dataset.
+- Version retrieval conditions, judgment prompts, response caches, and result
+  namespaces together.
 
-## Expansion evaluation
+## Improve PARM without hiding failure modes
 
-Examples 4, 6-11, and 13-18 are now executable as the frozen `expansion`
-split. Evaluate them without changing the pilot-tuned retrieval thresholds or
-judgment instructions before inspecting per-case failures. Each includes:
+- Replace or tighten the semantic anchored-singleton path. The current
+  expansion shows that a generic review note can appear on both a positive and
+  its cue-ablated control.
+- Develop a contrastive dense region-to-memory channel for semantic cues that
+  BM25 cannot express, especially relationship, hiring, and proactive-priority
+  cases.
+- Calibrate any new threshold on development cases and score it once on a new
+  held-out batch.
+- Keep retrieval admission metrics separate from downstream choice metrics.
 
-- an ordinary prompt;
-- one 8-12K-token observation;
-- an output-only decision;
-- a materially different memory-conditioned decision;
-- exactly one requested final choice, identified by a unique visible title or
-  name that a model can naturally repeat;
-- memory prose that naturally identifies the relevant output item or
-  affordance without relying on benchmark-only metadata;
-- a cue-ablated control;
-- authoritative Amara provenance; and
-- at least three plausible memory distractors.
+## Add external validity
 
-Examples 19 and 20 still require proposed personal-memory additions and must
-remain separate from the existing-corpus set until those additions are
-explicitly versioned.
+- Build a small paired end-to-end suite from natural agent or tool traces.
+- Start with five human-reviewed case studies if a statistically meaningful
+  suite is not yet available.
+- Measure task success, causal memory lift, false intervention, faithfulness,
+  privacy restraint, and calibration.
+- Keep deterministic PARMBench as the mechanism and regression gate.
+- Add an LLM judge only after measuring agreement with human reviewers and
+  freezing the judge protocol.
+
+See [Real-World Evaluation Strategy](docs/real-world-evaluation.md) for the
+recommended design and [How to Construct a PARMBench Scenario](docs/benchmark-construction.md)
+for the current controlled-case procedure.

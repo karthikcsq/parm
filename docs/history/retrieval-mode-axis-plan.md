@@ -1,5 +1,8 @@
 # Retrieval Mode Axis Implementation Plan
 
+> Historical implementation plan. See
+> [the current architecture guide](../architecture.md) for implemented behavior.
+
 ## Goal
 
 Separate **when and why retrieval runs** from **how retrieval ranks memories**.
@@ -28,7 +31,7 @@ GBrain is responsible for preparing the memory substrate:
 - retaining page titles and source metadata
 - extracting page-to-page graph edges
 
-GBrain must not perform ranking during canonical benchmark runs. A tracked exporter will freeze its neutral index data into a versioned artifact. PARM will own BM25, cosine ranking, RRF, title retrieval, graph reranking, selection, and retrieval traces. Selection is condition-dependent: fixed top-k for the mode-matched baselines, and a convergence-score threshold for the PARM condition (see `docs/parm-convergence-retrieval-design.md`).
+GBrain must not perform ranking during canonical benchmark runs. A tracked exporter will freeze its neutral index data into a versioned artifact. PARM will own BM25, cosine ranking, RRF, title retrieval, graph reranking, selection, and retrieval traces. Selection is condition-dependent: fixed top-k for the mode-matched baselines, and a convergence-score threshold for the PARM condition (see `parm-convergence-retrieval-v1.md`).
 
 Canonical runs must never invoke `gbrain search`.
 
@@ -86,7 +89,7 @@ The loader must reject missing files, hash mismatches, duplicate IDs, dangling p
 > naive output-RAG) keep fixed top-k and admit-all for comparability. The PARM
 > condition selects by a convergence-score threshold `T` and may admit zero,
 > because fixed top-k cannot express "admit nothing" and that is the required
-> behavior on cue-ablated twins. See `docs/parm-convergence-retrieval-design.md`.
+> behavior on cue-ablated twins. See `parm-convergence-retrieval-v1.md`.
 > The dynamic-threshold and reranker prohibitions still bind the shared
 > `dense`/`hybrid`/`enhanced` modes so mode-matched comparisons stay clean; PARM's
 > convergence ranking and threshold are part of the condition, not those modes.

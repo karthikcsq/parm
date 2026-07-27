@@ -12,11 +12,13 @@
 ## Improve PARM without hiding failure modes
 
 - Replace or tighten the semantic anchored-singleton path. The current
-  expansion shows that a generic review note can appear on both a positive and
-  its cue-ablated control.
+  expansion shows that a generic review note can select the same secondary
+  listing in both a positive and its cue-ablated control.
 - Develop a contrastive dense region-to-memory channel for semantic cues that
   BM25 cannot express, especially relationship, hiring, and proactive-priority
   cases.
+- Revisit control construction when another surviving listing still has a
+  legitimate relationship to the same memory, as in the human-factors case.
 - Calibrate any new threshold on development cases and score it once on a new
   held-out batch.
 - Keep retrieval admission metrics separate from downstream choice metrics.

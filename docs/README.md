@@ -32,6 +32,8 @@ Start with the document that matches the question you are trying to answer.
 
 - [Expanded benchmark first pass](results/benchmark-expansion-first-pass.md):
   the immutable first score on the 13-scenario expansion, before tuning on it.
+- [V5 development result](results/benchmark-v5.md): the repaired-fixture final
+  matrix and remaining failure analysis.
 - [Benchmark artifacts](../data/benchmark-results/README.md): names and
   interpretation of tracked prediction, configuration, and metric files.
 

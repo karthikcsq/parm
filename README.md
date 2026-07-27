@@ -80,6 +80,7 @@ module map.
 - [Real-World Evaluation Strategy](docs/real-world-evaluation.md)
 - [Output-Cued Memory Examples](docs/parm-output-cued-memory-examples.md)
 - [Expanded Benchmark First Pass](docs/results/benchmark-expansion-first-pass.md)
+- [V5 Benchmark Result](docs/results/benchmark-v5.md)
 - [Benchmark Result Artifacts](data/benchmark-results/README.md)
 - [GBrain and Amara Setup](docs/gbrain-amara-local-setup.md)
 - [Research Proposal](parm-proposal.md)

@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import numpy as np
 
@@ -18,7 +19,10 @@ from parm_bench.personamem import PersonaMemSourceRow, PersonaMemV2Adapter
 from parm_bench.retrieval import (
     EMBEDDING_DIMENSIONS,
     EMBEDDING_MODEL,
+    EntityExactRetriever,
+    EntitySeed,
     IndexRetriever,
+    PARMConvergenceRetriever,
     RetrievalIndex,
     RetrievalRequest,
     RetrievalValidationError,
@@ -41,6 +45,43 @@ class FakeEmbedder:
             if not vectors[index, :2].any():
                 vectors[index, 2] = 1.0
         return vectors
+
+
+class StubEntityExtractor:
+    def extract(self, observation_text: str) -> tuple[EntitySeed, ...]:
+        surface = observation_text.strip()
+        return (
+            EntitySeed(
+                seed_id="entity-1",
+                surface=surface,
+                normalized_surface=surface.casefold(),
+                source="noun_phrase",
+            ),
+        )
+
+
+class StubProjectingEntityExtractor:
+    def __init__(self, projections: list[str]) -> None:
+        self.projections = projections
+
+    def for_index(
+        self, index: RetrievalIndex
+    ) -> "StubProjectingEntityExtractor":
+        self.projections.append(index.corpus_ids[0])
+        return StubProjectingEntityExtractor(self.projections)
+
+    def extract_gazetteer(self, observation_text: str) -> tuple[EntitySeed, ...]:
+        return ()
+
+
+class StubConceptExtractor:
+    def task_anchors(self, prompt: str) -> tuple[str, ...]:
+        return ()
+
+    def rare_region_concepts(
+        self, descriptions: list[str]
+    ) -> tuple[tuple[str, ...], ...]:
+        return tuple(() for _ in descriptions)
 
 
 def source_mapping(
@@ -214,6 +255,101 @@ class CorpusIndexTests(unittest.TestCase):
             result.hits[0].corpus_id, "personamem-v2/train/persona-1"
         )
         self.assertEqual(result.hits[0].slug, "alpha source")
+
+    def test_entity_retriever_builds_and_reuses_only_requested_scope(self) -> None:
+        records = (
+            self._record("personamem-v2/train/persona-1", "alpha", "alpha"),
+            self._record("personamem-v2/train/persona-2", "beta", "beta"),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "index"
+            write_corpus_retrieval_index(
+                root,
+                records=records,
+                embedder=FakeEmbedder(),
+                source_manifest_hash="c" * 64,
+                dataset_revision=REVISION,
+            )
+            index = RetrievalIndex.load(root)
+            with mock.patch(
+                "parm_bench.retrieval.EntitySurfaceExtractor",
+                side_effect=lambda _index: StubEntityExtractor(),
+            ) as extractor_factory:
+                retriever = EntityExactRetriever(index)
+                self.assertEqual(extractor_factory.call_count, 0)
+                first = retriever.retrieve_entities(
+                    "alpha",
+                    top_k=5,
+                    corpus_id="personamem-v2/train/persona-1",
+                )
+                retriever.retrieve_entities(
+                    "alpha",
+                    top_k=5,
+                    corpus_id="personamem-v2/train/persona-1",
+                )
+                second = retriever.retrieve_entities(
+                    "beta",
+                    top_k=5,
+                    corpus_id="personamem-v2/train/persona-2",
+                )
+
+        self.assertEqual(extractor_factory.call_count, 2)
+        self.assertEqual(
+            {hit.corpus_id for hit in first.hits},
+            {"personamem-v2/train/persona-1"},
+        )
+        self.assertEqual(
+            {hit.corpus_id for hit in second.hits},
+            {"personamem-v2/train/persona-2"},
+        )
+
+    def test_parm_retriever_builds_and_reuses_only_requested_scope(self) -> None:
+        records = (
+            self._record("personamem-v2/train/persona-1", "alpha", "alpha note"),
+            self._record("personamem-v2/train/persona-2", "beta", "beta note"),
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "index"
+            write_corpus_retrieval_index(
+                root,
+                records=records,
+                embedder=FakeEmbedder(),
+                source_manifest_hash="c" * 64,
+                dataset_revision=REVISION,
+            )
+            projections: list[str] = []
+            retriever = PARMConvergenceRetriever(
+                RetrievalIndex.load(root),
+                FakeEmbedder(),
+                entity_extractor=StubProjectingEntityExtractor(projections),
+                concept_extractor=StubConceptExtractor(),
+            )
+            retriever.retrieve_observation(
+                "Choose one listing.",
+                "Listing A-147 - alpha note.",
+                top_k=5,
+                corpus_id="personamem-v2/train/persona-1",
+            )
+            retriever.retrieve_observation(
+                "Choose one listing.",
+                "Listing A-147 - alpha note.",
+                top_k=5,
+                corpus_id="personamem-v2/train/persona-1",
+            )
+            retriever.retrieve_observation(
+                "Choose one listing.",
+                "Listing B-147 - beta note.",
+                top_k=5,
+                corpus_id="personamem-v2/train/persona-2",
+            )
+
+        self.assertEqual(
+            projections,
+            [
+                "personamem-v2/train/persona-1",
+                "personamem-v2/train/persona-2",
+            ],
+        )
 
     @staticmethod
     def _record(corpus_id: str, source_id: str, text: str) -> NormalizedSourceRecord:

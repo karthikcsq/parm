@@ -418,6 +418,9 @@ class CliSmokeTests(unittest.TestCase):
             self.assertEqual(
                 configuration["retrieval_manifest_hash"], "manifest-hash"
             )
+            self.assertEqual(
+                configuration["corpus_ids"], ["amara-life-v1"]
+            )
             self.assertEqual(configuration["retrieval_limit"], 3)
             self.assertEqual(configuration["admission_policy"], "all_retrieved")
             self.assertIsNone(configuration["output_rag_flow"])

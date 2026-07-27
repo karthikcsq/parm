@@ -1190,11 +1190,19 @@ class EntitySurfaceExtractor:
         self.index = index
         self._nlp = nlp if nlp is not None else _load_spacy_model()
         factory = automaton_factory or _load_automaton_factory()
+        self._automaton_factory = factory
         self._surface_pages = self._build_surface_pages()
         self._automaton = factory()
         for normalized, page_ids in self._surface_pages.items():
             self._automaton.add_word(normalized, (normalized, tuple(sorted(page_ids))))
         self._automaton.make_automaton()
+
+    def for_index(self, index: RetrievalIndex) -> "EntitySurfaceExtractor":
+        return EntitySurfaceExtractor(
+            index,
+            nlp=self._nlp,
+            automaton_factory=self._automaton_factory,
+        )
 
     def extract(self, observation_text: str) -> tuple[EntitySeed, ...]:
         seeds = list(self.extract_gazetteer(observation_text))
@@ -1348,6 +1356,17 @@ class PARMConvergenceRetriever:
             raise ValueError("query embedder dimensions do not match retrieval index")
         self.index = index
         self.embedder = embedder
+        self._scoped_retrievers: dict[str, PARMConvergenceRetriever] = {}
+        self._scoped_nlp: Any | None = None
+        if len(index.corpus_ids) > 1:
+            if entity_extractor is None:
+                self._scoped_nlp = _load_spacy_model()
+            if concept_extractor is None:
+                nlp = self._scoped_nlp or _load_spacy_model()
+                concept_extractor = SpacyCueConceptExtractor(nlp)
+            self.entity_extractor = entity_extractor
+            self.concept_extractor = concept_extractor
+            return
         if entity_extractor is None or concept_extractor is None:
             nlp = _load_spacy_model()
             entity_extractor = entity_extractor or EntitySurfaceExtractor(
@@ -1421,10 +1440,24 @@ class PARMConvergenceRetriever:
             raise ValueError("top_k must be at least 1")
         resolved_corpus_id = self.index.resolve_corpus_id(corpus_id)
         if len(self.index.corpus_ids) > 1:
-            scoped = PARMConvergenceRetriever(
-                self.index.scoped(resolved_corpus_id),
-                self.embedder,
-            )
+            scoped = self._scoped_retrievers.get(resolved_corpus_id)
+            if scoped is None:
+                scoped_index = self.index.scoped(resolved_corpus_id)
+                scoped_entity_extractor = (
+                    self.entity_extractor.for_index(scoped_index)
+                    if self.entity_extractor is not None
+                    else EntitySurfaceExtractor(
+                        scoped_index,
+                        nlp=self._scoped_nlp,
+                    )
+                )
+                scoped = PARMConvergenceRetriever(
+                    scoped_index,
+                    self.embedder,
+                    entity_extractor=scoped_entity_extractor,
+                    concept_extractor=self.concept_extractor,
+                )
+                self._scoped_retrievers[resolved_corpus_id] = scoped
             return scoped.retrieve_observation(
                 prompt,
                 observation_text,
@@ -2041,7 +2074,10 @@ class EntityExactRetriever:
         extractor: EntitySurfaceExtractor | None = None,
     ):
         self.index = index
-        self.extractor = extractor or EntitySurfaceExtractor(index)
+        self.extractor = extractor
+        if self.extractor is None and len(index.corpus_ids) == 1:
+            self.extractor = EntitySurfaceExtractor(index)
+        self._scoped_retrievers: dict[str, EntityExactRetriever] = {}
         self._page_by_id = {page.page_id: page for page in index.pages}
         self._chunks_by_page: dict[str, list[ChunkRecord]] = defaultdict(list)
         for chunk in index.chunks:
@@ -2067,12 +2103,25 @@ class EntityExactRetriever:
             raise ValueError("top_k must be at least 1")
         resolved_corpus_id = self.index.resolve_corpus_id(corpus_id)
         if len(self.index.corpus_ids) > 1:
-            scoped = EntityExactRetriever(self.index.scoped(resolved_corpus_id))
+            scoped = self._scoped_retrievers.get(resolved_corpus_id)
+            if scoped is None:
+                scoped_index = self.index.scoped(resolved_corpus_id)
+                scoped_extractor = (
+                    self.extractor.for_index(scoped_index)
+                    if self.extractor is not None
+                    else None
+                )
+                scoped = EntityExactRetriever(
+                    scoped_index,
+                    extractor=scoped_extractor,
+                )
+                self._scoped_retrievers[resolved_corpus_id] = scoped
             return scoped.retrieve_entities(
                 observation_text,
                 top_k=top_k,
                 corpus_id=resolved_corpus_id,
             )
+        assert self.extractor is not None
         seeds = self.extractor.extract(observation_text)
         hits: list[RetrievalHit] = []
         per_seed = []

@@ -455,6 +455,20 @@ def _write_run_configuration(
     )
     mode = getattr(retrieval_resource, "mode", None)
     expander = getattr(retrieval_resource, "expander", None)
+    index_corpus_ids = (
+        tuple(
+            getattr(
+                index,
+                "corpus_ids",
+                (index.manifest.get("corpus_id"),),
+            )
+        )
+        if index is not None
+        else ()
+    )
+    index_corpus_ids = tuple(
+        str(corpus_id) for corpus_id in index_corpus_ids if corpus_id
+    )
     payload = {
         "baseline": baseline,
         "variants": variants,
@@ -484,17 +498,33 @@ def _write_run_configuration(
             index.manifest_hash if index is not None else None
         ),
         "corpus": (
-            index.manifest["corpus_id"]
+            index_corpus_ids[0]
+            if len(index_corpus_ids) == 1
+            else None
+        ),
+        "corpus_ids": list(index_corpus_ids) if index is not None else None,
+        "corpus_builder_version": (
+            index.manifest.get("builder_version")
+            if index is not None
+            else None
+        ),
+        "dataset_revision": (
+            index.manifest.get("dataset_revision")
+            if index is not None
+            else None
+        ),
+        "source_manifest_hash": (
+            index.manifest.get("source_manifest_hash")
             if index is not None
             else None
         ),
         "gbrain_version": (
-            index.manifest["gbrain_version"]
+            index.manifest.get("gbrain_version")
             if index is not None
             else None
         ),
         "chunker_version": (
-            index.manifest["chunker_version"]
+            index.manifest.get("chunker_version")
             if index is not None
             else None
         ),

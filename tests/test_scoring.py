@@ -115,6 +115,44 @@ class ScoringTests(unittest.TestCase):
         self.assertEqual(metrics["poison_admission_rate"], 1.0)
         self.assertGreater(metrics["spurious_memory_admission_rate"], 0.0)
 
+    def test_stale_or_contradictory_admission_is_counted(self) -> None:
+        case = next(case for case in CASES if case["variant"] == "positive")
+        stale = case["distractors"]["sources"][1]
+        row = prediction(
+            case,
+            case["decisions"]["output_only"]["choice"],
+            [stale["source_id"]],
+            {stale["source_id"]: stale["perturbations"]},
+        )
+
+        metrics = score_predictions([case], [row])
+
+        self.assertEqual(
+            metrics["stale_or_contradictory_admission_rate"], 1.0
+        )
+
+    def test_metrics_are_broken_down_by_corpus(self) -> None:
+        cases = [
+            next(case for case in CASES if case["variant"] == "positive"),
+            next(
+                case
+                for case in CASES
+                if case["variant"] == "positive"
+                and case["base_case_id"] != CASES[0]["base_case_id"]
+            ),
+        ]
+        cases[0] = {**cases[0], "corpus_id": "corpus-a"}
+        cases[1] = {**cases[1], "corpus_id": "corpus-b"}
+        rows = [
+            prediction(case, case["decisions"]["memory_conditioned"]["choice"])
+            for case in cases
+        ]
+
+        metrics = score_predictions(cases, rows)
+
+        self.assertEqual(set(metrics["by_corpus"]), {"corpus-a", "corpus-b"})
+        self.assertEqual(metrics["by_corpus"]["corpus-a"]["case_count"], 1)
+
     def test_tactful_response_does_not_need_to_repeat_memory(self) -> None:
         case = next(case for case in CASES if case["variant"] == "positive")
         row = prediction(

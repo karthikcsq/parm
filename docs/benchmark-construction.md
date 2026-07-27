@@ -136,6 +136,12 @@ beneficial decision change. If the control does not select the declared
 output-only choice, repair the fixture while preserving the approved
 memory-cue relationship. Rerun every condition after any fixture change.
 
+Deterministic construction and scoring do not establish semantic fairness. If
+repairs begin accumulating, templates become topic-specific, or reviewers
+cannot resolve failures from the declared choices alone, stop tuning the
+template. Add a versioned LLM-judge rubric, calibrate it against sampled human
+review, and retain the deterministic checks as provenance and symmetry gates.
+
 ## Step 7: Freeze the first pass
 
 Before inspecting retrieval failures:

@@ -853,7 +853,7 @@
 
       .pipeline-list {
         display: grid;
-        grid-template-columns: repeat(5, minmax(130px, 1fr));
+        grid-template-columns: repeat(11, minmax(155px, 1fr));
         gap: 12px;
         overflow-x: auto;
       }
@@ -1020,11 +1020,11 @@
           <span class="brand-mark" aria-hidden="true">P</span>
           <span class="brand-copy">
             <strong>PARM Retrieval Lab</strong>
-            <span>Interactive mechanism quiz</span>
+            <span>Semantic-pair waterfall walkthrough</span>
           </span>
         </a>
         <div class="top-actions">
-          <span class="question-count" id="question-count">Question 1 of 12</span>
+          <span class="question-count" id="question-count">Question 1 of 11</span>
           <button class="text-button" id="restart-top" type="button">Restart</button>
         </div>
       </header>
@@ -1100,7 +1100,7 @@
             <h1 id="results-title">Your retrieval profile</h1>
             <div class="score-line">
               <span class="score-number" id="score-number">0</span>
-              <span class="score-denominator">correct out of 12</span>
+              <span class="score-denominator">correct out of 11</span>
             </div>
             <p class="result-summary" id="result-summary"></p>
 
@@ -1129,50 +1129,92 @@
         </main>
 
         <aside class="pipeline-rail" aria-labelledby="pipeline-title">
-          <p class="pipeline-label" id="pipeline-title">Live pipeline map</p>
+          <p class="pipeline-label" id="pipeline-title">Semantic PARM waterfall</p>
           <p class="pipeline-subtitle" id="pipeline-subtitle">
-            Follow where this question sits in PARM's retrieval waterfall.
+            Each question advances one stage in the current retrieval path.
           </p>
           <ol class="pipeline-list" id="pipeline-list">
             <li class="pipeline-step" data-stage="0">
               <span class="pipeline-node">1</span>
               <span class="pipeline-copy">
-                <strong>Prompt</strong>
-                <span>No retrieval clue yet</span>
+                <strong>Corpus scope</strong>
+                <span>Restrict history to one persona</span>
               </span>
             </li>
             <li class="pipeline-step" data-stage="1">
               <span class="pipeline-node">2</span>
               <span class="pipeline-copy">
-                <strong>Later observation</strong>
-                <span>Tool or agent output arrives</span>
+                <strong>Observation regions</strong>
+                <span>Listings or semantic blocks</span>
               </span>
             </li>
             <li class="pipeline-step" data-stage="2">
               <span class="pipeline-node">3</span>
               <span class="pipeline-copy">
-                <strong>Cue region</strong>
-                <span>Segment and form queries</span>
+                <strong>Distinctive-region filter</strong>
+                <span>Keep blocks with useful concepts</span>
               </span>
             </li>
             <li class="pipeline-step" data-stage="3">
               <span class="pipeline-node">4</span>
               <span class="pipeline-copy">
-                <strong>Memory admission</strong>
-                <span>Require supported evidence</span>
+                <strong>Query embeddings</strong>
+                <span>Embed retained block descriptions</span>
               </span>
             </li>
             <li class="pipeline-step" data-stage="4">
               <span class="pipeline-node">5</span>
               <span class="pipeline-copy">
-                <strong>Decision</strong>
-                <span>Use the focused handoff</span>
+                <strong>Five candidate views</strong>
+                <span>Dense sentence, chunk, and BM25</span>
+              </span>
+            </li>
+            <li class="pipeline-step" data-stage="5">
+              <span class="pipeline-node">6</span>
+              <span class="pipeline-copy">
+                <strong>Top-seven union</strong>
+                <span>Merge a high-recall prefilter</span>
+              </span>
+            </li>
+            <li class="pipeline-step" data-stage="6">
+              <span class="pipeline-node">7</span>
+              <span class="pipeline-copy">
+                <strong>Contrastive admission judge</strong>
+                <span>Require a decision-changing pair</span>
+              </span>
+            </li>
+            <li class="pipeline-step" data-stage="7">
+              <span class="pipeline-node">8</span>
+              <span class="pipeline-copy">
+                <strong>Frozen selection validation</strong>
+                <span>Recheck page and exact region</span>
+              </span>
+            </li>
+            <li class="pipeline-step" data-stage="8">
+              <span class="pipeline-node">9</span>
+              <span class="pipeline-copy">
+                <strong>Zero-or-one retrieval hit</strong>
+                <span>Abstention remains valid</span>
+              </span>
+            </li>
+            <li class="pipeline-step" data-stage="9">
+              <span class="pipeline-node">10</span>
+              <span class="pipeline-copy">
+                <strong>Evidence projection</strong>
+                <span>Pair the region and raw memory</span>
+              </span>
+            </li>
+            <li class="pipeline-step" data-stage="10">
+              <span class="pipeline-node">11</span>
+              <span class="pipeline-copy">
+                <strong>Final visible choice</strong>
+                <span>Score choice and trace separately</span>
               </span>
             </li>
           </ol>
           <div class="pipeline-note" id="pipeline-note">
             <strong>Core invariant</strong>
-            The original prompt is insufficient. A later cue creates the reason to retrieve.
+            Candidate generation favors recall; admission decides whether memory should intervene.
           </div>
         </aside>
       </div>
@@ -1184,276 +1226,254 @@
 
     const quiz = [
       {
-        category: "Cue timing",
-        title: "The late cue",
-        intro: "Start with the defining shape of a PARMBench case.",
-        prompt: "Choose one conference session from the agenda.",
-        observationBefore: "Session G-147: Chen Wei, NovaMind - Edge inference for the ",
-        cue: "Texas grid reliability pilot",
+        category: "Scope and regions",
+        title: "Stage 1: Corpus scope",
+        intro: "The semantic waterfall starts by isolating one persona before any scores are computed.",
+        prompt: "Choose one option from a long mixed-context report.",
+        observationBefore: "A recovered transcript line describes ",
+        cue: "Northstar House as a fully screen-free weekend",
         observationAfter: ".",
-        memory: "Before the next investment discussion, Amara needs credible field evidence from NovaMind's Texas grid pilot.",
-        question: "When does a useful query for this memory first become available?",
+        memory: "Persona 819 asked why time away from screens improves Monday clarity. Another persona has a stronger lexical match about phones.",
+        question: "Which history can enter candidate generation for this case?",
         options: [
-          "When the original prompt is read",
-          "When the later agenda exposes NovaMind and the Texas pilot",
-          "Only after the final answer has already been produced",
-          "Never; tool output cannot create a retrieval opportunity"
+          "Every indexed persona, because the strongest match should win",
+          "Only unperturbed pages inside the requested Persona 819 corpus",
+          "Only the single labeled gold page",
+          "Persona 819 plus any linked Amara pages"
         ],
         correct: 1,
-        explanation: "The prompt only asks for a session. The later observation introduces the entity and task-relevant pilot evidence that can connect to the stored memory.",
-        takeaway: "PARM is cue-conditioned: the retrieval opportunity is created by later visible context, not by the original prompt.",
-        stage: 1,
-        pipelineNote: "The observation is the event that changes retrieval from unjustified to useful."
-      },
-      {
-        category: "Query formation",
-        title: "PARM's distinctive move",
-        intro: "Several baselines can retrieve after output. The difference is how they form and admit evidence.",
-        prompt: "Pick the report item that best supports the upcoming research review.",
-        observationBefore: "Item 19 lists ",
-        cue: "Jordan Lee as lead investigator on the longitudinal safety study",
-        observationAfter: "; the rest of the page contains 46 unrelated names.",
-        memory: "Amara promised to revisit Jordan Lee's longitudinal safety evidence before the research review.",
-        question: "Which condition is designed to isolate the cue-bearing region and require support before admitting memory?",
-        options: [
-          "Enhanced input RAG",
-          "Naive output RAG",
-          "PARM",
-          "No-memory control"
-        ],
-        correct: 2,
-        explanation: "PARM segments the later observation, forms focused queries from task anchors and cue surfaces, then applies selective admission. Naive output RAG can run late, but it queries a much broader output.",
-        takeaway: "Late retrieval alone is not the full idea. Cue localization and selective admission are the mechanism under test.",
-        stage: 2,
-        pipelineNote: "PARM turns the local cue region into focused retrieval channels instead of treating the full output as one query."
-      },
-      {
-        category: "Query formation",
-        title: "What input RAG can see",
-        intro: "Hold the corpus and decision task fixed, then change only the retrieval timing.",
-        prompt: "Choose the best restaurant from the search results.",
-        observationBefore: "The search later reveals that Marrow House has a ",
-        cue: "step-free side entrance",
-        observationAfter: ".",
-        memory: "Amara needs a step-free entrance for the dinner.",
-        question: "What text does the input-RAG baseline use to form its retrieval query?",
-        options: [
-          "Only the original prompt",
-          "Only the later restaurant result",
-          "The cue region plus the candidate memory",
-          "The final model answer"
-        ],
-        correct: 0,
-        explanation: "Input RAG retrieves before the later observation exists, so its query comes from the original prompt. It cannot use the step-free cue shown afterward.",
-        takeaway: "Input RAG is a timing control: it asks whether prompt-time retrieval is enough for a clue that has not appeared yet.",
+        explanation: "The retriever resolves the case corpus first, builds a scoped view of its pages, and excludes pages carrying perturbations. A better score from another persona cannot cross that boundary.",
+        takeaway: "Corpus isolation is a hard retrieval boundary rather than a reranking preference.",
         stage: 0,
-        pipelineNote: "Input RAG runs at the prompt stage. The later observation is unavailable to its query."
+        pipelineNote: "Resolve one persona corpus and remove perturbed pages before reading candidate scores."
       },
       {
-        category: "Selective admission",
-        title: "The whole-output trap",
-        intro: "Retrieving later can still fail when the query surface is noisy.",
-        prompt: "Select the vendor item most relevant to the task.",
-        observationBefore: "A 180-row vendor export includes ",
-        cue: "Aster Labs' battery audit",
-        observationAfter: " among hundreds of organizations, locations, and product terms.",
-        memory: "Amara wants Aster Labs' independent battery audit before approving a vendor.",
-        question: "What is the characteristic failure mode of naive output RAG here?",
+        category: "Scope and regions",
+        title: "Stage 2: Observation regions",
+        intro: "The next stage turns visible output into units that can carry a complete affordance.",
+        prompt: "Choose one option after reading exported notes, chat fragments, and broken Markdown.",
+        observationBefore: "A buried chat block says ",
+        cue: "Westbridge uses plain clear jars with simple printed labels",
+        observationAfter: ", while dozens of unrelated fragments surround it.",
+        memory: "The user keeps spices in simple, unmarked jars.",
+        question: "How does the current region splitter handle this observation?",
         options: [
-          "It is forced to return zero memories",
-          "It queries broad output text and can admit spurious top-ranked pages",
-          "It can only exact-match people, never organizations",
-          "It always waits until after the decision"
-        ],
-        correct: 1,
-        explanation: "Naive output RAG uses the tool output, model output, or both as a broad retrieval surface. In a long listing, unrelated entities and terms can dominate top-k retrieval and pollute the handoff.",
-        takeaway: "PARM must beat a strong late-retrieval control by being more selective, not merely by running after output.",
-        stage: 3,
-        pipelineNote: "The admission step matters because a broad late query can retrieve real but decision-irrelevant memories."
-      },
-      {
-        category: "Query formation",
-        title: "The all-entity control",
-        intro: "One baseline deliberately removes semantic ranking from the equation.",
-        prompt: "Choose an agenda item after reading the full listing.",
-        observationBefore: "The listing names ",
-        cue: "NovaMind, Chen Wei, Austin, and GridCore",
-        observationAfter: " alongside other entries.",
-        memory: "Amara tracks NovaMind's Texas grid pilot.",
-        question: "How does all-entity output RAG retrieve?",
-        options: [
-          "It embeds the prompt and later output into one vector",
-          "It exact-matches every recognized output entity and admits the deduplicated union",
-          "It lets the response model write one optional memory query",
-          "It ranks only the rarest noun phrase with BM25"
-        ],
-        correct: 1,
-        explanation: "The all-entity baseline extracts output entities, exact-matches them against the frozen store, and admits the deduplicated union. It is a fixed component baseline rather than a dense, hybrid, or enhanced retrieval mode.",
-        takeaway: "This control asks whether simply expanding every visible entity is enough. PARM should win through task-conditioned selectivity.",
-        stage: 2,
-        pipelineNote: "All-entity retrieval expands output entities indiscriminately; PARM conditions query formation on the task and region."
-      },
-      {
-        category: "Cue timing",
-        title: "The optional tool call",
-        intro: "Agentic retrieval has access to the late cue, but access does not guarantee use.",
-        prompt: "Pick one item from the newly returned report.",
-        observationBefore: "The report highlights ",
-        cue: "a supplier involved in Amara's earlier warranty dispute",
-        observationAfter: ".",
-        memory: "Amara will not reselect the supplier until the warranty dispute is resolved.",
-        question: "If the prompted memory-tool agent decides to answer directly, what happens?",
-        options: [
-          "PARM automatically runs in the background",
-          "The memory is injected through input RAG",
-          "No memory query runs, so the useful fact may be missed",
-          "All output entities are exact-matched instead"
+          "It rejects the observation because no line begins with Listing",
+          "It embeds the entire export as one region",
+          "It keeps large catalogs as listing rows but splits this mixed text into paragraph-like semantic blocks",
+          "It asks the admission judge to invent region boundaries"
         ],
         correct: 2,
-        explanation: "The agent baseline gives the model a memory tool after it sees the observation, but the model chooses whether and how to call it. A direct answer skips retrieval entirely.",
-        takeaway: "Naive agent retrieval tests whether an unconstrained model reliably notices the retrieval opportunity. PARM makes that opportunity an explicit pipeline stage.",
+        explanation: "Ten or more recognized listing rows retain the legacy catalog behavior. General prose and mixed Markdown are split on paragraph boundaries, with Markdown scaffolding removed from each description.",
+        takeaway: "The retrieval unit is a complete visible region, not a required Listing-prefixed row.",
         stage: 1,
-        pipelineNote: "The cue is visible, but the agent can still skip the transition from observation to retrieval."
+        pipelineNote: "Preserve structured listings when present; otherwise form semantic blocks from messy visible context."
       },
       {
-        category: "Selective admission",
-        title: "Multiple retrieval channels",
-        intro: "PARM does not bet the entire decision on one similarity score.",
-        prompt: "Choose the candidate whose newly shown evidence connects to the user's durable notes.",
-        observationBefore: "One row contains a rare project phrase, a known person, and ",
-        cue: "two task-relevant concepts in the same listing region",
+        category: "Scope and regions",
+        title: "Stage 3: Distinctive-region filter",
+        intro: "Not every surviving paragraph deserves an expensive memory comparison.",
+        prompt: "Read the assembled research notebook and choose one option.",
+        observationBefore: "The export contains headings, footer fragments, and one block describing ",
+        cue: "an anthology that pairs African proverbs with daily reflections",
         observationAfter: ".",
-        memory: "A durable note links that person and project to a constraint relevant to the current decision.",
-        question: "Which answer best describes PARM's evidence channels?",
+        memory: "The user's email uses the proverb 'The night has ears.'",
+        question: "Which blocks continue to the embedding stage?",
         options: [
-          "Only dense similarity over the entire observation",
-          "Entity graph, task-conditioned semantic matches, and contrastive durable-note retrieval",
-          "Only exact title matching against gold page IDs",
-          "A random channel selected independently for each case"
+          "Every block, including short headings and empty comments",
+          "Only blocks whose descriptions yield distinctive rare concepts",
+          "Only the block containing the ordinary evidence winner",
+          "Only blocks whose text already exact-matches a memory page"
         ],
         correct: 1,
-        explanation: "The current retriever combines entity-linked evidence, task-conditioned semantic evidence, and contrastive durable-note retrieval. It also uses regional lexical and rare-concept surfaces when forming candidates.",
-        takeaway: "The channels recover different valid cue shapes, then a priority merge and page deduplication produce a small supported set.",
-        stage: 3,
-        pipelineNote: "Several evidence channels propose candidates; admission rules and priority merging decide what reaches the model."
+        explanation: "Very short blocks are removed during segmentation. The concept extractor then supplies rare region concepts, and regions with no distinctive concepts stop before embedding.",
+        takeaway: "This filter reduces generic export noise while retaining blocks with specific semantic content.",
+        stage: 2,
+        pipelineNote: "Keep regions with distinctive concepts; headings and semantically empty fragments do not become queries."
       },
       {
-        category: "Cue timing",
-        title: "Zero is a valid result",
-        intro: "Selective retrieval must know when not to intervene.",
-        prompt: "Choose a session from the agenda.",
-        observationBefore: "The control listing replaces the specific pilot clue with ",
-        cue: "a generic industry overview",
-        observationAfter: " and contains no supported connection to the personal note.",
-        memory: "Amara needs evidence about NovaMind's Texas grid pilot.",
-        question: "What should PARM admit in this cue-ablated case?",
+        category: "Candidate construction",
+        title: "Stage 4: Query embeddings",
+        intro: "Each retained region now needs a vector representation compatible with the frozen index.",
+        prompt: "Select the option whose specific format fits the user's history.",
+        observationBefore: "One semantic block describes ",
+        cue: "a Puerto Rican home-cooking workshop built around family recipes",
+        observationAfter: ".",
+        memory: "The user cooks Puerto Rican dishes learned from family.",
+        question: "What does PARM embed at runtime in this stage?",
         options: [
-          "The nearest memory, because top-k must always be full",
-          "Every memory mentioning the industry",
-          "No memory if no candidate clears the support rules",
-          "The gold memory ID from the benchmark fixture"
+          "The complete benchmark case including gold source IDs",
+          "Each retained region description, using the model and dimensions declared by the frozen index",
+          "Every history page again, rebuilding the index for each case",
+          "Only the original prompt"
+        ],
+        correct: 1,
+        explanation: "The observation-side descriptions are embedded live. Page, chunk, and sentence embeddings remain frozen in the retrieval index, and the query embedder must match its model and dimensions.",
+        takeaway: "Runtime work represents new visible context; it does not rebuild or relabel personal history.",
+        stage: 3,
+        pipelineNote: "Embed the retained region descriptions against the frozen sentence and chunk matrices."
+      },
+      {
+        category: "Candidate construction",
+        title: "Stage 5: Five candidate views",
+        intro: "One similarity function did not recover enough supported source-region pairs.",
+        prompt: "Choose the visible program that best fits the user's prior routine.",
+        observationBefore: "A transcript block describes ",
+        cue: "a screen-free weekend that stores phones at check-in",
+        observationAfter: ".",
+        memory: "The raw history asks why a few days away from screens improves clarity.",
+        question: "Which five views score region-memory pairs in semantic PARM?",
+        options: [
+          "Entity graph, PageRank, title match, recency, and random fallback",
+          "Sentence maximum, sentence top-three mean, chunk maximum, blended dense, and BM25",
+          "Five differently seeded admission judges",
+          "Prompt cosine at five hand-tuned thresholds"
+        ],
+        correct: 1,
+        explanation: "The dense views emphasize different amounts of local sentence and broader chunk evidence. BM25 adds a lexical route. Each produces a full region-by-page score matrix.",
+        takeaway: "The views increase candidate recall by failing differently; none is treated as the final admission rule.",
+        stage: 4,
+        pipelineNote: "Score every retained region against scoped pages through four dense views and one lexical view."
+      },
+      {
+        category: "Candidate construction",
+        title: "Stage 6: Top-seven union",
+        intro: "The five rankings must become one bounded candidate set for semantic comparison.",
+        prompt: "Choose an option after reviewing a long research notebook.",
+        observationBefore: "The useful cue is ",
+        cue: "strong in BM25 but only sixth in the blended dense view",
+        observationAfter: ".",
+        memory: "A raw user-history source specifically supports that cue.",
+        question: "How is the candidate set formed?",
+        options: [
+          "Keep only the single highest dense score",
+          "Admit every pair whose cosine exceeds a tuned threshold",
+          "Take the best seven pairs from each view and deduplicate their union",
+          "Use the benchmark gold source to guarantee inclusion"
         ],
         correct: 2,
-        explanation: "PARM allows fewer than top-k hits, including zero. When the causal cue is removed, forcing the nearest memory would create a false intervention.",
-        takeaway: "Abstention is part of retrieval quality. The target is useful intervention on positives and no intervention on controls.",
-        stage: 3,
-        pipelineNote: "Selective admission is allowed to return zero. Top-k is a ceiling, not a quota."
+        explanation: "Each method contributes up to seven globally ranked pairs. Duplicate region-page pairs merge their method names, ranks, and scores before stable candidate IDs are assigned.",
+        takeaway: "Candidate depth is a bounded recall budget. Appearing in the union does not mean the memory is admitted.",
+        stage: 5,
+        pipelineNote: "Union the top seven pairs per view so the judge sees complementary dense and lexical candidates."
       },
       {
-        category: "Counterfactual controls",
-        title: "Why ablate the cue?",
-        intro: "Every executable scenario includes a matched control.",
-        prompt: "Positive and control cases share the same decision shape.",
-        observationBefore: "The positive contains the causal cue; the control changes only the ",
-        cue: "cue-bearing detail",
+        category: "Contrastive admission",
+        title: "Stage 7: Contrastive admission judge",
+        intro: "Candidate scores overlap too much to provide a reliable admission threshold.",
+        prompt: "Choose one option from the messy report.",
+        observationBefore: "The ordinary leader is broadly strongest, but a lower-ranked block offers ",
+        cue: "plain jars that match the user's stated kitchen routine",
         observationAfter: ".",
-        memory: "The same personal memory exists in the frozen store for both cases.",
-        question: "What does the cue-ablated control test?",
+        memory: "User: I keep my spices in simple, unmarked jars.",
+        question: "What must the admission judge establish before selecting this pair?",
         options: [
-          "Whether a larger model can memorize the answer label",
-          "Whether retrieval changes the decision when the later cue is absent",
-          "Whether the memory corpus can be rebuilt from scratch",
-          "Whether all conditions use different prompts"
-        ],
-        correct: 1,
-        explanation: "The control removes the reason to retrieve while holding the surrounding task structure stable. A good system should avoid admitting the personal memory or changing the control decision.",
-        takeaway: "The positive-control pair measures selectivity, not just recall. It detects retrieval that fires on superficial overlap.",
-        stage: 4,
-        pipelineNote: "The control checks the causal effect of the cue on both memory admission and the final decision."
-      },
-      {
-        category: "Counterfactual controls",
-        title: "The memory-included ceiling",
-        intro: "A retrieval benchmark needs to separate finding evidence from using evidence.",
-        prompt: "Run the same decision with the relevant personal fact placed directly in context.",
-        observationBefore: "The model sees the later observation plus the ",
-        cue: "explicitly included target memory",
-        observationAfter: ".",
-        memory: "The target fact is provided verbatim for this ceiling condition.",
-        question: "What does the memory-included ceiling diagnose?",
-        options: [
-          "Whether the response model can use the fact when retrieval is no longer the bottleneck",
-          "Whether input RAG generated the right embedding",
-          "Whether exact entity extraction has perfect recall",
-          "Whether the cue-ablated control should retrieve more pages"
-        ],
-        correct: 0,
-        explanation: "The ceiling places the relevant memory directly in context. If the model still fails, the problem is in decision use or fixture construction, not retrieval recall.",
-        takeaway: "A positive miss is only attributable to retrieval when the same model succeeds with the memory explicitly included.",
-        stage: 4,
-        pipelineNote: "The ceiling bypasses retrieval and tests the final evidence-use step directly."
-      },
-      {
-        category: "Selective admission",
-        title: "The focused handoff",
-        intro: "Retrieval output must preserve enough evidence for the response model to reason.",
-        prompt: "Return the best item and explain the choice.",
-        observationBefore: "PARM identifies the ",
-        cue: "triggering listing region",
-        observationAfter: " and one supported personal note.",
-        memory: "The admitted note contains the durable constraint that changes the ranking.",
-        question: "What should the response model receive from PARM?",
-        options: [
-          "The entire memory corpus and all raw index internals",
-          "Only an opaque gold page ID",
-          "The triggering output region plus focused memory evidence",
-          "Only the original prompt, with retrieval hidden"
+          "The pair has the highest cosine in any one view",
+          "The source contains any topic word also present in the region",
+          "The user's words support a durable fact, the region states a specific matching affordance, and the fact favors a lower-ranked option over the ordinary winner",
+          "The pair matches the benchmark's expected source ID"
         ],
         correct: 2,
-        explanation: "PARM projects the cue-bearing observation region and the focused admitted memory into the final context. That gives the response model visible evidence without flooding it with the store.",
-        takeaway: "Retrieval quality includes the handoff. The model needs compact, inspectable evidence rather than an unexplained identifier.",
-        stage: 4,
-        pipelineNote: "The final decision is conditioned on a compact pair: the triggering region and the supported memory."
+        explanation: "The versioned judge sees the complete observation and each candidate's raw source. It rejects assistant suggestions, generic overlap, invented relations, and memories that only reinforce the existing winner.",
+        takeaway: "Admission is a contrastive semantic decision over evidence, not another score cutoff.",
+        stage: 6,
+        pipelineNote: "Select one source-backed, affordance-matched reversal or return no admission."
       },
       {
-        category: "Counterfactual controls",
-        title: "Score the trace, not just the label",
-        intro: "A correct final answer can hide a broken retrieval mechanism.",
-        prompt: "A run chooses the expected option.",
-        observationBefore: "Its retrieval trace admits ",
-        cue: "several unrelated memory pages and misses the target page",
+        category: "Contrastive admission",
+        title: "Stage 8: Frozen selection validation",
+        intro: "Canonical replay must survive harmless ranking jitter without replaying a decision into the wrong evidence.",
+        prompt: "Replay the same PersonaMem case with the frozen admission cache.",
+        observationBefore: "Live embeddings reorder two low-ranked candidates, while the cached selection still names ",
+        cue: "the same scoped page and exact Westbridge region text",
         observationAfter: ".",
-        memory: "The target memory would have justified the expected choice, but it was not retrieved.",
-        question: "How should PARMBench record this run?",
+        memory: "The cache was produced with the same judge rubric, index hash, candidate depth, prompt, and observation.",
+        question: "When may PARM reuse the cached selection?",
         options: [
-          "Fully correct, because only the final label matters",
-          "Decision correct, with retrieval recall and precision scored separately",
-          "Retrieval correct, because any admitted page is acceptable",
-          "Unscored, because traces are never part of evaluation"
+          "Only when every live candidate ID and score is byte-for-byte identical",
+          "Whenever the selected page ID exists anywhere in the global index",
+          "When the selected page remains admissible in the scoped corpus and the exact selected region text still exists",
+          "Whenever the final expected choice has not changed"
         ],
-        correct: 1,
-        explanation: "PARMBench scores the final choice and retrieval behavior as separate outcomes. A lucky or prior-knowledge answer can be decision-correct while the retrieval trace still has poor target recall and admission precision.",
-        takeaway: "Mechanism-level scoring is necessary to show that PARM wins for the intended reason, not only on aggregate answer accuracy.",
-        stage: 4,
-        pipelineNote: "The benchmark observes both the decision and the memory-admission trace."
+        correct: 2,
+        explanation: "The cache identity binds the prompt and observation to the model, rubric, index, depth, and policy namespace. Replay validates the selected page against the admissible scoped pages and requires an exact region-text match.",
+        takeaway: "The cache freezes the semantic decision while preserving corpus and observation safety.",
+        stage: 7,
+        pipelineNote: "Permit candidate-rank drift, but revalidate the selected page and region before creating a hit."
+      },
+      {
+        category: "Contrastive admission",
+        title: "Stage 9: Zero-or-one retrieval hit",
+        intro: "The admission result is deliberately smaller than an ordinary top-k retrieval response.",
+        prompt: "Choose one option from the cue-ablated twin.",
+        observationBefore: "The target block now records ",
+        cue: "standard logistics with no specialized format or personal fit",
+        observationAfter: ".",
+        memory: "The same user's personal history remains available in the corpus.",
+        question: "What should the retriever return when no candidate clears all three admission conditions?",
+        options: [
+          "The seven prefilter candidates",
+          "The nearest page so the final model can decide",
+          "No hit",
+          "The benchmark's labeled source with zero confidence"
+        ],
+        correct: 2,
+        explanation: "Semantic PARM creates at most one retrieval hit. If the judge returns admit=false, the hit tuple is empty even though the prefilter produced candidates.",
+        takeaway: "Candidate recall and memory intervention are separate decisions; zero remains a successful retrieval result.",
+        stage: 8,
+        pipelineNote: "Convert a valid admission into one hit, or preserve abstention with an empty hit set."
+      },
+      {
+        category: "Evidence and evaluation",
+        title: "Stage 10: Evidence projection",
+        intro: "A retrieval hit still has to become inspectable context for the response model.",
+        prompt: "Return exactly one option name from the visible report.",
+        observationBefore: "PARM selected the block that says ",
+        cue: "Northstar House is screen-free and stores phones at check-in",
+        observationAfter: ".",
+        memory: "User: Why do I think more clearly after a couple of days away from screens?",
+        question: "What evidence is projected into the final model context?",
+        options: [
+          "The entire persona corpus and every candidate score",
+          "Only an opaque selected page ID",
+          "The exact triggering region paired with the raw selected memory text",
+          "The hidden PersonaMem profile and expected choice"
+        ],
+        correct: 2,
+        explanation: "The PARM handoff labels the triggering observed output and follows it with the selected page's raw memory text. Gold IDs, candidate scores, and hidden persona annotations are not projected.",
+        takeaway: "The final model receives a compact evidence pair that explains why memory is relevant to one visible option.",
+        stage: 9,
+        pipelineNote: "Project the selected region and raw memory together; keep retrieval internals out of the decision prompt."
+      },
+      {
+        category: "Evidence and evaluation",
+        title: "Stage 11: Final visible choice",
+        intro: "The last stage tests whether admitted evidence changes the visible decision for the intended reason.",
+        prompt: "Choose exactly one option and return only its name.",
+        observationBefore: "The ordinary leader remains strongest in general evidence, while ",
+        cue: "Northstar House is the lower-ranked screen-free fit",
+        observationAfter: ".",
+        memory: "The projected user history makes the screen-free affordance personally relevant.",
+        question: "How does PARMBench evaluate this final stage?",
+        options: [
+          "Only whether any non-empty answer was returned",
+          "Only whether the admission judge selected a pair",
+          "It deterministically scores the visible choice and separately scores admission recall, precision, and control interventions",
+          "A second LLM assigns one combined quality score"
+        ],
+        correct: 2,
+        explanation: "A correct option can coexist with a broken trace, and a correct retrieval can still be used badly. The benchmark therefore records decision accuracy and mechanism-level admission outcomes separately.",
+        takeaway: "The final label measures evidence use; the trace shows whether PARM found and admitted the right evidence.",
+        stage: 10,
+        pipelineNote: "Choose one visible name, then score the decision and retrieval trace as separate outcomes."
       }
     ];
 
     const categoryOrder = [
-      "Cue timing",
-      "Query formation",
-      "Selective admission",
-      "Counterfactual controls"
+      "Scope and regions",
+      "Candidate construction",
+      "Contrastive admission",
+      "Evidence and evaluation"
     ];
 
     const state = {
@@ -1704,15 +1724,15 @@
 
     function summaryFor(score) {
       if (score === quiz.length) {
-        return "You can trace PARM from late cue to focused evidence and distinguish the mechanism from every benchmark control.";
+        return "You can trace a case through all eleven semantic PARM stages, including the boundary between candidate recall and memory admission.";
       }
-      if (score >= 10) {
-        return "You have a strong model of the pipeline. Review the missed distinctions to sharpen how PARM differs from broad late retrieval.";
+      if (score >= 9) {
+        return "You have a strong model of the waterfall. Review the missed stage to tighten the handoff between retrieval components.";
       }
-      if (score >= 7) {
-        return "You understand the core late-cue idea. Your category scores show which retrieval stages need another pass.";
+      if (score >= 6) {
+        return "You understand the main path. Your category scores show whether region shaping, candidate construction, admission, or evidence use needs another pass.";
       }
-      return "The late-cue principle is taking shape. Review the missed scenarios, then retry and trace each cue through the pipeline map.";
+      return "Walk the pipeline rail in order, then retry. Each question corresponds to the stage highlighted on the right.";
     }
 
     function showResults() {
@@ -1758,7 +1778,7 @@
       }
 
       renderProgress();
-      renderPipeline(4, "Use the category scores to identify where your mental model of PARM still loses evidence.");
+      renderPipeline(10, "Use the category scores to identify the exact waterfall stage where your mental model still loses evidence.");
       elements.main.focus({ preventScroll: true });
       window.scrollTo({ top: 0, behavior: "smooth" });
     }

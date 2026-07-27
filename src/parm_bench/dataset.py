@@ -140,7 +140,9 @@ def observation_text(case: dict[str, Any], dataset_root: str | Path) -> str:
     return text
 
 
-def validate_cases(cases: list[dict[str, Any]]) -> None:
+def validate_cases(
+    cases: list[dict[str, Any]], *, include_profile: bool = True
+) -> None:
     issues: list[ValidationIssue] = []
     seen: set[str] = set()
     bases: dict[str, set[str]] = {}
@@ -181,6 +183,23 @@ def validate_cases(cases: list[dict[str, Any]]) -> None:
             )
     if issues:
         raise DatasetValidationError(issues)
+    dataset_root = Path(cases[0].get("_dataset_root", ".")) if cases else None
+    manifest_path = (
+        dataset_root / "dataset_manifest.json"
+        if dataset_root is not None
+        else None
+    )
+    if include_profile and manifest_path is not None and manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if manifest.get("validation_profile") == "personamem_v2_v0":
+            from .personamem import personamem_pilot_validation_issues
+
+            profile_issues = [
+                ValidationIssue(case_id, message)
+                for case_id, message in personamem_pilot_validation_issues(cases)
+            ]
+            if profile_issues:
+                raise DatasetValidationError(profile_issues)
 
 
 def _validate_case(

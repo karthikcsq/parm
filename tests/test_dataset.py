@@ -16,6 +16,7 @@ from parm_bench.dataset import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data" / "benchmark_v1"
+PERSONAMEM_DATASET = ROOT / "data" / "benchmark_personamem_v0"
 
 
 class DatasetValidationTests(unittest.TestCase):
@@ -25,6 +26,32 @@ class DatasetValidationTests(unittest.TestCase):
         self.assertEqual(len(cases), 54)
         self.assertEqual(len({case["base_case_id"] for case in cases}), 18)
         self.assertEqual({case["corpus_id"] for case in cases}, {"amara-life-v1"})
+
+    def test_personamem_development_dataset_is_valid_and_persona_disjoint(
+        self,
+    ) -> None:
+        cases = load_cases(PERSONAMEM_DATASET)
+        validate_cases(cases)
+        self.assertEqual(len(cases), 90)
+        self.assertEqual(len({case["base_case_id"] for case in cases}), 30)
+        self.assertEqual(len({case["corpus_id"] for case in cases}), 30)
+        self.assertTrue(
+            all(
+                case["provenance"]["source_split"] == "train_text"
+                for case in cases
+            )
+        )
+
+    def test_personamem_profile_rejects_hidden_preference_prompt_leakage(
+        self,
+    ) -> None:
+        cases = load_cases(PERSONAMEM_DATASET)
+        broken = copy.deepcopy(cases)
+        positive = next(case for case in broken if case["variant"] == "positive")
+        positive["prompt"] += " Enjoys historical dramas on TV."
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(broken)
+        self.assertIn("preference or query leaks", str(context.exception))
 
     def test_every_base_case_has_all_three_variants(self) -> None:
         cases = load_cases(DATASET)

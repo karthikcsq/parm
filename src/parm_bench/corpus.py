@@ -79,6 +79,30 @@ class NormalizedSourceRecord:
             "annotations": self.annotations,
         }
 
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> "NormalizedSourceRecord":
+        sensitivity = value.get("sensitivity", {})
+        return cls(
+            corpus_id=str(value["corpus_id"]),
+            source_id=str(value["source_id"]),
+            timestamp=str(value["timestamp"]),
+            title=str(value["title"]),
+            text=str(value["text"]),
+            provenance=dict(value["provenance"]),
+            update_status=UpdateStatus(value.get("update_status", "unspecified")),
+            sensitivity=SensitivityMetadata(
+                bool(sensitivity.get("flagged")),
+                str(sensitivity.get("handling", "")),
+                tuple(str(item) for item in sensitivity.get("labels", [])),
+            ),
+            who=str(value.get("who", "unspecified")),
+            source_hash=str(value.get("source_hash", "")),
+            perturbations=tuple(
+                str(item) for item in value.get("perturbations", [])
+            ),
+            annotations=dict(value.get("annotations", {})),
+        )
+
 
 class SourceAdapter(Protocol):
     adapter_name: str

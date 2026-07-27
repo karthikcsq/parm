@@ -141,8 +141,38 @@ class PersonaMemAdapterTests(unittest.TestCase):
             gold.sensitivity.handling, "exclude_from_ordinary_positive"
         )
 
+    def test_updated_preference_keeps_latest_value_current(self) -> None:
+        row = PersonaMemSourceRow.from_mapping(
+            source_mapping(updated=True),
+            source_row_id="train_text:9",
+        )
+        history = {
+            "metadata": {"persona_id": 887},
+            "chat_history": list(row.related_conversation_snippet),
+        }
+
+        gold = PersonaMemV2Adapter(REVISION).adapt(
+            row,
+            history,
+            history_sha256="d" * 64,
+        )[0]
+
+        self.assertEqual(gold.update_status, UpdateStatus.CURRENT)
+        self.assertEqual(
+            gold.annotations["previous_preference"], "Preferred sitcoms"
+        )
+
 
 class CorpusIndexTests(unittest.TestCase):
+    def test_normalized_record_round_trips(self) -> None:
+        record = self._record(
+            "personamem-v2/train/persona-1", "alpha source", "alpha"
+        )
+        self.assertEqual(
+            NormalizedSourceRecord.from_dict(record.to_dict()),
+            record,
+        )
+
     def test_schema_v3_requires_and_enforces_corpus_scope(self) -> None:
         records = (
             self._record("personamem-v2/train/persona-1", "alpha source", "alpha"),

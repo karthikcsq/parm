@@ -60,6 +60,7 @@ are manifests, not alternate project guides.
 | --- | --- |
 | [Research claim and scope](docs/research-scope.md) | Motivation, hypotheses, boundaries, current evidence, and unresolved claims |
 | [Architecture](docs/architecture.md) | End-to-end and PARM retrieval waterfalls, module ownership, and design trade-offs |
+| [Interactive retrieval quiz](docs/parm-retrieval-quiz.html) | Test cue timing, query formation, selective admission, and benchmark controls in the browser |
 | [Output-cued examples](docs/examples.md) | The 20 approved memory-cue relationships, including the 18 executable scenarios |
 
 ### Run and extend PARMBench

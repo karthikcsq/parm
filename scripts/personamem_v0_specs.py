@@ -20,6 +20,10 @@ def scenario(
         "row_offset": row_offset,
         "slug": slug,
         "code": code,
+        "output_name": output_name,
+        "memory_name": memory_name,
+        "positive_detail": positive_detail,
+        "control_detail": control_detail,
         "prompt": (
             "Choose exactly one featured option after the recommendation feed "
             "loads. Reply with its full listing label as written."

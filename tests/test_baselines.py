@@ -552,14 +552,18 @@ class AllEntityOutputRagBaselineTests(unittest.TestCase):
 class PARMBaselineTests(unittest.TestCase):
     def test_judgment_instructions_constrain_the_choice_to_the_trigger(self) -> None:
         self.assertIn(
-            "The triggering observed output identifies where the memory applies",
+            "Treat the triggering observed output as the exact decision locus",
+            PARM_JUDGMENT_INSTRUCTIONS,
+        )
+        self.assertIn(
+            "choose only between those alternatives",
             PARM_JUDGMENT_INSTRUCTIONS,
         )
         self.assertIn(
             "Choose only among labels or names visible in the observation",
             PARM_JUDGMENT_INSTRUCTIONS,
         )
-        self.assertEqual(PARM_JUDGMENT_PROMPT_VERSION, "parm_judgment_v2")
+        self.assertEqual(PARM_JUDGMENT_PROMPT_VERSION, "parm_judgment_v3")
 
     def test_runs_observation_retrieval_and_admits_selected_memory(self) -> None:
         case = benchmark_input(load_cases(DATASET)[0])

@@ -112,6 +112,15 @@ class OpenAIResponsesModel:
         self.model_name = model_name
         self.client = client or OpenAI()
 
+    def _create_response(self, **kwargs: Any) -> Any:
+        for attempt in range(3):
+            try:
+                return self.client.responses.create(**kwargs)
+            except json.JSONDecodeError:
+                if attempt == 2:
+                    raise
+        raise AssertionError("unreachable response retry state")
+
     def generate(
         self,
         *,
@@ -121,7 +130,7 @@ class OpenAIResponsesModel:
         instructions: str = FINAL_ANSWER_INSTRUCTIONS,
         memory_context: str | None = None,
     ) -> ModelResponse:
-        response = self.client.responses.create(
+        response = self._create_response(
             model=self.model_name,
             instructions=instructions,
             input=_render_input(
@@ -151,7 +160,7 @@ class OpenAIResponsesModel:
         observation_kind: str,
         observation_text: str,
     ) -> MemoryToolDecision:
-        response = self.client.responses.create(
+        response = self._create_response(
             model=self.model_name,
             instructions=MEMORY_TOOL_INSTRUCTIONS,
             input=_render_input(

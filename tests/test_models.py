@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 from types import SimpleNamespace
 
@@ -110,6 +111,33 @@ class OpenAIResponsesModelTests(unittest.TestCase):
             responses.calls[0]["input"],
             "Task:\nExplain the recommendation.",
         )
+
+    def test_generate_retries_an_empty_json_response(self) -> None:
+        class FlakyResponses(FakeResponses):
+            def create(self, **kwargs: object) -> SimpleNamespace:
+                self.calls.append(kwargs)
+                if len(self.calls) == 1:
+                    raise json.JSONDecodeError("empty response", "", 0)
+                return SimpleNamespace(
+                    output_text="Chosen Label",
+                    id="resp_retry",
+                    model="gpt-5-mini-resolved",
+                    usage=FakeUsage(),
+                )
+
+        responses = FlakyResponses()
+        model = OpenAIResponsesModel(
+            "gpt-5-mini", client=SimpleNamespace(responses=responses)
+        )
+
+        response = model.generate(
+            prompt="Choose exactly one.",
+            observation_kind="tool_result",
+            observation_text="Choice A\nChoice B",
+        )
+
+        self.assertEqual(len(responses.calls), 2)
+        self.assertEqual(response.response_id, "resp_retry")
 
     def test_memory_tool_decision_parses_search_call(self) -> None:
         class ToolResponses(FakeResponses):

@@ -603,7 +603,7 @@ PLANNED_BASELINES = (
     ),
     PlannedBaseline(
         "parm",
-        "Can non-LLM convergence admit the decision-relevant memory and stay "
+        "Can cue-region retrieval admit decision-relevant memory and stay "
         "empty on the cue-ablated twin?",
     ),
 )

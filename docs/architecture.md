@@ -89,7 +89,7 @@ and what text becomes the query.
 | `prompted_memory_tool` | Model elects to call a tool after seeing the observation | Admit fixed top-k when called |
 | `naive_output_rag` | Whole tool output, model output, or both | Admit fixed top-k |
 | `all_entity_output_rag` | Every exact entity found in the observation | Admit the deduplicated union |
-| `parm` | Cue regions inside the observation | Admit only candidates that clear a PARM channel |
+| `parm` | Cue regions inside the observation | Selectable convergence or semantic-pair admission |
 
 `input_rag`, `prompted_memory_tool`, and `naive_output_rag` use
 `IndexRetriever`. Their independent retrieval-mode axis controls how one query
@@ -100,19 +100,22 @@ is ranked:
 - `enhanced`: hybrid ranking plus three frozen query expansions, title BM25,
   and a small graph rerank.
 
-`all_entity_output_rag` uses `EntityExactRetriever`. `parm` uses
-`PARMConvergenceRetriever`. These are fixed retrieval mechanisms, so the CLI
-rejects `--retrieval-mode` for them.
+`all_entity_output_rag` uses `EntityExactRetriever`. `parm` defaults to
+`PARMConvergenceRetriever` and can select the development
+`PARMSemanticJudgeRetriever` with `--parm-retriever semantic-judge`. These are
+PARM-specific mechanisms, so the CLI rejects `--retrieval-mode` for them.
 
-## PARM retrieval waterfall
+## Deterministic PARM retrieval waterfall
 
-PARM treats the large observation as a set of listing regions. It creates
-several cheap views of those regions, then admits only durable pages supported
-by a channel-specific rule.
+The default retriever treats the large observation as visible regions. Existing
+catalog fixtures preserve one-listing-per-region parsing; general prose and
+mixed markdown use paragraph-like semantic blocks. PARM creates several cheap
+views of those regions, then admits only durable pages supported by a
+channel-specific rule.
 
 ```mermaid
 flowchart TB
-    A["Large observation"] --> B["Split into visible listing regions"]
+    A["Large observation"] --> B["Split into listings or semantic blocks"]
     B --> C["Task anchors from the prompt"]
     B --> D["Store-backed entity surfaces"]
     B --> E["Rare concepts per listing"]
@@ -182,9 +185,60 @@ Admissions are deduplicated by page. Channel priority is:
 3. semantic multi-concept;
 4. semantic anchored singleton.
 
-The response model receives the exact triggering listing beside a focused
+The response model receives the exact triggering region beside a focused
 memory excerpt. It never receives benchmark gold IDs, perturbation labels, or
 the retrieval scores.
+
+## Semantic-pair admission development path
+
+PersonaMem histories do not have the link graph or review/reflection filename
+conventions that make the deterministic waterfall effective on Amara. The
+development semantic path keeps corpus isolation and the frozen raw index but
+changes candidate generation and admission. Its canonical replay waterfall is:
+
+```mermaid
+flowchart TB
+    A["1. Corpus scope"] --> B["2. Observation regions"]
+    B --> C["3. Distinctive-region filter"]
+    C --> D["4. Query embeddings"]
+    D --> E["5. Five candidate views"]
+    E --> F["6. Top-seven union"]
+    F --> G["7. Contrastive admission judge"]
+    G --> H["8. Frozen selection validation"]
+    H --> I["9. Zero-or-one retrieval hit"]
+    I --> J["10. Evidence projection"]
+    J --> K["11. Final visible choice"]
+```
+
+The retriever first restricts the index to the requested persona corpus.
+Existing catalogs keep their listing rows, while mixed Markdown and prose
+become complete semantic blocks. Blocks without distinctive concepts are
+dropped. The remaining block descriptions are embedded and compared with raw
+history through sentence-max, sentence-top-three, chunk-max, blended dense, and
+BM25 views. The union of the best seven pairs from each view is a high-recall
+prefilter, not an admission threshold.
+
+The judge sees the complete observation so it can distinguish real candidates
+from archival noise and identify the ordinary evidence winner. It must find a
+fact in the user's own words, an explicit affordance in the visible block, and
+a reason that fact would favor a lower-ranked candidate. It does not receive
+case gold IDs, expected choices, source-support grades, or hidden persona
+annotations.
+
+This LLM use is narrow. Dense and lexical candidate generation, corpus
+filtering, the final choice scorer, and artifact validation stay deterministic.
+Canonical runs require `--parm-admission-cache` and normally use
+`--parm-admission-policy frozen`. Populate runs are for explicit experiment
+construction.
+
+Admission cache keys intentionally do not serialize the live ranked candidate
+list. They bind the prompt and complete observation to the judge model, rubric,
+retrieval-index hash, candidate depth, and candidate-policy version. Each
+cached admission stores the selected corpus page, region ID, and exact region
+text. Replay accepts a shifted live ranking only when that page is still in the
+scoped corpus and the exact region still exists in the observation. This
+prevents harmless embedding-order jitter from breaking replay without allowing
+a cached decision to cross a corpus or observation boundary.
 
 ## Frozen artifacts and replay
 
@@ -195,6 +249,7 @@ Canonical runs depend on tracked, hashed artifacts:
 | `data/retrieval-indexes/amara-life-v1` | Neutral pages, chunks, sentences, links, and embeddings |
 | `data/retrieval-indexes/personamem-v2-train-v0` | Schema-v3 index whose pages, chunks, sentences, and retrieval requests carry a persona corpus scope |
 | `data/expansion-caches/...` | Frozen enhanced-mode query alternatives |
+| `data/retrieval-experiments/.../admission-judge-*-cache` | Frozen semantic-pair admission decisions for development runs |
 | `data/response-caches/...` | Reusable response-model calls keyed by the full request |
 | `data/benchmark-results/*.jsonl` | One prediction and trace per case |
 | `data/benchmark-results/*.config.json` | Exact condition, model, constants, and artifact hashes |
@@ -210,6 +265,7 @@ benchmark run reads the frozen artifact directly.
 | `dataset.py` | Load, resolve, and validate benchmark cases |
 | `baselines.py` | Define retrieval timing, query source, admission handoff, and baseline registry |
 | `retrieval.py` | Load the frozen index and implement all ranking/retrieval mechanisms |
+| `semantic_parm.py` | Generate block-memory candidate pairs and replay versioned admission judgments |
 | `models.py` | OpenAI response calls, memory-tool decisions, and response caching |
 | `scoring.py` | Deterministic choice, admission, poison, privacy, and split metrics |
 | `cli.py` | Validate experiment axes, run cases, write config sidecars, and score results |

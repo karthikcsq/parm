@@ -211,12 +211,47 @@ class FakePARMRetriever:
         )
 
 
+class FakeAdmissionJudge:
+    model_name = "judge-model"
+    rubric_version = "judge-rubric"
+    cache_hash = "judge-cache-hash"
+
+    def __init__(
+        self,
+        cache_dir: str,
+        policy: object,
+        *,
+        cache_namespace: str,
+    ):
+        self.cache_dir = cache_dir
+        self.policy = policy
+        self.cache_namespace = cache_namespace
+
+
+class FakeSemanticPARMRetriever(FakePARMRetriever):
+    instances: list["FakeSemanticPARMRetriever"] = []
+    retrieval_condition_detail = "parm_semantic_pair_judge_v1"
+    evidence_projection_version = "raw_source_and_region_v1"
+    admission_policy = "contrastive_llm_judge_v2"
+
+    def __init__(
+        self,
+        index: FakeIndex,
+        embedder: object,
+        judge: FakeAdmissionJudge,
+    ):
+        super().__init__(index, embedder)
+        self.judge = judge
+        self.candidate_depth = 7
+
+
 class CliSmokeTests(unittest.TestCase):
     def setUp(self) -> None:
         FakeOpenAIModel.instances.clear()
         FakeRetriever.instances.clear()
         FakeEntityRetriever.instances.clear()
         FakePARMRetriever.instances.clear()
+        FakeSemanticPARMRetriever.instances.clear()
 
     def test_validate_and_inspect(self) -> None:
         self.assertEqual(main(["validate", str(DATASET)]), 0)
@@ -616,6 +651,93 @@ class CliSmokeTests(unittest.TestCase):
                 "cue_region_memory_v1",
             )
             self.assertTrue(configuration["perturbation_filtering"])
+
+    def test_parm_can_use_frozen_semantic_admission_judge(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = Path(tmp) / "result.jsonl"
+            admission_cache = Path(tmp) / "admission-cache"
+            with (
+                patch("parm_bench.cli.OpenAIResponsesModel", FakeOpenAIModel),
+                patch(
+                    "parm_bench.cli.RetrievalIndex.load",
+                    return_value=FakeIndex(),
+                ),
+                patch(
+                    "parm_bench.cli.CachedOpenAIAdmissionJudge",
+                    FakeAdmissionJudge,
+                ),
+                patch(
+                    "parm_bench.cli.PARMSemanticJudgeRetriever",
+                    FakeSemanticPARMRetriever,
+                ),
+            ):
+                status = main(
+                    [
+                        "run",
+                        str(DATASET),
+                        "--baseline",
+                        "parm",
+                        "--retrieval-index",
+                        "fixture-index",
+                        "--parm-retriever",
+                        "semantic-judge",
+                        "--parm-admission-cache",
+                        str(admission_cache),
+                        "--parm-admission-policy",
+                        "frozen",
+                        "--out",
+                        str(result),
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            retriever = FakeSemanticPARMRetriever.instances[0]
+            self.assertEqual(len(retriever.calls), CASE_COUNT)
+            configuration = json.loads(
+                result.with_suffix(".config.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                configuration["retrieval_condition_detail"],
+                "parm_semantic_pair_judge_v1",
+            )
+            self.assertEqual(
+                configuration["admission_policy"],
+                "contrastive_llm_judge_v2",
+            )
+            self.assertEqual(
+                configuration["admission_judge_model"],
+                "judge-model",
+            )
+            self.assertEqual(
+                configuration["admission_judge_rubric"],
+                "judge-rubric",
+            )
+            self.assertEqual(
+                configuration["admission_cache_hash"],
+                "judge-cache-hash",
+            )
+            self.assertEqual(
+                configuration["constants"]["candidate_depth"],
+                7,
+            )
+
+    def test_semantic_parm_requires_admission_cache(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):
+            status = main(
+                [
+                    "run",
+                    str(DATASET),
+                    "--baseline",
+                    "parm",
+                    "--retrieval-index",
+                    "fixture-index",
+                    "--parm-retriever",
+                    "semantic-judge",
+                    "--out",
+                    str(Path(tmp) / "result.jsonl"),
+                ]
+            )
+        self.assertEqual(status, 2)
 
     def test_memory_run_requires_explicit_mode_and_index(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, patch("sys.stderr"):

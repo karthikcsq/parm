@@ -96,6 +96,25 @@ silently make a new nondeterministic response-model call. PARM still embeds
 runtime cue queries, so the replay requires `OPENAI_API_KEY` unless query
 embeddings are separately cached.
 
+The PersonaMem semantic-pair development path adds a frozen admission cache:
+
+```powershell
+parm-bench run data\benchmark_personamem_mixed_v0 `
+  --baseline parm `
+  --retrieval-index data\retrieval-indexes\personamem-v2-train-v0 `
+  --parm-retriever semantic-judge `
+  --parm-admission-cache data\retrieval-experiments\personamem-mixed-v0\admission-judge-v2-frozen-cache `
+  --parm-admission-policy frozen `
+  --response-cache data\response-caches\personamem-mixed-v0-semantic-parm `
+  --response-policy frozen `
+  --model gpt-5-mini `
+  --out data\retrieval-experiments\personamem-mixed-v0\semantic-parm-replay.jsonl
+```
+
+Use `--parm-admission-policy populate` only to construct a new versioned judge
+cache. The final choice cache is separate because it contains the downstream
+response after the admitted region-memory pair is injected.
+
 ## Run comparison conditions
 
 Enhanced input RAG:

@@ -1469,7 +1469,7 @@ class PARMConvergenceRetriever:
                 top_k=top_k,
                 corpus_id=resolved_corpus_id,
             )
-        regions = _parm_listing_regions(observation_text)
+        regions = _parm_observation_regions(observation_text)
         anchors = self.concept_extractor.task_anchors(prompt)
         concepts_by_region = self.concept_extractor.rare_region_concepts(
             [region["description"] for region in regions]
@@ -2043,6 +2043,7 @@ def _parm_listing_regions(observation_text: str) -> list[dict[str, Any]]:
         regions.append(
             {
                 "region_id": f"region-{len(regions) + 1}",
+                "region_kind": "listing",
                 "start": start,
                 "end": end,
                 "text": text,
@@ -2050,6 +2051,61 @@ def _parm_listing_regions(observation_text: str) -> list[dict[str, Any]]:
             }
         )
     return regions
+
+
+def _parm_observation_regions(observation_text: str) -> list[dict[str, Any]]:
+    """Split either a structured feed or general markdown into cue regions.
+
+    Existing PARMBench feeds keep their one-listing-per-region behavior. When
+    the observation is prose or mixed markdown, paragraph-like blocks become
+    regions instead. Short headings and export fragments are skipped because
+    they do not carry enough semantic evidence to retrieve a personal memory.
+    """
+    listing_regions = _parm_listing_regions(observation_text)
+    if len(listing_regions) >= 10:
+        return listing_regions
+
+    regions: list[dict[str, Any]] = []
+    for match in re.finditer(
+        r"(?:\A|(?:\r?\n){2,})(.*?)(?=(?:\r?\n){2,}|\Z)",
+        observation_text,
+        flags=re.DOTALL,
+    ):
+        raw = match.group(1)
+        text = raw.strip()
+        if not text:
+            continue
+        start = match.start(1) + len(raw) - len(raw.lstrip())
+        end = start + len(text)
+        semantic_text = _strip_markdown_scaffolding(text)
+        words = re.findall(r"[A-Za-z0-9][A-Za-z0-9'-]*", semantic_text)
+        if len(words) < 8:
+            continue
+        regions.append(
+            {
+                "region_id": f"region-{len(regions) + 1}",
+                "region_kind": "semantic_block",
+                "start": start,
+                "end": end,
+                "text": text,
+                "description": semantic_text,
+            }
+        )
+    return regions
+
+
+def _strip_markdown_scaffolding(text: str) -> str:
+    lines = []
+    for line in text.splitlines():
+        normalized = re.sub(
+            r"^\s*(?:#{1,6}\s+|>\s*|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+)",
+            "",
+            line,
+        )
+        normalized = re.sub(r"<!--.*?-->", " ", normalized)
+        normalized = normalized.replace("`", " ").replace("**", "")
+        lines.append(normalized.strip())
+    return " ".join(line for line in lines if line).strip()
 
 
 def _word_present(text: str, word: str) -> bool:

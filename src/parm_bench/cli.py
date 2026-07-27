@@ -66,6 +66,14 @@ from .retrieval import (
 )
 from .retrieval_export import export_gbrain_index
 from .scoring import score_predictions
+from .semantic_parm import (
+    PARM_SEMANTIC_METHODS,
+    AdmissionCacheMissError,
+    AdmissionCachePolicy,
+    CachedOpenAIAdmissionJudge,
+    PARMSemanticJudgeRetriever,
+    semantic_admission_cache_namespace,
+)
 from .workbench import serve_workbench
 
 
@@ -112,6 +120,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     run.add_argument("--retrieval-index")
     run.add_argument("--retrieval-limit", type=_positive_int)
+    run.add_argument(
+        "--parm-retriever",
+        choices=("convergence", "semantic-judge"),
+        default="convergence",
+    )
+    run.add_argument("--parm-admission-cache")
+    run.add_argument(
+        "--parm-admission-policy",
+        choices=tuple(policy.value for policy in AdmissionCachePolicy),
+    )
     run.add_argument("--expansion-cache")
     run.add_argument(
         "--expansion-policy",
@@ -194,6 +212,9 @@ def main(argv: list[str] | None = None) -> int:
                 args.retrieval_mode,
                 args.retrieval_index,
                 args.retrieval_limit or OFFICIAL_TOP_K,
+                args.parm_retriever,
+                args.parm_admission_cache,
+                args.parm_admission_policy,
                 args.expansion_cache,
                 args.expansion_policy,
                 args.response_cache,
@@ -225,6 +246,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     except (
         ExpansionCacheMissError,
+        AdmissionCacheMissError,
         ResponseCacheMissError,
         RetrievalValidationError,
         ValueError,
@@ -256,6 +278,9 @@ def _run(
     retrieval_mode: str | None,
     retrieval_index: str | None,
     retrieval_limit: int,
+    parm_retriever: str,
+    parm_admission_cache: str | None,
+    parm_admission_policy: str | None,
     expansion_cache: str | None,
     expansion_policy: str | None,
     response_cache: str | None,
@@ -286,7 +311,11 @@ def _run(
         ),
     )
     retrieval_resource: (
-        IndexRetriever | EntityExactRetriever | PARMConvergenceRetriever | None
+        IndexRetriever
+        | EntityExactRetriever
+        | PARMConvergenceRetriever
+        | PARMSemanticJudgeRetriever
+        | None
     ) = None
     if implementation.retrieval_resource is RetrievalResourceKind.MODE_RETRIEVER:
         assert retrieval_mode is not None
@@ -314,10 +343,25 @@ def _run(
         is RetrievalResourceKind.PARM_CONVERGENCE
     ):
         assert retrieval_index is not None
-        retrieval_resource = PARMConvergenceRetriever(
-            RetrievalIndex.load(retrieval_index),
-            OpenAIEmbedder(),
-        )
+        index = RetrievalIndex.load(retrieval_index)
+        if parm_retriever == "semantic-judge":
+            assert parm_admission_cache is not None
+            retrieval_resource = PARMSemanticJudgeRetriever(
+                index,
+                OpenAIEmbedder(),
+                CachedOpenAIAdmissionJudge(
+                    parm_admission_cache,
+                    parm_admission_policy or AdmissionCachePolicy.FROZEN,
+                    cache_namespace=semantic_admission_cache_namespace(
+                        index.manifest_hash
+                    ),
+                ),
+            )
+        else:
+            retrieval_resource = PARMConvergenceRetriever(
+                index,
+                OpenAIEmbedder(),
+            )
     model: OpenAIResponsesModel | CachingLanguageModel = OpenAIResponsesModel(
         _resolve_model(model_name)
     )
@@ -442,7 +486,11 @@ def _write_run_configuration(
     *,
     baseline: str,
     retrieval_resource: (
-        IndexRetriever | EntityExactRetriever | PARMConvergenceRetriever | None
+        IndexRetriever
+        | EntityExactRetriever
+        | PARMConvergenceRetriever
+        | PARMSemanticJudgeRetriever
+        | None
     ),
     output_rag_flow: str | None,
     retrieval_limit: int | None,
@@ -455,6 +503,7 @@ def _write_run_configuration(
     )
     mode = getattr(retrieval_resource, "mode", None)
     expander = getattr(retrieval_resource, "expander", None)
+    admission_judge = getattr(retrieval_resource, "judge", None)
     index_corpus_ids = (
         tuple(
             getattr(
@@ -540,8 +589,26 @@ def _write_run_configuration(
             else None
         ),
         "perturbation_filtering": (
-            isinstance(retrieval_resource, PARMConvergenceRetriever)
+            isinstance(
+                retrieval_resource,
+                (PARMConvergenceRetriever, PARMSemanticJudgeRetriever),
+            )
             if retrieval_resource is not None
+            else None
+        ),
+        "admission_judge_model": getattr(
+            admission_judge,
+            "model_name",
+            None,
+        ),
+        "admission_judge_rubric": getattr(
+            admission_judge,
+            "rubric_version",
+            None,
+        ),
+        "admission_cache_hash": (
+            admission_judge.cache_hash
+            if admission_judge is not None
             else None
         ),
         "requested_model": requested_model,
@@ -572,7 +639,21 @@ def _write_run_configuration(
                     ),
                 }
                 if isinstance(retrieval_resource, PARMConvergenceRetriever)
-                else None
+                else (
+                    {
+                        "candidate_depth": (
+                            retrieval_resource.candidate_depth
+                        ),
+                        "candidate_methods": list(
+                            PARM_SEMANTIC_METHODS
+                        ),
+                    }
+                    if isinstance(
+                        retrieval_resource,
+                        PARMSemanticJudgeRetriever,
+                    )
+                    else None
+                )
             )
         ),
         "expansion_model": (
@@ -623,6 +704,15 @@ def _validate_retrieval_args(args: argparse.Namespace) -> None:
         raise ValueError("--response-policy requires --response-cache")
     resource_kind = retrieval_resource_kind(args.baseline)
     uses_memory = resource_kind is not RetrievalResourceKind.NONE
+    if (
+        resource_kind is not RetrievalResourceKind.PARM_CONVERGENCE
+        and (
+            args.parm_retriever != "convergence"
+            or args.parm_admission_cache
+            or args.parm_admission_policy
+        )
+    ):
+        raise ValueError("PARM retriever arguments are only valid for parm")
     retrieval_arguments = {
         "--retrieval-mode": args.retrieval_mode,
         "--retrieval-index": args.retrieval_index,
@@ -675,6 +765,16 @@ def _validate_retrieval_args(args: argparse.Namespace) -> None:
         if supplied:
             raise ValueError(
                 "parm rejects retrieval-mode arguments: " + ", ".join(supplied)
+            )
+        if args.parm_retriever == "semantic-judge":
+            if not args.parm_admission_cache:
+                raise ValueError(
+                    "semantic-judge PARM requires --parm-admission-cache"
+                )
+        elif args.parm_admission_cache or args.parm_admission_policy:
+            raise ValueError(
+                "PARM admission cache arguments require "
+                "--parm-retriever semantic-judge"
             )
         return
     if not args.retrieval_mode or not args.retrieval_index:

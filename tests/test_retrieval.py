@@ -27,6 +27,7 @@ from parm_bench.retrieval import (
     OpenAIEmbedder,
     PageRecord,
     PARMConvergenceRetriever,
+    _parm_observation_regions,
     RetrievalIndex,
     RetrievalMode,
     RetrievalRequest,
@@ -922,6 +923,42 @@ class RankingTests(unittest.TestCase):
         self.assertTrue(
             {hit.page_id for hit in result.hits}.issubset(candidate_union)
         )
+
+
+class ObservationRegionTests(unittest.TestCase):
+    def test_preserves_structured_listing_rows(self) -> None:
+        text = "\n\n".join(
+            f"Listing T-{position:03d} - Option {position}. Detail {position}."
+            for position in range(1, 12)
+        )
+        regions = _parm_observation_regions(text)
+        self.assertEqual(len(regions), 11)
+        self.assertTrue(
+            all(region["region_kind"] == "listing" for region in regions)
+        )
+
+    def test_splits_mixed_markdown_into_semantic_blocks(self) -> None:
+        text = (
+            "# exported notes\n\n"
+            "tiny marker\n\n"
+            "> The Gilded Court appeared in a clipped review. A royal court "
+            "moves through a succession crisis with period costumes and "
+            "political intrigue.\n\n"
+            "<!-- footer -->\n"
+            "- [ ] The unrelated follow-up contains enough words to remain "
+            "a separate semantic block for retrieval diagnostics."
+        )
+        regions = _parm_observation_regions(text)
+        self.assertEqual(len(regions), 2)
+        self.assertTrue(
+            all(
+                region["region_kind"] == "semantic_block"
+                for region in regions
+            )
+        )
+        self.assertIn("The Gilded Court", regions[0]["description"])
+        self.assertNotIn(">", regions[0]["description"])
+        self.assertNotIn("<!--", regions[1]["description"])
 
 
 class ExpansionCacheTests(unittest.TestCase):

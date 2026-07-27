@@ -1,6 +1,6 @@
-# PARM Output Cue-Triggered Memory Examples
+# Output-Cued Memory Example Catalog
 
-**Status:** Canonical expansion specification. Examples 1-18 are implemented
+**Status:** Current scenario specification. Examples 1-18 are implemented
 in the executable benchmark. Examples 1, 2, 3, 5, and 12 retain the `pilot`
 split; the other 13 existing-memory examples form the frozen `expansion`
 split. Examples 19 and 20 remain proposed additions.

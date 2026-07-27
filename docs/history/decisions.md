@@ -1,6 +1,9 @@
-# Decisions
+# PARM Decision Log
 
-A running log of non-obvious choices and the reasoning behind them. Newest first.
+This historical log records non-obvious choices and their reasoning. Newest
+entries appear first. Current behavior is documented in
+[Architecture](../architecture.md) and the
+[Evaluation Contract](../benchmark-evaluation.md).
 
 ## 2026-07-26
 
@@ -30,7 +33,7 @@ false-intervention test. Fixed top-k structurally always admits k, so a universa
 top-k rule is incompatible with the condition PARM exists to measure.
 
 **What:** Deprecated those rules as universal in
-`docs/history/retrieval-mode-axis-plan.md` and made selection condition-dependent: the
+`retrieval-mode-axis-plan.md` and made selection condition-dependent: the
 mode-matched baselines keep fixed top-k for comparability; PARM selects by a
 convergence-score threshold `T`. Wrote `docs/history/parm-convergence-retrieval-v1.md`
 for the full condition.
@@ -43,7 +46,8 @@ substrate) are not PARM's to claim. What remains, and what neither component
 baseline does, is ranking candidates by cross-seed convergence over a load-bearing
 graph so precision comes from ranking and selection rather than from restricting
 retrieval. Breadth at the candidate stage is fine; convergence plus the threshold
-carry precision, and the ablated twin comes back empty through the same mechanism.
+carry precision, and the ablated twin comes back empty through the same
+mechanism.
 
 **What:** Recorded the two-stage design (wide multi-seed candidate generation,
 then convergence ranking with threshold selection) and the graph-load-bearing
@@ -61,7 +65,7 @@ smart; a smart extractor would drop the weak single-match signals convergence
 exists to exploit. The one step that seemed to need a small LM — composing
 disconnected entities — is what the load-bearing graph already does.
 
-**What:** Wrote the seed-extraction section in the design doc with the cheap
+**What:** Wrote the seed-extraction section in the design record with the cheap
 non-LLM stack and the high-recall principle. Demoted the SLM to an optional
 upstream cue-proposer booster (never in retrieval/ranking), deferred until the
 data shows the graph plus cheap extractor miss the pattern cues.

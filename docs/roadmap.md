@@ -1,4 +1,7 @@
-# Next Steps
+# PARM Roadmap
+
+This page contains unfinished work only. Completed experiment history belongs
+in the result reports and decision log.
 
 ## Preserve the current evidence
 
@@ -34,6 +37,6 @@
 - Add an LLM judge only after measuring agreement with human reviewers and
   freezing the judge protocol.
 
-See [Real-World Evaluation Strategy](docs/real-world-evaluation.md) for the
-recommended design and [How to Construct a PARMBench Scenario](docs/benchmark-construction.md)
+See [Real-World Evaluation Strategy](real-world-evaluation.md) for the
+recommended design and [How to Construct a PARMBench Scenario](benchmark-construction.md)
 for the current controlled-case procedure.

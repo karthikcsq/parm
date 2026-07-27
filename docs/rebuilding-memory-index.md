@@ -1,4 +1,4 @@
-# GBrain + Amara Life Local Setup
+# How to Rebuild the Amara Memory Index
 
 Recorded against GBrain `0.42.53.0` and the `amara-life-v1` fixture.
 
@@ -13,9 +13,9 @@ PARM       = ranking, output-cue policy, and decision evaluation
 The tracked source fixture contains 424 fictional artifacts across email,
 Slack, calendar, meetings, notes, and reference documents. It is compact and
 safe to version. Canonical frozen PARM artifacts are tracked under `data/`:
-the retrieval index in `data/retrieval-indexes/amara-life-v1`, the enhanced
-query expansion cache in `data/expansion-caches/amara-life-v1`, and benchmark
-outputs in `data/benchmark-results`. GBrain runtime code, PGLite state,
+the retrieval index in `data/retrieval-indexes/amara-life-v1`, versioned query
+expansion caches in `data/expansion-caches/`, and benchmark outputs in
+`data/benchmark-results`. GBrain runtime code, PGLite state,
 dependencies, model caches, and rebuild scratch state remain under ignored
 `.gbrain-local/`.
 
@@ -24,7 +24,8 @@ dependencies, model caches, and rebuild scratch state remain under ignored
 From the repo root:
 
 ```powershell
-python -m pip install -e .
+$python = 'C:\Users\karth\anaconda3\python.exe'
+& $python -m pip install -e .
 parm-bench prepare-amara
 ```
 
@@ -68,7 +69,8 @@ separate from the explicit corpus import:
 
 ```powershell
 $repo = (Resolve-Path '.').Path
-$env:OPENAI_API_KEY = python -c "from dotenv import dotenv_values; print(dotenv_values('.env')['OPENAI_API_KEY'])"
+$python = 'C:\Users\karth\anaconda3\python.exe'
+$env:OPENAI_API_KEY = & $python -c "from dotenv import dotenv_values; print(dotenv_values('.env')['OPENAI_API_KEY'])"
 $env:GBRAIN_HOME = "$repo\.gbrain-local\home"
 $env:GBRAIN_LOCAL_FS_WALK = 'true'
 

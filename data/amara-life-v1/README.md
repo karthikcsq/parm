@@ -1,5 +1,8 @@
 # Amara Life source fixture
 
+Project navigation starts at [the root README](../../README.md). This file only
+describes the source fixture stored in this directory.
+
 This directory vendors the compact `amara-life-v1` source fixture from
 `garrytan/gbrain-evals` for reproducible PARM experiments. The original corpus
 manifest identifies the fixture as MIT licensed and generated with seed 42.

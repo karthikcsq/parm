@@ -37,51 +37,64 @@ Validation should report 54 cases.
 
 ## Run PARM
 
+Replay the published V5 response requests without making new response-model
+calls:
+
 ```powershell
+$replay = Join-Path $env:TEMP 'parm-v5-replay.jsonl'
 parm-bench run data\benchmark_v1 `
   --baseline parm `
   --retrieval-index data\retrieval-indexes\amara-life-v1 `
   --retrieval-limit 5 `
-  --response-cache data\response-caches\amara-life-v4\parm `
-  --response-policy populate `
+  --response-cache data\response-caches\amara-life-v5\parm `
+  --response-policy frozen `
   --model gpt-5-mini `
-  --out data\benchmark-results\parm-v4-gpt-5-mini.jsonl
+  --out $replay
 ```
 
-The command writes predictions plus
-`parm-v4-gpt-5-mini.config.json`. Use a new cache namespace whenever retrieval
-or judgment behavior changes.
+The command writes predictions plus a sibling config sidecar in the temporary
+directory. Compare it with the tracked
+`data\benchmark-results\parm-v5-gpt-5-mini.jsonl`. A live development run uses
+`--response-policy populate` and a new cache namespace; do not add new requests
+to the published V5 cache.
 
 ## Score the run
 
 ```powershell
+$replay = Join-Path $env:TEMP 'parm-v5-replay.jsonl'
+$metrics = Join-Path $env:TEMP 'parm-v5-replay.metrics.json'
 parm-bench score `
-  data\benchmark-results\parm-v4-gpt-5-mini.jsonl `
+  $replay `
   --gold data\benchmark_v1 `
-  --out data\benchmark-results\parm-v4-gpt-5-mini.metrics.json
+  --out $metrics
 ```
 
 Read primary accuracy as positive decisions plus cue-ablated controls. Read
 retrieval precision and recall separately. A system that changes every
 positive and every control has zero net primary advantage.
 
-## Replay without model calls
+## Replay responses from cache
 
-After a populate pass completes, change only the policy:
+The V5 command above is already a frozen replay. For a new experiment, populate
+a new cache first, then rerun the identical request with only the policy
+changed from `populate` to `frozen`.
 
 ```powershell
+$replay = Join-Path $env:TEMP 'parm-v5-second-replay.jsonl'
 parm-bench run data\benchmark_v1 `
   --baseline parm `
   --retrieval-index data\retrieval-indexes\amara-life-v1 `
   --retrieval-limit 5 `
-  --response-cache data\response-caches\amara-life-v4\parm `
+  --response-cache data\response-caches\amara-life-v5\parm `
   --response-policy frozen `
   --model gpt-5-mini `
-  --out data\benchmark-results\parm-v4-replay.jsonl
+  --out $replay
 ```
 
 A frozen cache miss is an error. That is intentional: official replay must not
-silently make a new nondeterministic model call.
+silently make a new nondeterministic response-model call. PARM still embeds
+runtime cue queries, so the replay requires `OPENAI_API_KEY` unless query
+embeddings are separately cached.
 
 ## Run comparison conditions
 
@@ -135,7 +148,7 @@ parm-bench run data\benchmark_v1 `
 ```powershell
 parm-bench serve-workbench `
   --retrieval-index data\retrieval-indexes\amara-life-v1 `
-  --expansion-cache data\expansion-caches\amara-life-v1
+  --expansion-cache data\expansion-caches\amara-life-v2-input-rag-enhanced
 ```
 
 The workbench shows the final choice, expected decision, admitted sources,

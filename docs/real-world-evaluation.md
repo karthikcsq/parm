@@ -19,31 +19,17 @@ The two suites answer different questions:
 
 ## What the current benchmark proves
 
-The current benchmark is strong evidence for the narrow original mechanism
-claim:
+The current benchmark supports the narrow original mechanism claim:
 
 > A memory can become decision-relevant only after a later agent or tool output,
 > and selective output-cued retrieval can outperform prompt-only retrieval,
 > whole-output RAG, all-entity retrieval, and waiting for an agent to elect to
 > search memory.
 
-The benchmark makes that claim testable because:
-
-- every prompt is memory-neutral;
-- the decisive cue appears only in the later observation;
-- the positive and cue-ablated control differ at the intended relationship;
-- the memory-included ceiling verifies that the response model can use the
-  fact;
-- retrieval and decision correctness are scored separately;
-- every condition uses the same frozen memory substrate and response model;
-- broad-recall baselines are penalized when the same memories change controls;
-  and
-- the frozen first expansion pass records generalization before tuning.
-
-The benchmark therefore does more than show that PARM can retrieve a relevant
-note. It demonstrates the important asymmetry behind the project: input RAG
-does not see the late cue, naive output RAG admits too much, and the naive agent
-often does not initiate memory retrieval at all.
+The [research scope](research-scope.md) states the claim and evidence. The
+[evaluation contract](benchmark-evaluation.md) defines the paired controls and
+metrics that make the claim testable. This page starts where those documents
+stop: whether that controlled evidence transfers to natural agent work.
 
 ## What the current benchmark does not prove
 
@@ -212,15 +198,3 @@ Five well-instrumented cases do not establish population-level performance, but
 they make the original PARM insight concrete. They show a real agent noticing
 something new in its own output, recalling the right part of the user's history,
 and taking a better action without spraying unrelated memory into context.
-
-## Decision
-
-The existing benchmark suffices for the mechanism proof and for iterative
-retrieval engineering. It does not suffice for the broadest real-world product
-or research claim.
-
-The next investment should be a realistic paired end-to-end suite, not a
-wholesale switch to LLM scoring. Preserve deterministic PARMBench as the
-explainable core, use human-reviewed real-world examples to establish external
-validity, and introduce an LLM judge only as a calibrated, versioned secondary
-measurement.

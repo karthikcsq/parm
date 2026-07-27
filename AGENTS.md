@@ -33,7 +33,7 @@ python -m unittest discover -s tests
 Start the local workbench when reviewing retrieval behavior:
 
 ```powershell
-parm-bench serve-workbench --retrieval-index data\retrieval-indexes\amara-life-v1 --expansion-cache data\expansion-caches\amara-life-v1
+parm-bench serve-workbench --retrieval-index data\retrieval-indexes\amara-life-v1 --expansion-cache data\expansion-caches\amara-life-v2-input-rag-enhanced
 ```
 
 ## Coding Style & Naming Conventions

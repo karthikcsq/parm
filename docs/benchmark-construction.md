@@ -24,7 +24,7 @@ history to make a benchmark case executable.
 
 ## Step 1: Approve the memory-cue relationship
 
-Start from `docs/parm-output-cued-memory-examples.md`. Record:
+Start from [the example catalog](examples.md). Record:
 
 - the ordinary task and answer format;
 - the incidental output cue;
@@ -164,7 +164,8 @@ human review should answer:
 - Would a wrong but plausible answer reveal a retrieval failure, a judgment
   failure, or an ambiguous fixture?
 
-Record any non-obvious repair in `DECISIONS.md`.
+Record any non-obvious repair in
+[the decision log](history/decisions.md).
 
 ## Verification checklist
 

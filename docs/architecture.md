@@ -230,7 +230,9 @@ in an unversioned replacement for the core triplets.
 
 ## Related documents
 
+- [Research claim and scope](research-scope.md)
 - [Run PARMBench](running-parmbench.md)
 - [Construct benchmark cases](benchmark-construction.md)
 - [Evaluation contract](benchmark-evaluation.md)
+- [Rebuild the memory index](rebuilding-memory-index.md)
 - [Expanded benchmark first pass](results/benchmark-expansion-first-pass.md)

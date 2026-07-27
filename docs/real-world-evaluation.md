@@ -8,7 +8,8 @@ Keep the current triplet benchmark as the fast, attributable mechanism test,
 and add a second end-to-end suite with realistic tasks, open-ended responses,
 and rubric-based judgment. Use humans as the calibration source and an LLM
 judge as a scaled approximation only after its agreement and failure modes are
-measured.
+measured. The [larger dataset survey](dataset-candidates.md) recommends public
+sources for both layers.
 
 The two suites answer different questions:
 

@@ -78,6 +78,7 @@ are manifests, not alternate project guides.
 | [V5 development result](docs/results/benchmark-v5.md) | Current repaired-fixture comparison and remaining failures |
 | [Frozen expansion first pass](docs/results/benchmark-expansion-first-pass.md) | Untuned generalization record that motivated the V5 changes |
 | [Real-world evaluation](docs/real-world-evaluation.md) | Limits of the controlled benchmark and the human-calibrated end-to-end judge design |
+| [Larger dataset candidates](docs/dataset-candidates.md) | Hugging Face survey, recommended sources, conversion procedure, and retrieval-substrate changes |
 | [Roadmap](docs/roadmap.md) | Next retrieval and external-validity work, in priority order |
 
 ### Project records

@@ -235,4 +235,5 @@ in an unversioned replacement for the core triplets.
 - [Construct benchmark cases](benchmark-construction.md)
 - [Evaluation contract](benchmark-evaluation.md)
 - [Rebuild the memory index](rebuilding-memory-index.md)
+- [Larger dataset candidates](dataset-candidates.md)
 - [Expanded benchmark first pass](results/benchmark-expansion-first-pass.md)

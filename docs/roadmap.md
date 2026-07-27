@@ -28,9 +28,13 @@ in the result reports and decision log.
 
 ## Add external validity
 
-- Build a small paired end-to-end suite from natural agent or tool traces.
-- Start with five human-reviewed case studies if a statistically meaningful
-  suite is not yet available.
+- Add corpus-scoped adapters and index isolation for multi-person datasets.
+- Convert 30 PersonaMem-v2 development records before freezing the generation
+  and acceptance procedure.
+- Publish a sealed, persona-disjoint set of 500 human-audited PersonaMem-v2
+  triplets.
+- Build 50 to 100 paired end-to-end cases from LongMemEval-V2 web and
+  enterprise trajectories.
 - Measure task success, causal memory lift, false intervention, faithfulness,
   privacy restraint, and calibration.
 - Keep deterministic PARMBench as the mechanism and regression gate.
@@ -39,4 +43,6 @@ in the result reports and decision log.
 
 See [Real-World Evaluation Strategy](real-world-evaluation.md) for the
 recommended design and [How to Construct a PARMBench Scenario](benchmark-construction.md)
-for the current controlled-case procedure.
+for the current controlled-case procedure. The
+[larger dataset survey](dataset-candidates.md) explains the source selection,
+conversion rules, and retrieval-index changes.

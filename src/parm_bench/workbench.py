@@ -217,12 +217,28 @@ class WorkbenchService:
             if selected_case is not None
             else ""
         )
+        corpus_id = (
+            str(
+                selected_case.get("corpus_id")
+                or selected_case.get("memory", {}).get("corpus_id", "fixture")
+            )
+            if selected_case is not None
+            else (
+                self.index.resolve_corpus_id(None)
+                if hasattr(self.index, "resolve_corpus_id")
+                else str(self.index.manifest.get("corpus_id", "fixture"))
+            )
+        )
         row: dict[str, Any] | None = None
         if condition is RetrievalCondition.INPUT_RAG:
             assert retrieval_mode is not None
             try:
                 retrieval = self._retriever(retrieval_mode).retrieve(
-                    RetrievalRequest(prompt, top_k=top_k)
+                    RetrievalRequest(
+                        prompt,
+                        top_k=top_k,
+                        corpus_id=corpus_id,
+                    )
                 )
             except (ExpansionCacheMissError, RetrievalValidationError):
                 raise
@@ -278,6 +294,7 @@ class WorkbenchService:
                         prompt=prompt,
                         observation_kind=observation_kind,
                         observation_text=observation_text,
+                        corpus_id=corpus_id,
                     ),
                     model,
                     retriever,
@@ -308,6 +325,7 @@ class WorkbenchService:
                         prompt=prompt,
                         observation_kind=observation_kind,
                         observation_text=observation_text,
+                        corpus_id=corpus_id,
                     ),
                     model,
                     entity_retriever,
@@ -495,11 +513,13 @@ class _CapturingEntityRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> EntityRetrievalResult:
         try:
             result = self._retriever.retrieve_entities(
                 observation_text,
                 top_k=top_k,
+                corpus_id=corpus_id,
             )
         except Exception:
             self.failed_during_retrieval = True

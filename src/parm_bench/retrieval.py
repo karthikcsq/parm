@@ -216,6 +216,7 @@ class PageRecord:
     slug: str
     title: str
     perturbations: tuple[str, ...] = ()
+    corpus_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -224,6 +225,7 @@ class ChunkRecord:
     page_id: str
     chunk_index: int
     text: str
+    corpus_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -241,18 +243,22 @@ class SentenceRecord:
     page_id: str
     sentence_index: int
     text: str
+    corpus_id: str = ""
 
 
 @dataclass(frozen=True)
 class RetrievalRequest:
     query: str
     top_k: int = OFFICIAL_TOP_K
+    corpus_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.query.strip():
             raise ValueError("retrieval query must be non-empty")
         if self.top_k < 1:
             raise ValueError("top_k must be at least 1")
+        if self.corpus_id is not None and not self.corpus_id.strip():
+            raise ValueError("corpus_id must be non-empty when provided")
 
 
 @dataclass(frozen=True)
@@ -267,6 +273,7 @@ class RetrievalHit:
     rank: int
     perturbations: tuple[str, ...] = ()
     diagnostics: dict[str, Any] = field(default_factory=dict)
+    corpus_id: str = ""
 
 
 @dataclass(frozen=True)
@@ -305,6 +312,7 @@ class EntityRetriever(Protocol):
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> EntityRetrievalResult: ...
 
 
@@ -315,6 +323,7 @@ class PARMObservationRetriever(Protocol):
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> RetrievalResult: ...
 
 
@@ -355,6 +364,76 @@ class RetrievalIndex:
     sentences: tuple[SentenceRecord, ...] = ()
     sentence_embeddings: np.ndarray | None = None
 
+    @property
+    def corpus_ids(self) -> tuple[str, ...]:
+        return tuple(sorted({page.corpus_id for page in self.pages}))
+
+    def resolve_corpus_id(self, requested: str | None) -> str:
+        corpus_ids = self.corpus_ids
+        if requested is None:
+            if len(corpus_ids) != 1:
+                raise RetrievalValidationError(
+                    "multi-corpus retrieval requires corpus_id"
+                )
+            return corpus_ids[0]
+        if requested not in corpus_ids:
+            raise RetrievalValidationError(
+                f"retrieval corpus_id {requested!r} is not present in the index"
+            )
+        return requested
+
+    def scoped(self, corpus_id: str) -> "RetrievalIndex":
+        resolved = self.resolve_corpus_id(corpus_id)
+        if self.corpus_ids == (resolved,):
+            return self
+        page_ids = {
+            page.page_id for page in self.pages if page.corpus_id == resolved
+        }
+        chunk_positions = [
+            position
+            for position, chunk in enumerate(self.chunks)
+            if chunk.corpus_id == resolved
+        ]
+        chunk_ids = {self.chunks[position].chunk_id for position in chunk_positions}
+        sentence_positions = [
+            position
+            for position, sentence in enumerate(self.sentences)
+            if sentence.corpus_id == resolved
+        ]
+        manifest = dict(self.manifest)
+        manifest["corpus_ids"] = [resolved]
+        manifest["corpus_id"] = resolved
+        return RetrievalIndex(
+            path=self.path,
+            manifest=manifest,
+            manifest_hash=self.manifest_hash,
+            pages=tuple(
+                page for page in self.pages if page.corpus_id == resolved
+            ),
+            chunks=tuple(self.chunks[position] for position in chunk_positions),
+            embeddings=np.asarray(
+                self.embeddings[chunk_positions], dtype=np.float32
+            ),
+            links=tuple(
+                link
+                for link in self.links
+                if (
+                    link.source_page_id in page_ids
+                    and link.target_page_id in page_ids
+                )
+            ),
+            sentences=tuple(
+                self.sentences[position] for position in sentence_positions
+            ),
+            sentence_embeddings=(
+                np.asarray(
+                    self.sentence_embeddings[sentence_positions], dtype=np.float32
+                )
+                if self.sentence_embeddings is not None
+                else None
+            ),
+        )
+
     @classmethod
     def load(
         cls,
@@ -386,10 +465,10 @@ class RetrievalIndex:
         if not isinstance(manifest, dict):
             raise RetrievalValidationError("manifest.json must contain an object")
         schema_version = manifest.get("schema_version")
-        if schema_version not in {1, 2}:
+        if schema_version not in {1, 2, 3}:
             raise RetrievalValidationError("unsupported retrieval index schema")
         artifact_names = list(core_artifacts[1:])
-        if schema_version == 2:
+        if schema_version in {2, 3}:
             artifact_names.extend(("sentences.jsonl", "sentence_embeddings.npy"))
             missing = [name for name in artifact_names if not (root / name).is_file()]
             if missing:
@@ -423,8 +502,35 @@ class RetrievalIndex:
         pages_data = _read_jsonl(root / "pages.jsonl")
         chunks_data = _read_jsonl(root / "chunks.jsonl")
         links_data = _read_jsonl(root / "links.jsonl")
+        legacy_corpus_id = (
+            _required_text(manifest, "corpus_id")
+            if schema_version in {1, 2}
+            else None
+        )
+        manifest_corpus_ids = manifest.get("corpus_ids")
+        if schema_version == 3:
+            if (
+                not isinstance(manifest_corpus_ids, list)
+                or not manifest_corpus_ids
+                or any(
+                    not isinstance(value, str) or not value.strip()
+                    for value in manifest_corpus_ids
+                )
+            ):
+                raise RetrievalValidationError(
+                    "schema-v3 manifest corpus_ids must be a non-empty string list"
+                )
+            if len(set(manifest_corpus_ids)) != len(manifest_corpus_ids):
+                raise RetrievalValidationError(
+                    "schema-v3 manifest corpus_ids contains duplicates"
+                )
         pages = tuple(
             PageRecord(
+                corpus_id=(
+                    _required_text(row, "corpus_id")
+                    if schema_version == 3
+                    else str(legacy_corpus_id)
+                ),
                 page_id=_required_text(row, "page_id"),
                 source_id=_required_text(row, "source_id"),
                 slug=_required_text(row, "slug"),
@@ -435,6 +541,11 @@ class RetrievalIndex:
         )
         chunks = tuple(
             ChunkRecord(
+                corpus_id=(
+                    _required_text(row, "corpus_id")
+                    if schema_version == 3
+                    else str(legacy_corpus_id)
+                ),
                 chunk_id=_required_text(row, "chunk_id"),
                 page_id=_required_text(row, "page_id"),
                 chunk_index=_required_int(row, "chunk_index"),
@@ -452,10 +563,15 @@ class RetrievalIndex:
             for row in links_data
         )
         sentences: tuple[SentenceRecord, ...] = ()
-        if schema_version == 2:
+        if schema_version in {2, 3}:
             sentences_data = _read_jsonl(root / "sentences.jsonl")
             sentences = tuple(
                 SentenceRecord(
+                    corpus_id=(
+                        _required_text(row, "corpus_id")
+                        if schema_version == 3
+                        else str(legacy_corpus_id)
+                    ),
                     sentence_id=_required_text(row, "sentence_id"),
                     chunk_id=_required_text(row, "chunk_id"),
                     page_id=_required_text(row, "page_id"),
@@ -470,11 +586,23 @@ class RetrievalIndex:
             "sentence", [sentence.sentence_id for sentence in sentences]
         )
         page_ids = {page.page_id for page in pages}
+        page_corpora = {page.page_id: page.corpus_id for page in pages}
         chunk_ids = {chunk.chunk_id for chunk in chunks}
+        chunk_corpora = {chunk.chunk_id: chunk.corpus_id for chunk in chunks}
+        if schema_version == 3:
+            actual_corpus_ids = sorted(set(page_corpora.values()))
+            if sorted(manifest_corpus_ids) != actual_corpus_ids:
+                raise RetrievalValidationError(
+                    "manifest corpus_ids do not match page corpus IDs"
+                )
         for chunk in chunks:
             if chunk.page_id not in page_ids:
                 raise RetrievalValidationError(
                     f"chunk {chunk.chunk_id} references missing page {chunk.page_id}"
+                )
+            if chunk.corpus_id != page_corpora.get(chunk.page_id):
+                raise RetrievalValidationError(
+                    f"chunk {chunk.chunk_id} crosses corpus boundary"
                 )
         chunk_page_ids = {chunk.page_id for chunk in chunks}
         pages_without_chunks = sorted(page_ids - chunk_page_ids)
@@ -492,6 +620,11 @@ class RetrievalIndex:
                     "link references a missing page: "
                     f"{link.source_page_id} -> {link.target_page_id}"
                 )
+            if (
+                page_corpora[link.source_page_id]
+                != page_corpora[link.target_page_id]
+            ):
+                raise RetrievalValidationError("link crosses corpus boundary")
         for sentence in sentences:
             if sentence.page_id not in page_ids:
                 raise RetrievalValidationError(
@@ -502,6 +635,13 @@ class RetrievalIndex:
                 raise RetrievalValidationError(
                     f"sentence {sentence.sentence_id} references missing chunk "
                     f"{sentence.chunk_id}"
+                )
+            if (
+                sentence.corpus_id != page_corpora.get(sentence.page_id)
+                or sentence.corpus_id != chunk_corpora.get(sentence.chunk_id)
+            ):
+                raise RetrievalValidationError(
+                    f"sentence {sentence.sentence_id} crosses corpus boundary"
                 )
         try:
             embeddings = np.load(root / "embeddings.npy", allow_pickle=False)
@@ -518,7 +658,7 @@ class RetrievalIndex:
         if not np.isfinite(embeddings).all():
             raise RetrievalValidationError("embeddings contain non-finite values")
         sentence_embeddings: np.ndarray | None = None
-        if schema_version == 2:
+        if schema_version in {2, 3}:
             try:
                 sentence_embeddings = np.load(
                     root / "sentence_embeddings.npy", allow_pickle=False
@@ -551,7 +691,7 @@ class RetrievalIndex:
             "links": len(links),
             "vectors": int(embeddings.shape[0]),
         }
-        if schema_version == 2:
+        if schema_version in {2, 3}:
             assert sentence_embeddings is not None
             actual_counts.update(
                 {
@@ -791,6 +931,21 @@ class IndexRetriever:
         }
 
     def retrieve(self, request: RetrievalRequest) -> RetrievalResult:
+        corpus_id = self.index.resolve_corpus_id(request.corpus_id)
+        if len(self.index.corpus_ids) > 1:
+            scoped = IndexRetriever(
+                self.index.scoped(corpus_id),
+                self.mode,
+                self.embedder,
+                expander=self.expander,
+            )
+            return scoped.retrieve(
+                RetrievalRequest(
+                    request.query,
+                    top_k=request.top_k,
+                    corpus_id=corpus_id,
+                )
+            )
         windows = _token_windows(request.query, EMBEDDING_MAX_INPUT_TOKENS)
         cosine, best_chunks, dense_channels = self._dense_channels(windows)
         expansions: tuple[str, ...] = ()
@@ -905,6 +1060,7 @@ class IndexRetriever:
             }
             hits.append(
                 RetrievalHit(
+                    corpus_id=corpus_id,
                     page_id=page_id,
                     source_id=page.source_id,
                     slug=page.slug,
@@ -918,6 +1074,7 @@ class IndexRetriever:
                 )
             )
         trace = {
+            "corpus_id": corpus_id,
             "retrieval_mode": self.mode.value,
             "original_query": request.query,
             "expansion_queries": list(expansions),
@@ -940,6 +1097,7 @@ class IndexRetriever:
             "candidate_lists": channel_lists,
             "returned_pages": [
                 {
+                    "corpus_id": hit.corpus_id,
                     "page_id": hit.page_id,
                     "source_id": hit.source_id,
                     "slug": hit.slug,
@@ -1181,7 +1339,9 @@ class PARMConvergenceRetriever:
         concept_extractor: CueConceptExtractor | None = None,
     ):
         if index.sentence_embeddings is None or not index.sentences:
-            raise ValueError("PARM convergence retrieval requires a schema-v2 index")
+            raise ValueError(
+                "PARM convergence retrieval requires sentence-index artifacts"
+            )
         if embedder.model_name != index.manifest["embedding_model"]:
             raise ValueError("query embedder model does not match retrieval index")
         if embedder.dimensions != index.manifest["embedding_dimensions"]:
@@ -1255,9 +1415,22 @@ class PARMConvergenceRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> RetrievalResult:
         if top_k < 1:
             raise ValueError("top_k must be at least 1")
+        resolved_corpus_id = self.index.resolve_corpus_id(corpus_id)
+        if len(self.index.corpus_ids) > 1:
+            scoped = PARMConvergenceRetriever(
+                self.index.scoped(resolved_corpus_id),
+                self.embedder,
+            )
+            return scoped.retrieve_observation(
+                prompt,
+                observation_text,
+                top_k=top_k,
+                corpus_id=resolved_corpus_id,
+            )
         regions = _parm_listing_regions(observation_text)
         anchors = self.concept_extractor.task_anchors(prompt)
         concepts_by_region = self.concept_extractor.rare_region_concepts(
@@ -1343,6 +1516,7 @@ class PARMConvergenceRetriever:
             for rank, admission in enumerate(ordered, start=1)
         )
         trace = {
+            "corpus_id": resolved_corpus_id,
             "retrieval_condition_detail": self.retrieval_condition_detail,
             "evidence_projection_version": self.evidence_projection_version,
             "admission_policy": self.admission_policy,
@@ -1381,6 +1555,7 @@ class PARMConvergenceRetriever:
             },
             "returned_pages": [
                 {
+                    "corpus_id": hit.corpus_id,
                     "page_id": hit.page_id,
                     "source_id": hit.source_id,
                     "slug": hit.slug,
@@ -1801,6 +1976,7 @@ class PARMConvergenceRetriever:
             if key not in {"page_id", "priority"}
         }
         return RetrievalHit(
+            corpus_id=page.corpus_id,
             page_id=page_id,
             source_id=page.source_id,
             slug=page.slug,
@@ -1885,9 +2061,18 @@ class EntityExactRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> EntityRetrievalResult:
         if top_k < 1:
             raise ValueError("top_k must be at least 1")
+        resolved_corpus_id = self.index.resolve_corpus_id(corpus_id)
+        if len(self.index.corpus_ids) > 1:
+            scoped = EntityExactRetriever(self.index.scoped(resolved_corpus_id))
+            return scoped.retrieve_entities(
+                observation_text,
+                top_k=top_k,
+                corpus_id=resolved_corpus_id,
+            )
         seeds = self.extractor.extract(observation_text)
         hits: list[RetrievalHit] = []
         per_seed = []
@@ -1899,6 +2084,7 @@ class EntityExactRetriever:
                 chunk, chunk_score = self._best_exact_chunk(seed, page_id)
                 score = self._exact_match_score(seed.normalized_surface, page_id)
                 hit = RetrievalHit(
+                    corpus_id=page.corpus_id,
                     page_id=page.page_id,
                     source_id=page.source_id,
                     slug=page.slug,
@@ -1919,6 +2105,7 @@ class EntityExactRetriever:
                 hits.append(hit)
                 seed_pages.append(
                     {
+                        "corpus_id": page.corpus_id,
                         "page_id": page.page_id,
                         "source_id": page.source_id,
                         "slug": page.slug,
@@ -1942,6 +2129,7 @@ class EntityExactRetriever:
                 }
             )
         trace = {
+            "corpus_id": resolved_corpus_id,
             "retrieval_condition_detail": self.retrieval_condition_detail,
             "entity_seeds": [seed.__dict__ for seed in seeds],
             "per_seed_retrievals": per_seed,

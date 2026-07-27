@@ -24,6 +24,7 @@ class DatasetValidationTests(unittest.TestCase):
         validate_cases(cases)
         self.assertEqual(len(cases), 54)
         self.assertEqual(len({case["base_case_id"] for case in cases}), 18)
+        self.assertEqual({case["corpus_id"] for case in cases}, {"amara-life-v1"})
 
     def test_every_base_case_has_all_three_variants(self) -> None:
         cases = load_cases(DATASET)

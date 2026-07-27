@@ -97,6 +97,7 @@ class FakeEntityRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> EntityRetrievalResult:
         self.calls.append((observation_text, top_k))
         seed = EntitySeed(
@@ -207,7 +208,7 @@ class WorkbenchServiceTests(unittest.TestCase):
 
         self.assertEqual(
             self.retrievers[0].calls,
-            [RetrievalRequest("Choose a plan", top_k=3)],
+            [RetrievalRequest("Choose a plan", top_k=3, corpus_id="fixture")],
         )
         self.assertEqual(result["condition"], "input_rag")
         self.assertEqual(result["retrieval_mode"], "hybrid")
@@ -251,7 +252,13 @@ class WorkbenchServiceTests(unittest.TestCase):
 
         self.assertEqual(
             self.retrievers[0].calls,
-            [RetrievalRequest("Result 1. Garden Table", top_k=2)],
+            [
+                RetrievalRequest(
+                    "Result 1. Garden Table",
+                    top_k=2,
+                    corpus_id="fixture",
+                )
+            ],
         )
         self.assertEqual(result["condition"], "naive_output_rag")
         self.assertEqual(result["output_rag_flow"], "tool_output_only")
@@ -281,7 +288,13 @@ class WorkbenchServiceTests(unittest.TestCase):
         self.assertEqual(len(FakeModel.calls), 2)
         self.assertEqual(
             self.retrievers[0].calls,
-            [RetrievalRequest("Workbench answer", top_k=1)],
+            [
+                RetrievalRequest(
+                    "Workbench answer",
+                    top_k=1,
+                    corpus_id="fixture",
+                )
+            ],
         )
         self.assertEqual(result["output_rag_flow"], "model_output_only")
         self.assertEqual(result["retrieval_mode"], "hybrid")
@@ -351,7 +364,13 @@ class WorkbenchServiceTests(unittest.TestCase):
 
         self.assertEqual(
             self.retrievers[0].calls,
-            [RetrievalRequest("Choose exactly one lunch option.", top_k=2)],
+            [
+                RetrievalRequest(
+                    "Choose exactly one lunch option.",
+                    top_k=2,
+                    corpus_id="fixture",
+                )
+            ],
         )
         self.assertEqual(
             FakeModel.calls[0]["observation_text"],

@@ -44,6 +44,7 @@ LISTING_PREFIXES = (
 REQUIRED_FIELDS = {
     "case_id",
     "base_case_id",
+    "corpus_id",
     "variant",
     "prompt",
     "observation",
@@ -75,6 +76,7 @@ def load_cases(dataset_dir: str | Path) -> list[dict[str, Any]]:
     path = root / "cases.jsonl"
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found: {path}")
+    corpus_roots = _load_corpus_roots(root)
     cases: list[dict[str, Any]] = []
     with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
@@ -84,10 +86,46 @@ def load_cases(dataset_dir: str | Path) -> list[dict[str, Any]]:
                 case = json.loads(line)
             except json.JSONDecodeError as exc:
                 raise ValueError(f"{path}:{line_number}: invalid JSON: {exc}") from exc
+            if "corpus_id" not in case:
+                legacy_corpus_id = case.get("memory", {}).get("corpus_id")
+                if legacy_corpus_id:
+                    case["corpus_id"] = legacy_corpus_id
             case["_dataset_root"] = str(root.resolve())
+            case["_corpus_roots"] = corpus_roots
             case["observation_text"] = observation_text(case, root)
             cases.append(case)
     return cases
+
+
+def _load_corpus_roots(root: Path) -> dict[str, str]:
+    path = root / "dataset_manifest.json"
+    if not path.exists():
+        return {}
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{path}: invalid JSON: {exc}") from exc
+    if not isinstance(manifest, dict):
+        raise ValueError(f"{path}: expected an object")
+    if manifest.get("schema_version") != 1:
+        raise ValueError(f"{path}: unsupported dataset manifest schema")
+    corpora = manifest.get("corpora")
+    if not isinstance(corpora, list) or not corpora:
+        raise ValueError(f"{path}: corpora must be a non-empty list")
+    roots: dict[str, str] = {}
+    for entry in corpora:
+        if not isinstance(entry, dict):
+            raise ValueError(f"{path}: corpus entries must be objects")
+        corpus_id = entry.get("corpus_id")
+        source_root = entry.get("source_root")
+        if not isinstance(corpus_id, str) or not corpus_id.strip():
+            raise ValueError(f"{path}: corpus_id must be non-empty")
+        if corpus_id in roots:
+            raise ValueError(f"{path}: duplicate corpus_id {corpus_id!r}")
+        if not isinstance(source_root, str) or not source_root.strip():
+            raise ValueError(f"{path}: source_root must be non-empty")
+        roots[corpus_id] = str((root / source_root).resolve())
+    return roots
 
 
 def observation_text(case: dict[str, Any], dataset_root: str | Path) -> str:
@@ -106,6 +144,7 @@ def validate_cases(cases: list[dict[str, Any]]) -> None:
     issues: list[ValidationIssue] = []
     seen: set[str] = set()
     bases: dict[str, set[str]] = {}
+    base_corpora: dict[str, set[str]] = {}
     encoding = tiktoken.get_encoding(TOKENIZER)
 
     for index, case in enumerate(cases):
@@ -115,8 +154,12 @@ def validate_cases(cases: list[dict[str, Any]]) -> None:
         if case_id in seen:
             issues.append(ValidationIssue(case_id, "duplicate case_id"))
         seen.add(case_id)
-        bases.setdefault(str(case.get("base_case_id")), set()).add(
+        base_case_id = str(case.get("base_case_id"))
+        bases.setdefault(base_case_id, set()).add(
             str(case.get("variant"))
+        )
+        base_corpora.setdefault(base_case_id, set()).add(
+            str(case.get("corpus_id"))
         )
         _validate_case(case, case_id, encoding, issues)
 
@@ -127,6 +170,13 @@ def validate_cases(cases: list[dict[str, Any]]) -> None:
                     base_case_id,
                     "must contain positive, cue-ablated, and memory-included "
                     "variants",
+                )
+            )
+        if len(base_corpora[base_case_id]) != 1:
+            issues.append(
+                ValidationIssue(
+                    base_case_id,
+                    "all triplet variants must use the same corpus_id",
                 )
             )
     if issues:
@@ -145,6 +195,9 @@ def _validate_case(
     observation = case.get("observation", {})
     if observation.get("kind") not in OBSERVATION_KINDS:
         issues.append(ValidationIssue(case_id, "invalid observation.kind"))
+    corpus_id = case.get("corpus_id")
+    if not isinstance(corpus_id, str) or not corpus_id.strip():
+        issues.append(ValidationIssue(case_id, "corpus_id must be non-empty"))
 
     text = str(case.get("observation_text", ""))
     token_count = len(encoding.encode(text))
@@ -221,16 +274,30 @@ def _validate_case(
         issues.append(ValidationIssue(case_id, "needs at least 3 memory distractors"))
 
     memory = case.get("memory", {})
+    if memory.get("corpus_id") != corpus_id:
+        issues.append(
+            ValidationIssue(case_id, "case and memory corpus_id disagree")
+        )
     if not str(memory.get("text", "")).strip():
         issues.append(ValidationIssue(case_id, "memory text must be readable prose"))
     source_ids = set(memory.get("gold_source_ids", []))
     sources = memory.get("sources", [])
     if source_ids != {source.get("source_id") for source in sources}:
         issues.append(ValidationIssue(case_id, "gold source IDs and sources disagree"))
+    corpus_roots = case.get("_corpus_roots", {})
+    configured_root = (
+        corpus_roots.get(corpus_id)
+        if isinstance(corpus_roots, dict)
+        else None
+    )
     corpus_root = (
-        Path(case.get("_dataset_root", ".")).parent
-        / "amara-life-v1"
-        / "source"
+        Path(configured_root)
+        if configured_root is not None
+        else (
+            Path(case.get("_dataset_root", ".")).parent
+            / str(corpus_id)
+            / "source"
+        )
     )
     for source in sources:
         if "poison" in source.get("perturbations", []):

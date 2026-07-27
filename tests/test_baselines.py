@@ -108,7 +108,13 @@ class NoMemoryBaselineTests(unittest.TestCase):
         public = benchmark_input(case)
         self.assertEqual(
             set(asdict(public)),
-            {"case_id", "prompt", "observation_kind", "observation_text"},
+            {
+                "case_id",
+                "prompt",
+                "observation_kind",
+                "observation_text",
+                "corpus_id",
+            },
         )
         self.assertNotIn(case["memory"]["text"], public.observation_text)
 
@@ -134,6 +140,7 @@ class NoMemoryBaselineTests(unittest.TestCase):
         self.assertEqual(
             row["trace"],
             {
+                "corpus_id": case.corpus_id,
                 "detected_cues": [],
                 "retrieved_source_ids": [],
                 "admitted_source_ids": [],
@@ -183,6 +190,7 @@ class RecordingEntityRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> EntityRetrievalResult:
         self.calls.append((observation_text, top_k))
         return EntityRetrievalResult(
@@ -207,6 +215,7 @@ class RecordingPARMRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> RetrievalResult:
         self.calls.append((prompt, observation_text, top_k))
         return RetrievalResult(
@@ -267,7 +276,8 @@ class InputRagBaselineTests(unittest.TestCase):
         row = InputRagBaseline(retrieval_limit=2).run(case, model, retriever)
 
         self.assertEqual(
-            retriever.calls, [RetrievalRequest(case.prompt, top_k=2)]
+            retriever.calls,
+            [RetrievalRequest(case.prompt, top_k=2, corpus_id=case.corpus_id)],
         )
         self.assertEqual(model.calls[0]["instructions"], INPUT_RAG_INSTRUCTIONS)
         self.assertEqual(
@@ -324,7 +334,14 @@ class NaiveOutputRagBaselineTests(unittest.TestCase):
         ).run(case, model, retriever)
 
         self.assertEqual(
-            retriever.calls, [RetrievalRequest(case.observation_text, top_k=2)]
+            retriever.calls,
+            [
+                RetrievalRequest(
+                    case.observation_text,
+                    top_k=2,
+                    corpus_id=case.corpus_id,
+                )
+            ],
         )
         self.assertEqual(len(model.calls), 1)
         self.assertEqual(model.calls[0]["memory_context"], "1. Tool memory")
@@ -350,7 +367,14 @@ class NaiveOutputRagBaselineTests(unittest.TestCase):
         ).run(case, model, retriever)
 
         self.assertEqual(
-            retriever.calls, [RetrievalRequest("Intermediate choice", top_k=1)]
+            retriever.calls,
+            [
+                RetrievalRequest(
+                    "Intermediate choice",
+                    top_k=1,
+                    corpus_id=case.corpus_id,
+                )
+            ],
         )
         self.assertEqual(len(model.calls), 2)
         self.assertIsNone(model.calls[0]["memory_context"])
@@ -403,8 +427,16 @@ class NaiveOutputRagBaselineTests(unittest.TestCase):
         self.assertEqual(
             retriever.calls,
             [
-                RetrievalRequest(case.observation_text, top_k=3),
-                RetrievalRequest("Intermediate with memory", top_k=3),
+                RetrievalRequest(
+                    case.observation_text,
+                    top_k=3,
+                    corpus_id=case.corpus_id,
+                ),
+                RetrievalRequest(
+                    "Intermediate with memory",
+                    top_k=3,
+                    corpus_id=case.corpus_id,
+                ),
             ],
         )
         self.assertEqual(len(model.calls), 2)
@@ -453,7 +485,13 @@ class PromptedMemoryToolBaselineTests(unittest.TestCase):
 
         self.assertEqual(
             retriever.calls,
-            [RetrievalRequest("NovaMind Texas grid pilot", top_k=2)],
+            [
+                RetrievalRequest(
+                    "NovaMind Texas grid pilot",
+                    top_k=2,
+                    corpus_id=case.corpus_id,
+                )
+            ],
         )
         self.assertEqual(len(model.memory_tool_calls), 1)
         self.assertEqual(len(model.calls), 1)

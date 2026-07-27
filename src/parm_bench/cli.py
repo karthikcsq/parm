@@ -410,6 +410,7 @@ def _truncated_row(
         "truncated": True,
         "truncation_reason": error.reason,
         "trace": {
+            "corpus_id": case["corpus_id"],
             "detected_cues": [],
             "retrieved_source_ids": [],
             "admitted_source_ids": [],

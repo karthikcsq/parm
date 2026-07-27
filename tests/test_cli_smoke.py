@@ -132,6 +132,7 @@ class FakeEntityRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> EntityRetrievalResult:
         self.calls.append((observation_text, top_k))
         seed = EntitySeed(
@@ -185,6 +186,7 @@ class FakePARMRetriever:
         observation_text: str,
         *,
         top_k: int,
+        corpus_id: str | None = None,
     ) -> RetrievalResult:
         self.calls.append((prompt, observation_text, top_k))
         hit = RetrievalHit(

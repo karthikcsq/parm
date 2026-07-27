@@ -28,6 +28,7 @@ class BenchmarkInput:
     prompt: str
     observation_kind: str
     observation_text: str
+    corpus_id: str = "fixture"
 
 
 class Baseline(Protocol):
@@ -108,6 +109,7 @@ class NoMemoryBaseline:
             "provider_response_id": response.response_id,
             "usage": response.usage,
             "trace": {
+                "corpus_id": case.corpus_id,
                 "detected_cues": [],
                 "retrieved_source_ids": [],
                 "admitted_source_ids": [],
@@ -136,7 +138,11 @@ class InputRagBaseline:
         if retriever is None:
             raise ValueError("input_rag baseline requires a retriever")
         retrieval = retriever.retrieve(
-            RetrievalRequest(case.prompt, top_k=self.retrieval_limit)
+            RetrievalRequest(
+                case.prompt,
+                top_k=self.retrieval_limit,
+                corpus_id=case.corpus_id,
+            )
         )
         hits = retrieval.hits
         memory_context = "\n\n".join(
@@ -163,6 +169,7 @@ class InputRagBaseline:
             "provider_response_id": response.response_id,
             "usage": response.usage,
             "trace": {
+                "corpus_id": case.corpus_id,
                 "detected_cues": [],
                 **retrieval.trace,
                 "retrieved_page_ids": page_ids,
@@ -214,6 +221,7 @@ class NaiveOutputRagBaseline:
                 "tool_output",
                 case.observation_text,
                 self.retrieval_limit,
+                case.corpus_id,
             )
             retrievals.append(tool_retrieval)
             admitted_hits.extend(tool_retrieval["hits"])
@@ -230,6 +238,7 @@ class NaiveOutputRagBaseline:
                 "model_output",
                 first_response.text,
                 self.retrieval_limit,
+                case.corpus_id,
             )
             retrievals.append(model_retrieval)
             admitted_hits.extend(model_retrieval["hits"])
@@ -239,6 +248,7 @@ class NaiveOutputRagBaseline:
                 "tool_output",
                 case.observation_text,
                 self.retrieval_limit,
+                case.corpus_id,
             )
             retrievals.append(tool_retrieval)
             tool_hits = tool_retrieval["hits"]
@@ -262,6 +272,7 @@ class NaiveOutputRagBaseline:
                 "model_output",
                 intermediate_response.text,
                 self.retrieval_limit,
+                case.corpus_id,
             )
             retrievals.append(model_retrieval)
             admitted_hits.extend(tool_hits)
@@ -288,6 +299,7 @@ class NaiveOutputRagBaseline:
             "provider_response_id": response.response_id,
             "usage": response.usage,
             "trace": {
+                "corpus_id": case.corpus_id,
                 "detected_cues": [],
                 "output_rag_flow": self.output_rag_flow.value,
                 "model_passes": model_passes,
@@ -354,7 +366,11 @@ class PromptedMemoryToolBaseline:
         retrieval_trace: dict[str, Any] | None = None
         if decision.query is not None:
             retrieval = retriever.retrieve(
-                RetrievalRequest(decision.query, top_k=self.retrieval_limit)
+                RetrievalRequest(
+                    decision.query,
+                    top_k=self.retrieval_limit,
+                    corpus_id=case.corpus_id,
+                )
             )
             hits = list(retrieval.hits)
             retrieval_trace = retrieval.trace
@@ -385,6 +401,7 @@ class PromptedMemoryToolBaseline:
             "provider_response_id": response.response_id,
             "usage": response.usage,
             "trace": {
+                "corpus_id": case.corpus_id,
                 "detected_cues": [],
                 "memory_tool_called": decision.query is not None,
                 "memory_tool_query": decision.query,
@@ -429,6 +446,7 @@ class AllEntityOutputRagBaseline:
         retrieval = retriever.retrieve_entities(
             case.observation_text,
             top_k=self.retrieval_limit,
+            corpus_id=case.corpus_id,
         )
         admitted_hits = _dedupe_entity_hits(list(retrieval.hits))
         memory_context = _memory_context(admitted_hits)
@@ -453,6 +471,7 @@ class AllEntityOutputRagBaseline:
             "provider_response_id": response.response_id,
             "usage": response.usage,
             "trace": {
+                "corpus_id": case.corpus_id,
                 "detected_cues": [
                     {
                         "seed_id": seed.seed_id,
@@ -501,6 +520,7 @@ class PARMBaseline:
             case.prompt,
             case.observation_text,
             top_k=self.retrieval_limit,
+            corpus_id=case.corpus_id,
         )
         hits = list(retrieval.hits)
         memory_context = _parm_memory_context(hits, retrieval.trace)
@@ -525,6 +545,7 @@ class PARMBaseline:
             "provider_response_id": response.response_id,
             "usage": response.usage,
             "trace": {
+                "corpus_id": case.corpus_id,
                 "detected_cues": retrieval.trace.get("semantic_seeds", [])
                 + retrieval.trace.get("entity_seeds", []),
                 "judgment_prompt_version": PARM_JUDGMENT_PROMPT_VERSION,
@@ -633,6 +654,7 @@ def benchmark_input(case: dict[str, Any]) -> BenchmarkInput:
         prompt=case["prompt"],
         observation_kind=case["observation"]["kind"],
         observation_text=case["observation_text"],
+        corpus_id=case["corpus_id"],
     )
 
 
@@ -675,9 +697,10 @@ def _retrieve_phase(
     phase: str,
     query: str,
     retrieval_limit: int,
+    corpus_id: str,
 ) -> dict[str, Any]:
     retrieval = retriever.retrieve(
-        RetrievalRequest(query, top_k=retrieval_limit)
+        RetrievalRequest(query, top_k=retrieval_limit, corpus_id=corpus_id)
     )
     return {
         "phase": phase,

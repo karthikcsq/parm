@@ -11,6 +11,7 @@ RESULTS = ROOT / "data" / "benchmark-results" / "personamem-v0-first-pass"
 DATASET_MANIFEST = (
     ROOT / "data" / "benchmark_personamem_v0" / "dataset_manifest.json"
 )
+DATASET_CASES = ROOT / "data" / "benchmark_personamem_v0" / "cases.jsonl"
 INDEX_MANIFEST = (
     ROOT
     / "data"
@@ -40,6 +41,11 @@ CONDITIONS = (
 def main() -> None:
     dataset_manifest = _read_json(DATASET_MANIFEST)
     index_manifest = _read_json(INDEX_MANIFEST)
+    corpus_scenarios = {
+        row["corpus_id"]: row["base_case_id"]
+        for row in _read_jsonl(DATASET_CASES)
+        if row["variant"] == "positive"
+    }
     condition_rows: list[dict[str, Any]] = []
     corpus_rows: dict[str, dict[str, Any]] = {}
     resolved_models: set[str] = set()
@@ -95,7 +101,12 @@ def main() -> None:
         condition_rows.append(row)
         for corpus_id, corpus_metrics in metrics["by_corpus"].items():
             corpus = corpus_rows.setdefault(
-                corpus_id, {"corpus_id": corpus_id, "conditions": {}}
+                corpus_id,
+                {
+                    "corpus_id": corpus_id,
+                    "base_case_id": corpus_scenarios[corpus_id],
+                    "conditions": {},
+                },
             )
             corpus["conditions"][name] = {
                 "positive_accuracy": _variant_rate(
@@ -209,9 +220,40 @@ def _render_markdown(comparison: dict[str, Any]) -> str:
             + " | ".join(_percent(value) for value in values)
             + " |"
         )
+    by_name = {
+        row["condition"]: row for row in comparison["conditions"]
+    }
+    parm = by_name["parm-gpt-5-mini"]
+    input_rag = by_name["input-rag-enhanced-gpt-5-mini"]
+    entity = by_name["all-entity-output-rag-gpt-5-mini"]
     lines.extend(
         [
             "",
+            "## First-pass readout",
+            "",
+            f"- PARM and enhanced input RAG tie for the highest positive "
+            f"accuracy at {_percent(parm['positive_accuracy'])}. PARM keeps "
+            f"{_percent(parm['control_accuracy'])} of controls stable versus "
+            f"{_percent(input_rag['control_accuracy'])} for input RAG.",
+            f"- PARM admits little evidence, but its "
+            f"{_percent(parm['memory_admission_precision'])} precision is "
+            f"substantially cleaner than every fixed top-k condition. Its "
+            f"{_percent(parm['memory_admission_recall'])} recall remains too "
+            f"low for strong coverage.",
+            f"- Exact-entity output RAG reaches "
+            f"{_percent(entity['memory_admission_recall'])} recall, but "
+            f"{_percent(entity['spurious_memory_admission_rate'])} of its "
+            f"admissions are non-gold and it keeps only "
+            f"{_percent(entity['control_accuracy'])} of controls stable.",
+            "- Every condition reaches the 100.0% explicit-memory ceiling. "
+            "Together with the no-memory 0/30 positive, 30/30 control, and "
+            "30/30 ceiling gate, this makes retrieval and admission the main "
+            "first-pass bottleneck rather than basic task usability.",
+            "",
+        ]
+    )
+    lines.extend(
+        [
             "## Interpretation boundaries",
             "",
             "- This development set uses ordinary, current, self-attributed "
@@ -233,10 +275,10 @@ def _render_markdown(comparison: dict[str, Any]) -> str:
             "",
             "Each cell is P/C/Z/R, where R is gold-memory admission recall.",
             "",
-            "| Corpus | "
+            "| Corpus | Scenario | "
             + " | ".join(row["label"] for row in comparison["conditions"])
             + " |",
-            "| --- | "
+            "| --- | --- | "
             + " | ".join("---:" for _ in comparison["conditions"])
             + " |",
         ]
@@ -256,7 +298,12 @@ def _render_markdown(comparison: dict[str, Any]) -> str:
                     )
                 )
             )
-        lines.append(f"| `{corpus['corpus_id']}` | " + " | ".join(cells) + " |")
+        scenario = corpus["base_case_id"].removeprefix("parm-personamem-")
+        lines.append(
+            f"| `{corpus['corpus_id']}` | {scenario} | "
+            + " | ".join(cells)
+            + " |"
+        )
     lines.extend(
         [
             "",

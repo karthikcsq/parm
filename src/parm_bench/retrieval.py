@@ -4,7 +4,7 @@ import hashlib
 import json
 import math
 import re
-from collections import Counter, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -19,6 +19,7 @@ EMBEDDING_DIMENSIONS = 512
 EMBEDDING_ENCODING = "cl100k_base"
 EMBEDDING_MAX_INPUT_TOKENS = 8192
 EMBEDDING_BATCH_SIZE = 64
+SCOPED_RETRIEVER_CACHE_SIZE = 8
 CANDIDATE_DEPTH = 20
 OFFICIAL_TOP_K = 5
 RRF_K = 60
@@ -1356,7 +1357,9 @@ class PARMConvergenceRetriever:
             raise ValueError("query embedder dimensions do not match retrieval index")
         self.index = index
         self.embedder = embedder
-        self._scoped_retrievers: dict[str, PARMConvergenceRetriever] = {}
+        self._scoped_retrievers: OrderedDict[
+            str, PARMConvergenceRetriever
+        ] = OrderedDict()
         self._scoped_nlp: Any | None = None
         if len(index.corpus_ids) > 1:
             if entity_extractor is None:
@@ -1440,7 +1443,7 @@ class PARMConvergenceRetriever:
             raise ValueError("top_k must be at least 1")
         resolved_corpus_id = self.index.resolve_corpus_id(corpus_id)
         if len(self.index.corpus_ids) > 1:
-            scoped = self._scoped_retrievers.get(resolved_corpus_id)
+            scoped = self._scoped_retrievers.pop(resolved_corpus_id, None)
             if scoped is None:
                 scoped_index = self.index.scoped(resolved_corpus_id)
                 scoped_entity_extractor = (
@@ -1457,7 +1460,9 @@ class PARMConvergenceRetriever:
                     entity_extractor=scoped_entity_extractor,
                     concept_extractor=self.concept_extractor,
                 )
-                self._scoped_retrievers[resolved_corpus_id] = scoped
+            self._scoped_retrievers[resolved_corpus_id] = scoped
+            if len(self._scoped_retrievers) > SCOPED_RETRIEVER_CACHE_SIZE:
+                self._scoped_retrievers.popitem(last=False)
             return scoped.retrieve_observation(
                 prompt,
                 observation_text,
@@ -2077,7 +2082,9 @@ class EntityExactRetriever:
         self.extractor = extractor
         if self.extractor is None and len(index.corpus_ids) == 1:
             self.extractor = EntitySurfaceExtractor(index)
-        self._scoped_retrievers: dict[str, EntityExactRetriever] = {}
+        self._scoped_retrievers: OrderedDict[
+            str, EntityExactRetriever
+        ] = OrderedDict()
         self._page_by_id = {page.page_id: page for page in index.pages}
         self._chunks_by_page: dict[str, list[ChunkRecord]] = defaultdict(list)
         for chunk in index.chunks:
@@ -2103,7 +2110,7 @@ class EntityExactRetriever:
             raise ValueError("top_k must be at least 1")
         resolved_corpus_id = self.index.resolve_corpus_id(corpus_id)
         if len(self.index.corpus_ids) > 1:
-            scoped = self._scoped_retrievers.get(resolved_corpus_id)
+            scoped = self._scoped_retrievers.pop(resolved_corpus_id, None)
             if scoped is None:
                 scoped_index = self.index.scoped(resolved_corpus_id)
                 scoped_extractor = (
@@ -2115,7 +2122,9 @@ class EntityExactRetriever:
                     scoped_index,
                     extractor=scoped_extractor,
                 )
-                self._scoped_retrievers[resolved_corpus_id] = scoped
+            self._scoped_retrievers[resolved_corpus_id] = scoped
+            if len(self._scoped_retrievers) > SCOPED_RETRIEVER_CACHE_SIZE:
+                self._scoped_retrievers.popitem(last=False)
             return scoped.retrieve_entities(
                 observation_text,
                 top_k=top_k,

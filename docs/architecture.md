@@ -51,6 +51,13 @@ policy so the benchmark can compare mechanisms over the same memory substrate.
 `data/benchmark_v1/cases.jsonl` contains 54 cases: 18 scenarios, each with
 three variants.
 
+`data/benchmark_personamem_v0/cases.jsonl` is a separate development
+benchmark with 90 cases over 30 persona-disjoint PersonaMem-v2 corpora. It
+uses the same triplet contract. A dataset manifest links each case to its
+corpus, bounded upstream source, normalized record, construction decision,
+and passing no-memory fairness artifact. The frozen Amara cases and index are
+not inputs to this benchmark.
+
 | Variant | Observation | Expected behavior |
 | --- | --- | --- |
 | Positive | Contains the decisive incidental cue | Retrieve and select the memory-conditioned choice |
@@ -186,6 +193,7 @@ Canonical runs depend on tracked, hashed artifacts:
 | Artifact | Purpose |
 | --- | --- |
 | `data/retrieval-indexes/amara-life-v1` | Neutral pages, chunks, sentences, links, and embeddings |
+| `data/retrieval-indexes/personamem-v2-train-v0` | Schema-v3 index whose pages, chunks, sentences, and retrieval requests carry a persona corpus scope |
 | `data/expansion-caches/...` | Frozen enhanced-mode query alternatives |
 | `data/response-caches/...` | Reusable response-model calls keyed by the full request |
 | `data/benchmark-results/*.jsonl` | One prediction and trace per case |

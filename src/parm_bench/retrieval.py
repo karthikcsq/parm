@@ -18,6 +18,7 @@ EMBEDDING_API_MODEL = "text-embedding-3-small"
 EMBEDDING_DIMENSIONS = 512
 EMBEDDING_ENCODING = "cl100k_base"
 EMBEDDING_MAX_INPUT_TOKENS = 8192
+EMBEDDING_BATCH_SIZE = 64
 CANDIDATE_DEPTH = 20
 OFFICIAL_TOP_K = 5
 RRF_K = 60
@@ -607,16 +608,32 @@ class OpenAIEmbedder:
     def embed(self, texts: Sequence[str]) -> np.ndarray:
         if not texts:
             return np.empty((0, self.dimensions), dtype=np.float32)
-        response = self._client.embeddings.create(
-            model=EMBEDDING_API_MODEL,
-            input=list(texts),
-            dimensions=self.dimensions,
-            encoding_format="float",
-        )
-        ordered = sorted(response.data, key=lambda item: item.index)
-        result = np.asarray(
-            [item.embedding for item in ordered], dtype=np.float32
-        )
+        embeddings = []
+        for start in range(0, len(texts), EMBEDDING_BATCH_SIZE):
+            batch = list(texts[start : start + EMBEDDING_BATCH_SIZE])
+            for attempt in range(3):
+                try:
+                    response = self._client.embeddings.create(
+                        model=EMBEDDING_API_MODEL,
+                        input=batch,
+                        dimensions=self.dimensions,
+                        encoding_format="float",
+                    )
+                    break
+                except json.JSONDecodeError:
+                    if attempt == 2:
+                        raise
+            ordered = sorted(response.data, key=lambda item: item.index)
+            batch_result = np.asarray(
+                [item.embedding for item in ordered], dtype=np.float32
+            )
+            if batch_result.shape != (len(batch), self.dimensions):
+                raise ValueError(
+                    f"embedder returned {batch_result.shape}, expected "
+                    f"({len(batch)}, {self.dimensions})"
+                )
+            embeddings.append(batch_result)
+        result = np.concatenate(embeddings)
         if result.shape != (len(texts), self.dimensions):
             raise ValueError(
                 f"embedder returned {result.shape}, expected "

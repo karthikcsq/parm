@@ -175,6 +175,45 @@ class OpenAIEmbedderTests(unittest.TestCase):
             ],
         )
 
+    def test_batches_large_requests_without_changing_order(self) -> None:
+        calls: list[list[str]] = []
+
+        def create(**kwargs: object) -> SimpleNamespace:
+            batch = list(kwargs["input"])
+            calls.append(batch)
+            return SimpleNamespace(
+                data=[
+                    SimpleNamespace(index=index, embedding=vector(float(text)))
+                    for index, text in enumerate(batch)
+                ]
+            )
+
+        client = SimpleNamespace(embeddings=SimpleNamespace(create=create))
+        with mock.patch("parm_bench.retrieval.EMBEDDING_BATCH_SIZE", 2):
+            result = OpenAIEmbedder(client).embed(["1", "2", "3", "4", "5"])
+
+        self.assertEqual(calls, [["1", "2"], ["3", "4"], ["5"]])
+        self.assertEqual(result.shape, (5, EMBEDDING_DIMENSIONS))
+        self.assertEqual(result[:, 0].tolist(), [1.0, 2.0, 3.0, 4.0, 5.0])
+
+    def test_retries_an_empty_json_embedding_response(self) -> None:
+        attempts = 0
+
+        def create(**kwargs: object) -> SimpleNamespace:
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                raise json.JSONDecodeError("empty response", "", 0)
+            return SimpleNamespace(
+                data=[SimpleNamespace(index=0, embedding=vector(1.0))]
+            )
+
+        client = SimpleNamespace(embeddings=SimpleNamespace(create=create))
+        result = OpenAIEmbedder(client).embed(["retry"])
+
+        self.assertEqual(attempts, 2)
+        self.assertEqual(result.shape, (1, EMBEDDING_DIMENSIONS))
+
 class TokenWindowTests(unittest.TestCase):
     def test_short_text_is_a_single_verbatim_window(self) -> None:
         self.assertEqual(_token_windows("alpha beta", 8192), ["alpha beta"])

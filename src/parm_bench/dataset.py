@@ -41,6 +41,11 @@ LISTING_PREFIXES = (
     "Essay ",
     "Chart ",
 )
+# Model-visible fields are exactly the four `baselines.benchmark_input` reads:
+# prompt, observation.kind, observation_text, and corpus_id (plus case_id for
+# bookkeeping). Everything else here is evaluator-only and must never reach a
+# system under test: `memory` (text, gold_source_ids, sources and their
+# evidence_span records), `cue`, `decisions`, `distractors`, and `provenance`.
 REQUIRED_FIELDS = {
     "case_id",
     "base_case_id",
@@ -54,6 +59,60 @@ REQUIRED_FIELDS = {
     "distractors",
     "provenance",
 }
+
+
+@dataclass(frozen=True)
+class ValidationProfile:
+    """Per-profile validation rules keyed by a manifest `validation_profile`.
+
+    Generic rules run for every profile. The switches below only add or drop
+    rules that a dataset family cannot share: the Listing-row envelope that
+    Amara and the PersonaMem pilot use, the observation size band, the
+    PersonaMem pilot's one-off construction audit, and the PARMBench evidence,
+    opacity, isolation, and construction-signature gates.
+    """
+
+    name: str
+    require_listing_rows: bool = True
+    min_context_tokens: int = MIN_CONTEXT_TOKENS
+    max_context_tokens: int = MAX_CONTEXT_TOKENS
+    run_personamem_pilot_gate: bool = False
+    require_evidence_spans: bool = False
+    require_prompt_opacity: bool = False
+    require_persona_isolation: bool = False
+    run_construction_checks: bool = False
+
+
+DEFAULT_VALIDATION_PROFILE = ValidationProfile(name="default")
+VALIDATION_PROFILES: dict[str, ValidationProfile] = {
+    "personamem_v2_v0": ValidationProfile(
+        name="personamem_v2_v0",
+        run_personamem_pilot_gate=True,
+    ),
+    "personamem_v2_mixed_v0": ValidationProfile(
+        name="personamem_v2_mixed_v0",
+        require_listing_rows=False,
+        run_personamem_pilot_gate=True,
+    ),
+    "parmbench_v1": ValidationProfile(
+        name="parmbench_v1",
+        require_listing_rows=False,
+        # A retrieval-agnostic schema varies the observation format, so the
+        # legacy 8k-12k band is widened rather than dropped.
+        min_context_tokens=6_000,
+        max_context_tokens=16_000,
+        require_evidence_spans=True,
+        require_prompt_opacity=True,
+        require_persona_isolation=True,
+        run_construction_checks=True,
+    ),
+}
+
+
+def validation_profile(name: Any) -> ValidationProfile:
+    if not isinstance(name, str):
+        return DEFAULT_VALIDATION_PROFILE
+    return VALIDATION_PROFILES.get(name, DEFAULT_VALIDATION_PROFILE)
 
 
 @dataclass(frozen=True)
@@ -76,7 +135,7 @@ def load_cases(dataset_dir: str | Path) -> list[dict[str, Any]]:
     path = root / "cases.jsonl"
     if not path.exists():
         raise FileNotFoundError(f"Dataset file not found: {path}")
-    corpus_roots = _load_corpus_roots(root)
+    corpus_roots, corpus_source_id_prefixes = _load_corpus_settings(root)
     cases: list[dict[str, Any]] = []
     with path.open(encoding="utf-8") as handle:
         for line_number, line in enumerate(handle, start=1):
@@ -92,15 +151,18 @@ def load_cases(dataset_dir: str | Path) -> list[dict[str, Any]]:
                     case["corpus_id"] = legacy_corpus_id
             case["_dataset_root"] = str(root.resolve())
             case["_corpus_roots"] = corpus_roots
+            case["_corpus_source_id_prefixes"] = corpus_source_id_prefixes
             case["observation_text"] = observation_text(case, root)
             cases.append(case)
     return cases
 
 
-def _load_corpus_roots(root: Path) -> dict[str, str]:
+def _load_corpus_settings(root: Path) -> tuple[dict[str, str], dict[str, str]]:
+    """Resolve each corpus source root and its optional source_id prefix."""
+
     path = root / "dataset_manifest.json"
     if not path.exists():
-        return {}
+        return {}, {}
     try:
         manifest = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -113,6 +175,7 @@ def _load_corpus_roots(root: Path) -> dict[str, str]:
     if not isinstance(corpora, list) or not corpora:
         raise ValueError(f"{path}: corpora must be a non-empty list")
     roots: dict[str, str] = {}
+    source_id_prefixes: dict[str, str] = {}
     for entry in corpora:
         if not isinstance(entry, dict):
             raise ValueError(f"{path}: corpus entries must be objects")
@@ -125,7 +188,10 @@ def _load_corpus_roots(root: Path) -> dict[str, str]:
         if not isinstance(source_root, str) or not source_root.strip():
             raise ValueError(f"{path}: source_root must be non-empty")
         roots[corpus_id] = str((root / source_root).resolve())
-    return roots
+        prefix = entry.get("source_id_prefix")
+        if isinstance(prefix, str) and prefix.strip():
+            source_id_prefixes[corpus_id] = prefix
+    return roots, source_id_prefixes
 
 
 def observation_text(case: dict[str, Any], dataset_root: str | Path) -> str:
@@ -159,8 +225,8 @@ def validate_cases(
         if manifest_path is not None and manifest_path.is_file()
         else {}
     )
-    validation_profile = manifest.get("validation_profile")
-    require_listing_rows = validation_profile != "personamem_v2_mixed_v0"
+    profile = validation_profile(manifest.get("validation_profile"))
+    source_texts: dict[str, str] = {}
 
     for index, case in enumerate(cases):
         case_id = str(case.get("case_id", f"<case {index}>"))
@@ -181,7 +247,8 @@ def validate_cases(
             case_id,
             encoding,
             issues,
-            require_listing_rows=require_listing_rows,
+            profile=profile,
+            source_texts=source_texts,
         )
 
     for base_case_id, variants in bases.items():
@@ -200,13 +267,17 @@ def validate_cases(
                     "all triplet variants must use the same corpus_id",
                 )
             )
+    if profile.run_construction_checks:
+        from .construction_checks import construction_issues
+
+        issues.extend(
+            ValidationIssue(case_id, message)
+            for case_id, message in construction_issues(cases)
+        )
     if issues:
         raise DatasetValidationError(issues)
     if include_profile and manifest_path is not None and manifest_path.is_file():
-        if manifest.get("validation_profile") in {
-            "personamem_v2_v0",
-            "personamem_v2_mixed_v0",
-        }:
+        if profile.run_personamem_pilot_gate:
             from .personamem import personamem_pilot_validation_issues
 
             profile_issues = [
@@ -223,8 +294,12 @@ def _validate_case(
     encoding: Any,
     issues: list[ValidationIssue],
     *,
-    require_listing_rows: bool = True,
+    profile: ValidationProfile = DEFAULT_VALIDATION_PROFILE,
+    source_texts: dict[str, str] | None = None,
 ) -> None:
+    require_listing_rows = profile.require_listing_rows
+    if source_texts is None:
+        source_texts = {}
     variant = case.get("variant")
     if variant not in VARIANTS:
         issues.append(ValidationIssue(case_id, "invalid variant"))
@@ -237,12 +312,13 @@ def _validate_case(
 
     text = str(case.get("observation_text", ""))
     token_count = len(encoding.encode(text))
-    if not MIN_CONTEXT_TOKENS <= token_count <= MAX_CONTEXT_TOKENS:
+    if not profile.min_context_tokens <= token_count <= profile.max_context_tokens:
         issues.append(
             ValidationIssue(
                 case_id,
                 f"observation has {token_count} tokens; expected "
-                f"{MIN_CONTEXT_TOKENS}-{MAX_CONTEXT_TOKENS} using {TOKENIZER}",
+                f"{profile.min_context_tokens}-{profile.max_context_tokens} "
+                f"using {TOKENIZER}",
             )
         )
 
@@ -366,3 +442,156 @@ def _validate_case(
                         f"corpus directory {path_prefix!r} for {source_path}",
                     )
                 )
+        if profile.require_evidence_spans:
+            _validate_evidence_span(
+                source, case_id, corpus_root, issues, source_texts
+            )
+
+    if profile.require_persona_isolation:
+        _validate_persona_isolation(case, case_id, corpus_id, sources, issues)
+    if profile.require_prompt_opacity:
+        _validate_prompt_opacity(
+            prompt,
+            case_id,
+            variant,
+            str(memory.get("text", "")),
+            memory_choice,
+            sources,
+            issues,
+        )
+
+
+def _validate_evidence_span(
+    source: dict[str, Any],
+    case_id: str,
+    corpus_root: Path,
+    issues: list[ValidationIssue],
+    source_texts: dict[str, str],
+) -> None:
+    """Require a gold source to quote the raw span that supports the memory.
+
+    Raw source spans are canonical benchmark truth, so the span must be present
+    verbatim in the tracked source file rather than paraphrased by a builder.
+    """
+
+    source_id = str(source.get("source_id", ""))
+    span = source.get("evidence_span")
+    if not isinstance(span, dict):
+        issues.append(
+            ValidationIssue(
+                case_id, f"gold source {source_id} is missing evidence_span"
+            )
+        )
+        return
+    span_text = span.get("text")
+    if not isinstance(span_text, str) or not span_text.strip():
+        issues.append(
+            ValidationIssue(
+                case_id,
+                f"gold source {source_id} needs a non-empty evidence_span.text",
+            )
+        )
+        return
+    path = corpus_root / str(source.get("path", ""))
+    if not path.exists():
+        return
+    key = str(path)
+    if key not in source_texts:
+        source_texts[key] = path.read_text(encoding="utf-8", errors="replace")
+    if span_text not in source_texts[key]:
+        issues.append(
+            ValidationIssue(
+                case_id,
+                f"evidence_span for {source_id} is not verbatim in "
+                f"{source.get('path')}",
+            )
+        )
+
+
+def _validate_persona_isolation(
+    case: dict[str, Any],
+    case_id: str,
+    corpus_id: Any,
+    sources: list[dict[str, Any]],
+    issues: list[ValidationIssue],
+) -> None:
+    """Keep a case inside the one persona history its provenance declares."""
+
+    persona_id = case.get("provenance", {}).get("persona_id")
+    persona_token = "" if persona_id is None else str(persona_id).strip()
+    if not persona_token:
+        issues.append(
+            ValidationIssue(case_id, "provenance.persona_id must be set")
+        )
+    elif persona_token not in str(corpus_id):
+        issues.append(
+            ValidationIssue(
+                case_id,
+                f"corpus_id {corpus_id!r} does not name provenance persona "
+                f"{persona_token!r}",
+            )
+        )
+    prefixes = case.get("_corpus_source_id_prefixes", {})
+    prefix = prefixes.get(corpus_id) if isinstance(prefixes, dict) else None
+    if not prefix:
+        issues.append(
+            ValidationIssue(
+                case_id,
+                f"corpus {corpus_id!r} must declare source_id_prefix in the "
+                "dataset manifest",
+            )
+        )
+        return
+    for source in sources:
+        source_id = str(source.get("source_id", ""))
+        if not source_id.startswith(prefix):
+            issues.append(
+                ValidationIssue(
+                    case_id,
+                    f"source_id {source_id!r} is outside corpus prefix "
+                    f"{prefix!r}",
+                )
+            )
+
+
+def _validate_prompt_opacity(
+    prompt: str,
+    case_id: str,
+    variant: Any,
+    memory_text: str,
+    memory_choice: Any,
+    sources: list[dict[str, Any]],
+    issues: list[ValidationIssue],
+) -> None:
+    """Keep the ordinary prompt from revealing the answer or the memory query.
+
+    The memory-included ceiling injects the memory text on purpose; nothing
+    else may appear, including the raw evidence spans behind that memory.
+    """
+
+    if (
+        variant != "memory-included"
+        and memory_text.strip()
+        and memory_text.casefold() in prompt
+    ):
+        issues.append(ValidationIssue(case_id, "memory text leaks into prompt"))
+    if isinstance(memory_choice, str) and memory_choice.strip():
+        if memory_choice.casefold() in prompt:
+            issues.append(
+                ValidationIssue(
+                    case_id, "memory-conditioned choice leaks into prompt"
+                )
+            )
+    for source in sources:
+        span = source.get("evidence_span")
+        span_text = span.get("text") if isinstance(span, dict) else None
+        if not isinstance(span_text, str) or not span_text.strip():
+            continue
+        if span_text.casefold() in prompt:
+            issues.append(
+                ValidationIssue(
+                    case_id,
+                    f"evidence_span for {source.get('source_id')} leaks into "
+                    "prompt",
+                )
+            )

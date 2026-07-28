@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import copy
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from parm_bench.amara import normalize_amara
+import tiktoken
+
+from parm_bench.amara import normalize_amara, sha256_file
 from parm_bench.dataset import (
     LISTING_PREFIXES,
+    TOKENIZER,
     DatasetValidationError,
     load_cases,
     validate_cases,
+    validation_profile,
 )
 
 
@@ -20,6 +25,176 @@ PERSONAMEM_DATASET = ROOT / "data" / "benchmark_personamem_v0"
 PERSONAMEM_MIXED_DATASET = (
     ROOT / "data" / "benchmark_personamem_mixed_v0"
 )
+
+PARMBENCH_PERSONAS = (7, 8)
+PARMBENCH_PROMPT = (
+    "After reading the collected material, choose exactly one option you "
+    "would move forward with. Reply using only its name exactly as written."
+)
+PARMBENCH_EVIDENCE = {
+    7: "I keep a shared log of my weekly swimming sessions.",
+    8: "I stopped drinking coffee after two in the afternoon.",
+}
+PARMBENCH_MEMORY = {
+    7: "The user tracks weekly swimming sessions in a shared log.",
+    8: "The user avoids caffeine in the second half of the day.",
+}
+PARMBENCH_CUE = {
+    7: "The listed slot reserves a lane and writes each set into a shared log.",
+    8: "The listed slot serves decaffeinated pours after midday.",
+}
+PARMBENCH_NEUTRAL = {
+    7: "The listed slot runs at the same hour as the others on the sheet.",
+    8: "The listed slot pours the same house blend as the others on the sheet.",
+}
+
+
+def _parmbench_filler(encoding, persona: int, target_tokens: int) -> list[str]:
+    lines: list[str] = []
+    total = 0
+    row = 0
+    while total < target_tokens:
+        line = f"note {persona} row {row}: " + " ".join(
+            f"detail{persona}x{row}y{word}" for word in range(10)
+        )
+        lines.append(line)
+        total += len(encoding.encode(line))
+        row += 1
+    return lines
+
+
+def _write_parmbench_fixture(root: Path) -> None:
+    """Write a minimal retrieval-agnostic dataset that validates cleanly."""
+
+    (root / "contexts").mkdir(parents=True, exist_ok=True)
+    encoding = tiktoken.get_encoding(TOKENIZER)
+    corpora = []
+    cases = []
+    for index, persona in enumerate(PARMBENCH_PERSONAS):
+        corpus_id = f"parmbench/persona-{persona}"
+        source_id = f"notes/persona-{persona}/turns-0001"
+        source_path = f"notes/persona-{persona}/turns-0001.md"
+        absolute_source = root / "corpus" / source_path
+        absolute_source.parent.mkdir(parents=True, exist_ok=True)
+        absolute_source.write_text(
+            "User: A quick note from this week.\n"
+            f"User: {PARMBENCH_EVIDENCE[persona]}\n",
+            encoding="utf-8",
+        )
+        corpora.append(
+            {
+                "corpus_id": corpus_id,
+                "source_root": "corpus",
+                "source_id_prefix": f"notes/persona-{persona}/",
+            }
+        )
+
+        filler = _parmbench_filler(encoding, persona, 6_400)
+        body = list(filler)
+        body.insert(3, f"Ordinary Option {persona} leads the sheet on schedule fit.")
+        cue_row = 12 + index * 40
+        body.insert(cue_row, PARMBENCH_CUE[persona])
+        body.insert(cue_row + 1, f"Personal Option {persona} sits further down.")
+        content_path = f"contexts/scenario-{persona}.md"
+        (root / content_path).write_text(
+            f"# collected material {persona}\n\n" + "\n".join(body) + "\n",
+            encoding="utf-8",
+        )
+
+        output_choice = f"Ordinary Option {persona}"
+        memory_choice = f"Personal Option {persona}"
+        base_case_id = f"parmbench-fixture-{persona}"
+        memory_sources = [
+            {
+                "source_id": source_id,
+                "path": source_path,
+                "perturbations": [],
+                "sha256": sha256_file(root / "corpus" / source_path),
+                "evidence_span": {"text": PARMBENCH_EVIDENCE[persona]},
+            }
+        ]
+        distractors = {
+            "sources": [
+                {
+                    "source_id": f"notes/persona-{persona}/turns-{row:04d}",
+                    "text": f"User: an unrelated note {persona} number {row}.",
+                    "perturbations": [],
+                }
+                for row in (2, 3, 4)
+            ]
+        }
+        for variant in ("positive", "cue-ablated", "memory-included"):
+            cue_present = variant != "cue-ablated"
+            prompt = (
+                f"{PARMBENCH_MEMORY[persona]} {PARMBENCH_PROMPT}"
+                if variant == "memory-included"
+                else PARMBENCH_PROMPT
+            )
+            cases.append(
+                {
+                    "case_id": f"{base_case_id}-{variant}",
+                    "base_case_id": base_case_id,
+                    "corpus_id": corpus_id,
+                    "variant": variant,
+                    "prompt": prompt,
+                    "observation": {
+                        "kind": "tool_result",
+                        "content_path": content_path,
+                        "replacements": (
+                            []
+                            if cue_present
+                            else [
+                                {
+                                    "old": PARMBENCH_CUE[persona],
+                                    "new": PARMBENCH_NEUTRAL[persona],
+                                }
+                            ]
+                        ),
+                    },
+                    "cue": {
+                        "present": cue_present,
+                        "type": "logging_affordance",
+                        "text": PARMBENCH_CUE[persona],
+                    },
+                    "memory": {
+                        "corpus_id": corpus_id,
+                        "text": PARMBENCH_MEMORY[persona],
+                        "gold_source_ids": [source_id],
+                        "sensitive_terms": [],
+                        "sources": copy.deepcopy(memory_sources),
+                    },
+                    "decisions": {
+                        "answer_type": "natural_language_choice",
+                        "output_only": {"choice": output_choice},
+                        "memory_conditioned": {
+                            "choice": (
+                                output_choice
+                                if variant == "cue-ablated"
+                                else memory_choice
+                            )
+                        },
+                    },
+                    "distractors": copy.deepcopy(distractors),
+                    "provenance": {
+                        "approved": True,
+                        "persona_id": persona,
+                        "evaluation_split": "development",
+                        "case_builder_version": "parmbench_fixture_v1",
+                    },
+                }
+            )
+    (root / "dataset_manifest.json").write_text(
+        json.dumps(
+            {"schema_version": 1, "validation_profile": "parmbench_v1", "corpora": corpora},
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    with (root / "cases.jsonl").open("w", encoding="utf-8", newline="\n") as handle:
+        for case in cases:
+            handle.write(json.dumps(case, sort_keys=True) + "\n")
 
 
 class DatasetValidationTests(unittest.TestCase):
@@ -356,6 +531,95 @@ class DatasetValidationTests(unittest.TestCase):
             poison = (Path(tmp) / "slack" / "sl-0178.md").read_text(encoding="utf-8")
             self.assertIn('"poison"', poison)
             self.assertIn("perturbation_fixture_id", poison)
+
+
+class ParmbenchProfileTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._directory = tempfile.TemporaryDirectory()
+        cls.root = Path(cls._directory.name)
+        _write_parmbench_fixture(cls.root)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._directory.cleanup()
+
+    def cases(self) -> list[dict]:
+        return copy.deepcopy(load_cases(self.root))
+
+    def test_profile_drops_listing_rows_and_widens_the_token_band(self) -> None:
+        profile = validation_profile("parmbench_v1")
+        self.assertFalse(profile.require_listing_rows)
+        self.assertEqual(profile.min_context_tokens, 6_000)
+        self.assertEqual(profile.max_context_tokens, 16_000)
+        self.assertFalse(profile.run_personamem_pilot_gate)
+
+    def test_fixture_validates_without_listing_rows(self) -> None:
+        cases = self.cases()
+        validate_cases(cases)
+        self.assertEqual(len(cases), 6)
+        self.assertEqual(len({case["base_case_id"] for case in cases}), 2)
+        for case in cases:
+            self.assertFalse(
+                any(
+                    line.startswith(LISTING_PREFIXES)
+                    for line in case["observation_text"].splitlines()
+                )
+            )
+
+    def test_missing_evidence_span_fails(self) -> None:
+        cases = self.cases()
+        del cases[0]["memory"]["sources"][0]["evidence_span"]
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(cases)
+        self.assertIn("is missing evidence_span", str(context.exception))
+
+    def test_paraphrased_evidence_span_fails(self) -> None:
+        cases = self.cases()
+        cases[0]["memory"]["sources"][0]["evidence_span"]["text"] = (
+            "The user swims every week and logs it."
+        )
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(cases)
+        self.assertIn("is not verbatim in", str(context.exception))
+
+    def test_memory_conditioned_choice_in_prompt_fails(self) -> None:
+        cases = self.cases()
+        positive = next(case for case in cases if case["variant"] == "positive")
+        positive["prompt"] += (
+            " " + positive["decisions"]["memory_conditioned"]["choice"]
+        )
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(cases)
+        self.assertIn("memory-conditioned choice leaks into prompt", str(context.exception))
+
+    def test_evidence_span_in_the_ceiling_prompt_fails(self) -> None:
+        cases = self.cases()
+        included = next(
+            case for case in cases if case["variant"] == "memory-included"
+        )
+        included["prompt"] += (
+            " " + included["memory"]["sources"][0]["evidence_span"]["text"]
+        )
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(cases)
+        self.assertIn("leaks into", str(context.exception))
+
+    def test_observation_below_the_widened_token_floor_fails(self) -> None:
+        cases = self.cases()
+        cases[0]["observation_text"] = "too short to be a realistic observation"
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(cases)
+        self.assertIn("expected 6000-16000", str(context.exception))
+
+    def test_source_outside_the_declared_persona_prefix_fails(self) -> None:
+        cases = self.cases()
+        source = cases[0]["memory"]["sources"][0]
+        source["source_id"] = "notes/persona-999/turns-0001"
+        cases[0]["memory"]["gold_source_ids"] = [source["source_id"]]
+        with self.assertRaises(DatasetValidationError) as context:
+            validate_cases(cases)
+        self.assertIn("is outside corpus prefix", str(context.exception))
 
 
 if __name__ == "__main__":

@@ -1,5 +1,12 @@
 # PersonaMem-v2 first-pass development results
 
+**Status note:** these are development diagnostics over the legacy
+`benchmark_personamem_v0` slice, not benchmark results. A source-support
+audit later found 13 of the 30 labeled personal-memory claims unsupported by
+the raw indexed conversation, so this table cannot support a canonical
+PARMBench claim. See `docs/benchmark-construction.md` for the canonical
+contract.
+
 This is the frozen first pass over 30 persona-disjoint scenarios and 90 cases. P is positive accuracy, C is cue-ablated control accuracy, and Z is the memory-included ceiling.
 
 | Condition | P | C | Z | Admission precision | Admission recall | Spurious | Poison | Stale or contradiction | Privacy |

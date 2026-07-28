@@ -1,5 +1,14 @@
 # PersonaMem V0 retrieval experiments
 
+**Status note:** this log records development diagnostics over the legacy
+`benchmark_personamem_v0` and `benchmark_personamem_mixed_v0` slices, not
+benchmark results. Both slices are development-only: 13 of 30 labeled
+personal-memory claims are unsupported by raw source, and the mixed slice
+carries a repeated 9.8/8.8 construction signature plus admission-judge
+leakage of construction details. None of the results below support a
+superiority claim for any retrieval method. See
+`docs/benchmark-construction.md` for the canonical construction contract.
+
 This log records each retrieval design tried against the frozen 30-scenario
 PersonaMem development benchmark. The benchmark cases, persona corpora, gold
 source IDs, and frozen Amara artifacts do not change during these experiments.

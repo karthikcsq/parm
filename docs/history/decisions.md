@@ -5,6 +5,23 @@ entries appear first. Current behavior is documented in
 [Architecture](../architecture.md) and the
 [Evaluation Contract](../benchmark-evaluation.md).
 
+## 2026-07-28
+
+### PersonaMem-v2 stays the canonical raw-history source
+
+**Why:** The mixed_v0 failures were construction failures, not source failures.
+The corpus is expansive (18,549 train_text rows at the pinned revision), openly
+licensed under CC BY 4.0, and its 32k-token histories carry enough
+user-authored statements to support gated scenario construction. Switching
+sources would discard the adapter, provenance, and audit work without fixing
+the actual defect.
+
+**What:** Expanded the local pool to 120 personas in
+`data/personamem-v2-train-v1` and kept `personamem-v2-train-v0` frozen for the
+legacy slices. New construction drafts each claim from raw user-authored text
+and gates it with `evidence_gate`; the upstream `preference` label is only a
+pointer to where to look and never becomes the claim.
+
 ## 2026-07-26
 
 ### Freeze the first expansion pass against the completed pilot

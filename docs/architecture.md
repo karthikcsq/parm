@@ -218,12 +218,15 @@ history through sentence-max, sentence-top-three, chunk-max, blended dense, and
 BM25 views. The union of the best seven pairs from each view is a high-recall
 prefilter, not an admission threshold.
 
-The judge sees the complete observation so it can distinguish real candidates
-from archival noise and identify the ordinary evidence winner. It must find a
-fact in the user's own words, an explicit affordance in the visible block, and
-a reason that fact would favor a lower-ranked candidate. It does not receive
-case gold IDs, expected choices, source-support grades, or hidden persona
-annotations.
+The judge sees the complete observation so it can tell substantive passages
+from surrounding archival noise. Rubric `parm_pair_admission_v3` requires a
+fact in the user's own words, a concrete action, property, schedule, subject,
+or relationship in the visible block that specifically satisfies that fact,
+and a material change in what the user would want done once the fact is
+recalled. A generic evaluative adjective is not a concrete affordance. The
+rubric says nothing about how many options exist, their relative standing, or
+which one ordinary evidence favors, and the judge does not receive case gold
+IDs, expected choices, source-support grades, or hidden persona annotations.
 
 This LLM use is narrow. Dense and lexical candidate generation, corpus
 filtering, the final choice scorer, and artifact validation stay deterministic.

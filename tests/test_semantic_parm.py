@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +9,15 @@ from types import SimpleNamespace
 
 import numpy as np
 
+from parm_bench.baselines import (
+    INPUT_RAG_INSTRUCTIONS,
+    PARM_JUDGMENT_INSTRUCTIONS,
+)
+from parm_bench.construction_checks import judge_leakage_violations
+from parm_bench.models import (
+    FINAL_ANSWER_INSTRUCTIONS,
+    MEMORY_TOOL_INSTRUCTIONS,
+)
 from parm_bench.retrieval import (
     ChunkRecord,
     PageRecord,
@@ -16,8 +27,13 @@ from parm_bench.retrieval import (
 from parm_bench.semantic_parm import (
     AdmissionCachePolicy,
     CachedOpenAIAdmissionJudge,
+    PARM_SEMANTIC_JUDGE_INSTRUCTIONS,
+    PARM_SEMANTIC_JUDGE_MODEL,
+    PARM_SEMANTIC_JUDGE_RUBRIC,
     PARMSemanticJudgeRetriever,
+    semantic_admission_cache_key,
 )
+from parm_bench.workbench import WORKBENCH_INSTRUCTIONS
 
 
 class FakeEmbedder:
@@ -176,6 +192,49 @@ class SemanticPARMRetrieverTests(unittest.TestCase):
                     "selected_region_text": "A visible semantic block.",
                 },
             )
+
+
+class AdmissionRubricTests(unittest.TestCase):
+    def test_rubric_keeps_answer_construction_out_of_the_judge(self) -> None:
+        self.assertEqual(
+            judge_leakage_violations(PARM_SEMANTIC_JUDGE_INSTRUCTIONS),
+            [],
+        )
+
+    def test_model_visible_instructions_stay_construction_free(self) -> None:
+        for instructions in (
+            FINAL_ANSWER_INSTRUCTIONS,
+            INPUT_RAG_INSTRUCTIONS,
+            MEMORY_TOOL_INSTRUCTIONS,
+            PARM_JUDGMENT_INSTRUCTIONS,
+            WORKBENCH_INSTRUCTIONS,
+        ):
+            with self.subTest(instructions=instructions[:40]):
+                self.assertEqual(judge_leakage_violations(instructions), [])
+
+    def test_rubric_version_keys_the_admission_cache(self) -> None:
+        self.assertEqual(PARM_SEMANTIC_JUDGE_RUBRIC, "parm_pair_admission_v3")
+        expected = hashlib.sha256(
+            json.dumps(
+                {
+                    "model": PARM_SEMANTIC_JUDGE_MODEL,
+                    "rubric_version": "parm_pair_admission_v3",
+                    "cache_namespace": "fixture-namespace",
+                    "prompt": "Choose one.",
+                    "observation_text": "A long observation.",
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+            ).encode("utf-8")
+        ).hexdigest()
+        self.assertEqual(
+            semantic_admission_cache_key(
+                "Choose one.",
+                "A long observation.",
+                cache_namespace="fixture-namespace",
+            ),
+            expected,
+        )
 
 
 class AdmissionJudgeCacheTests(unittest.TestCase):

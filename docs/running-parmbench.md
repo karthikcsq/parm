@@ -111,6 +111,11 @@ parm-bench run data\benchmark_personamem_mixed_v0 `
   --out data\retrieval-experiments\personamem-mixed-v0\semantic-parm-replay.jsonl
 ```
 
+That cache was frozen under rubric `parm_pair_admission_v2`. The current rubric
+is `parm_pair_admission_v3`, and the rubric version is part of the cache key,
+so replaying the command above now raises a frozen cache miss. Keep the v2
+cache as a labeled historical artifact and populate a new cache for v3 runs.
+
 Use `--parm-admission-policy populate` only to construct a new versioned judge
 cache. The final choice cache is separate because it contains the downstream
 response after the admitted region-memory pair is injected.

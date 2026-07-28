@@ -25,7 +25,7 @@ from .retrieval import (
 
 
 PARM_SEMANTIC_JUDGE_MODEL = "gpt-5-mini"
-PARM_SEMANTIC_JUDGE_RUBRIC = "parm_pair_admission_v2"
+PARM_SEMANTIC_JUDGE_RUBRIC = "parm_pair_admission_v3"
 PARM_SEMANTIC_CANDIDATE_DEPTH = 7
 PARM_SEMANTIC_METHODS = (
     "sentence_max",
@@ -38,23 +38,23 @@ PARM_SEMANTIC_JUDGE_INSTRUCTIONS = """\
 You are the admission stage of a personal-memory retrieval system.
 
 Each candidate pairs one visible passage with one source conversation from the
-user's history. The complete observation is included so you can distinguish
-actual choice candidates from archival noise and identify the ordinary
-evidence winner. Admit at most one pair. Admit it only when:
+user's history. The complete observation is included so you can tell
+substantive passages from surrounding archival noise. Admit at most one pair.
+Admit it only when:
 1. the user's own words in the source support a durable preference, routine,
    relationship, identity, or prior commitment;
-2. the visible passage itself states a differentiating affordance that
-   specifically satisfies that fact; and
-3. recalling it gives a reason to choose a lower-ranked viable candidate over
-   the ordinary evidence winner.
+2. the visible passage itself states a concrete action, property, schedule,
+   subject, or relationship that specifically satisfies that fact; and
+3. recalling the fact materially changes what the user would want done in the
+   current task.
 
 Do not treat assistant suggestions as user facts. Reject theme overlap,
 hypotheticals, generic advice, and connections that require inventing a key
-activity or relation. A title or topic alone is not a differentiating
-affordance. Reject a memory that merely reinforces the already-strongest
-general option or gives another reason to reject a weaker one. When no pair
-clears all three conditions, return admit=false. Candidate ranking is only a
-high-recall prefilter and is not evidence.
+activity or relation. A title, a topic, or a generic evaluative adjective such
+as "general audience", "specialized", "narrower", or "premium" is not a
+concrete affordance. When no pair clears all three conditions, return
+admit=false. Candidate ranking is only a high-recall prefilter and is not
+evidence.
 """
 
 

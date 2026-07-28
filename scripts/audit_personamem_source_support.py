@@ -1,39 +1,44 @@
+"""Audit PersonaMem pilot memory claims against their raw source snippets.
+
+Grading now runs through `parm_bench.evidence_gate`, which adds deterministic
+pre-checks (unjustified frequency words, assistant-only evidence, topical
+questions, missing lexical anchor) ahead of the LLM rubric. The rubric moved
+from `personamem_source_support_v1` to `personamem_source_support_v2`, so the
+cache key changed and the defaults point at v2 artifacts. The v1 cache and
+report stay untouched and remain replayable by passing the old paths.
+"""
+
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from openai import OpenAI
+
+from parm_bench.evidence_gate import (
+    EVIDENCE_GATE_MODEL,
+    EVIDENCE_GATE_RUBRIC,
+    CachedOpenAISupportJudge,
+    EvidenceGateCachePolicy,
+    grade_claim,
+)
 
 from personamem_v0_specs import SPECS
 
 
-MODEL = "gpt-5-mini"
-RUBRIC_VERSION = "personamem_source_support_v1"
-INSTRUCTIONS = """\
-Judge whether an indexed conversation supports a proposed personal-memory
-claim. Evaluate only the conversation text. Do not assume a hidden persona,
-profile, benchmark label, or unstated fact.
-
-Grades:
-- explicit: the user directly states or clearly demonstrates the core claim.
-- inferable: the core claim follows from the user's words with one small,
-  ordinary inference, and no key relation or activity must be invented.
-- unsupported: a key topic, relation, preference, frequency, or identity in
-  the claim is absent, or the source could support many incompatible claims.
-
-Assistant suggestions are not evidence of the user's preference unless the
-user accepts or independently states them. Keep the rationale short and quote
-at most two short pieces of source evidence.
-"""
+MODEL = EVIDENCE_GATE_MODEL
+RUBRIC_VERSION = EVIDENCE_GATE_RUBRIC
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description=(
+            "Grade each PersonaMem pilot memory claim against its raw source "
+            f"conversation using rubric {RUBRIC_VERSION}."
+        ),
+    )
     parser.add_argument(
         "--sources",
         type=Path,
@@ -44,127 +49,56 @@ def main() -> None:
         type=Path,
         default=Path(
             "data/retrieval-experiments/personamem-v0/"
-            "source-support-cache"
+            "source-support-cache-v2"
         ),
+    )
+    parser.add_argument(
+        "--policy",
+        choices=[policy.value for policy in EvidenceGateCachePolicy],
+        default=EvidenceGateCachePolicy.POPULATE.value,
     )
     parser.add_argument(
         "--out",
         type=Path,
         default=Path(
             "data/retrieval-experiments/personamem-v0/"
-            "source-support-audit.jsonl"
+            "source-support-audit-v2.jsonl"
         ),
     )
     args = parser.parse_args()
 
     load_dotenv()
-    client = OpenAI()
     sources = {
         row["source_row_id"]: row
         for row in _read_jsonl(args.sources)
     }
-    args.cache.mkdir(parents=True, exist_ok=True)
+    judge = CachedOpenAISupportJudge(args.cache, args.policy)
     rows = []
     for position, spec in enumerate(SPECS, start=1):
         source_row_id = f"train_text:{spec['row_offset']}"
         source = sources[source_row_id]
-        rendered_source = "\n\n".join(
-            f"{message['role'].title()}: {message['content']}"
-            for message in source["related_conversation_snippet"]
+        result = grade_claim(
+            spec["memory_summary"],
+            source["related_conversation_snippet"],
+            judge=judge,
         )
-        input_text = (
-            f"Memory claim:\n{spec['memory_summary']}\n\n"
-            f"Indexed source conversation:\n{rendered_source}"
-        )
-        request = {
-            "rubric_version": RUBRIC_VERSION,
-            "model": MODEL,
-            "input": input_text,
-        }
-        request_hash = hashlib.sha256(
-            json.dumps(
-                request, ensure_ascii=False, sort_keys=True
-            ).encode("utf-8")
-        ).hexdigest()
-        cache_path = args.cache / f"{request_hash}.json"
-        if cache_path.exists():
-            cached = json.loads(cache_path.read_text(encoding="utf-8"))
-            result = cached["result"]
-            resolved_model = cached["resolved_model"]
-            response_id = cached["response_id"]
-        else:
-            response = client.responses.create(
-                model=MODEL,
-                instructions=INSTRUCTIONS,
-                input=input_text,
-                text={
-                    "format": {
-                        "type": "json_schema",
-                        "name": "personamem_source_support",
-                        "strict": True,
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "grade": {
-                                    "type": "string",
-                                    "enum": [
-                                        "explicit",
-                                        "inferable",
-                                        "unsupported",
-                                    ],
-                                },
-                                "rationale": {"type": "string"},
-                                "evidence": {
-                                    "type": "array",
-                                    "items": {"type": "string"},
-                                    "maxItems": 2,
-                                },
-                            },
-                            "required": [
-                                "grade",
-                                "rationale",
-                                "evidence",
-                            ],
-                            "additionalProperties": False,
-                        },
-                    }
-                },
-                store=False,
-            )
-            result = json.loads(response.output_text)
-            resolved_model = response.model
-            response_id = response.id
-            cache_path.write_text(
-                json.dumps(
-                    {
-                        **request,
-                        "request_hash": request_hash,
-                        "result": result,
-                        "resolved_model": resolved_model,
-                        "response_id": response_id,
-                    },
-                    ensure_ascii=False,
-                    sort_keys=True,
-                )
-                + "\n",
-                encoding="utf-8",
-            )
         row = {
             "base_case_id": f"parm-personamem-{spec['slug']}",
             "source_row_id": source_row_id,
             "corpus_id": source["corpus_id"],
             "gold_source_id": source["gold_source_id"],
             "memory_claim": spec["memory_summary"],
-            "rubric_version": RUBRIC_VERSION,
-            "requested_model": MODEL,
-            "resolved_model": resolved_model,
-            "response_id": response_id,
-            **result,
+            **result.to_dict(),
         }
         rows.append(row)
+        detail = (
+            f" ({', '.join(result.deterministic_rejections)})"
+            if result.deterministic_rejections
+            else ""
+        )
         print(
             f"[{position:02d}/{len(SPECS)}] {spec['slug']}: "
-            f"{result['grade']}"
+            f"{result.grade}{detail}"
         )
 
     args.out.parent.mkdir(parents=True, exist_ok=True)

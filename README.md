@@ -6,9 +6,19 @@ retrieve the memory. The later cue makes one stored fact useful, and the
 retrieval policy must improve the decision without changing the cue-ablated
 control.
 
-PARMBench contains 18 scenarios and 54 cases. Each scenario has a positive
-case, a cue-ablated control, and a memory-included ceiling. All retrieval
-conditions use the same frozen `amara-life-v1` memory substrate.
+PARM v1 is graphless. Its claim is parallel, output-triggered personal-memory
+retrieval: detect cue-sized regions as output becomes visible, search memory
+for them in parallel, ground candidates in raw user-authored evidence, and
+admit only when the visible region makes the memory useful. PARMBench itself
+prescribes no memory representation. It supplies raw persona history, and any
+retrieval substrate is the system's own artifact.
+
+The frozen Amara regression benchmark contains 18 scenarios and 54 cases. Each
+scenario has a positive case, a cue-ablated control, and a memory-included
+ceiling. Every retrieval condition in that set reads the same frozen
+`amara-life-v1` export, which keeps the comparison equal-information. The next
+benchmark generation replaces the shared export with raw history under
+[the construction contract](docs/benchmark-construction.md).
 
 The current repaired-fixture development result is:
 
@@ -60,7 +70,7 @@ are manifests, not alternate project guides.
 
 | Page | Purpose |
 | --- | --- |
-| [Research claim and scope](docs/research-scope.md) | Motivation, hypotheses, boundaries, current evidence, and unresolved claims |
+| [Research claim and scope](docs/research-scope.md) | The graphless v1 claim, motivation, hypotheses, boundaries, current evidence, and unresolved claims |
 | [Architecture](docs/architecture.md) | End-to-end and PARM retrieval waterfalls, module ownership, and design trade-offs |
 | [Interactive retrieval quiz](docs/parm-retrieval-quiz.html) | Test cue timing, query formation, selective admission, and benchmark controls in the browser |
 | [Output-cued examples](docs/examples.md) | The 20 approved memory-cue relationships, including the 18 executable scenarios |
@@ -71,7 +81,7 @@ are manifests, not alternate project guides.
 | --- | --- |
 | [How to Run PARMBench](docs/running-parmbench.md) | Install, validate, replay, run comparisons, inspect traces, and troubleshoot |
 | [Evaluation contract](docs/benchmark-evaluation.md) | Case semantics, deterministic metrics, correctness, and failure taxonomy |
-| [How to Construct a Scenario](docs/benchmark-construction.md) | Generate a symmetric triplet, establish fixture fairness, and freeze a first pass |
+| [How to Construct a Scenario](docs/benchmark-construction.md) | Canonical construction contract: what PARMBench supplies, the retrieval-agnostic boundary, the twelve acceptance criteria, coverage and scale targets |
 | [Rebuild the memory index](docs/rebuilding-memory-index.md) | Prepare Amara Life with GBrain and export the neutral frozen index |
 
 ### Read the evidence and planned evaluation

@@ -11,3 +11,7 @@
 *.pdf binary
 *.ico binary
 *.zip binary
+data/personamem-v2-train-v1/records.jsonl filter=lfs diff=lfs merge=lfs -text
+data/retrieval-indexes/personamem-v2-train-v1/chunks.jsonl filter=lfs diff=lfs merge=lfs -text
+data/retrieval-indexes/personamem-v2-train-v1/sentences.jsonl filter=lfs diff=lfs merge=lfs -text
+data/retrieval-indexes/personamem-v2-train-v1/sentence_embeddings.npy filter=lfs diff=lfs merge=lfs -text

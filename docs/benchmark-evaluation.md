@@ -23,6 +23,13 @@ session label, story label, episode title, company name, or restaurant name.
 The model is explicitly asked to return that language. Opaque item IDs and
 hidden structured decision fields are not part of the task.
 
+A correct label is not a success when the retrieved evidence does not support
+the personal fact. When a run supplies a retrieval trace, score the grounding
+separately and report ungrounded correct answers as their own count rather than
+folding them into the headline decision rate. A system that reaches the
+memory-conditioned choice through an unsupported inference has not demonstrated
+the mechanism under test.
+
 The response is not required to quote, explain, or expose the private memory.
 Retrieval traces are optional for externally supplied responses and diagnostic
 for internal baselines.
@@ -55,8 +62,12 @@ Primary scoring is deterministic. The scorer applies light case and punctuation
 normalization, then recognizes the gold choice in the natural-language
 response. Naming both the output-only and memory-conditioned alternatives is
 ambiguous and does not count as one final choice. Source IDs are used only in
-optional retrieval traces. An LLM judge may be used later only as a
-disagreement audit.
+optional retrieval traces.
+
+An LLM judge is secondary analysis only. It may audit disagreements, sample
+response quality, or flag cases for human review. It is never the primary
+correctness oracle, and no proprietary judge decides a published PARMBench
+score.
 
 Metrics are also reported by evaluation split and corpus. In the PersonaMem-v2
 development benchmark, each corpus is one persona, so the corpus breakdown is

@@ -29,10 +29,10 @@ in the result reports and decision log.
 ## Add external validity
 
 - Add corpus-scoped adapters and index isolation for multi-person datasets.
-- Convert 30 PersonaMem-v2 development records before freezing the generation
-  and acceptance procedure.
-- Publish a sealed, persona-disjoint set of 500 human-audited PersonaMem-v2
-  triplets.
+- Calibrate the construction contract on at least 100 audited base scenarios,
+  then freeze the generation and acceptance procedure.
+- Publish a sealed, persona-disjoint release of at least 500 independent
+  audited base scenarios across at least 100 personas.
 - Build 50 to 100 paired end-to-end cases from LongMemEval-V2 web and
   enterprise trajectories.
 - Measure task success, causal memory lift, false intervention, faithfulness,
@@ -43,6 +43,6 @@ in the result reports and decision log.
 
 See [Real-World Evaluation Strategy](real-world-evaluation.md) for the
 recommended design and [How to Construct a PARMBench Scenario](benchmark-construction.md)
-for the current controlled-case procedure. The
+for the canonical construction contract. The
 [larger dataset survey](dataset-candidates.md) explains the source selection,
 conversion rules, and retrieval-index changes.

@@ -27,10 +27,26 @@ ability to admit no memory when the decisive cue is absent.
 
 ## Thesis
 
-PARM segments a later observation into cue regions, retrieves against a frozen
-personal-memory substrate, and admits only the evidence supported by a
-selective channel. The final response receives the triggering region beside a
-focused memory excerpt.
+PARM v1 is graphless. Its contribution is parallel, output-triggered
+personal-memory retrieval:
+
+1. detect cue-sized regions as output becomes visible;
+2. launch memory searches for those regions in parallel;
+3. ground candidate memories in raw user-authored evidence;
+4. admit memory only when the visible region makes it useful to the current
+   task; and
+5. abstain otherwise.
+
+Parallelism is an implementation property. The research claim is the
+output-triggered timing plus the selective intervention policy. The final
+response receives the triggering region beside a focused memory excerpt.
+
+PARM is not defined by any retrieval substrate. Lexical search, dense search,
+graphs, agentic memory tools, rerankers, and hybrids are competing ways to
+generate candidates from the same raw history, and PARMBench treats them as
+interchangeable submissions. Graph retrieval may later become another
+candidate-generation channel behind the same admission interface; it is not
+part of v1 and the benchmark never requires it.
 
 The proposed contribution is the benchmark and retrieval problem at the
 intersection of:
@@ -38,7 +54,7 @@ intersection of:
 - a cue introduced after the prompt;
 - personal long-term memory;
 - large noisy tool or agent outputs;
-- selective memory admission; and
+- selective memory admission grounded in raw user-authored evidence; and
 - paired causal evaluation through a cue-ablated control.
 
 Output-conditioned retrieval, proactive assistance, graph retrieval, and
@@ -55,11 +71,15 @@ from the current dialogue and fetches a memory that can fill it. That behavior
 is complementary. It does not require a later tool or agent output, so it is
 outside the core PARMBench score.
 
-GBrain prepares the neutral substrate: imported pages, chunks, embeddings,
-links, provenance, and timestamps. PARM owns retrieval timing, cue-region
-selection, candidate ranking, admission, focused evidence handoff, and causal
-evaluation. Canonical benchmark runs load the tracked export directly and do
-not call GBrain search.
+PARMBench supplies raw, time-ordered persona history and nothing else that is
+model-visible. Building a substrate from that history is the system's job, not
+the benchmark's. In the current implementation GBrain prepares PARM's own
+substrate of imported pages, chunks, embeddings, links, provenance, and
+timestamps; a competing submission may prepare something entirely different
+from the same history. PARM owns retrieval timing, cue-region selection,
+candidate ranking, admission, focused evidence handoff, and causal evaluation.
+Canonical benchmark runs load the tracked export directly and do not call
+GBrain search.
 
 The current benchmark evaluates one visible final choice. It does not yet
 establish natural drafting quality, multi-step planning, asynchronous latency,

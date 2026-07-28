@@ -1,47 +1,250 @@
 # How to Construct a PARMBench Scenario
 
-This is the procedure used to turn approved output-cued memory examples into
-the 18 executable scenario triplets in `data/benchmark_v1`.
+This page defines what a valid PARMBench scenario is and how to build one from
+a raw persona history. It is the canonical construction contract for the next
+benchmark generation. The frozen Amara `benchmark_v1` procedure is preserved at
+the end as a historical record of how the existing 54 cases were produced.
 
-## Acceptance contract
+## What PARMBench supplies
 
-A scenario is eligible only when all of these statements are true:
+A scenario gives a system under test exactly five things:
 
-1. The initial prompt is ordinary and does not ask for memory.
-2. A later tool result or agent output introduces the decisive cue.
-3. The cue maps to an authoritative memory already present in the declared
-   corpus version.
-4. Without memory, one visible choice is defensible.
-5. With memory, a different visible choice is better.
-6. The final answer can name exactly one visible label or name.
-7. Removing the cue collapses the expected answer back to the output-only
-   choice.
-8. Giving the memory explicitly makes the memory-conditioned choice usable.
+1. a raw, time-ordered persona history;
+2. an ordinary task prompt;
+3. a later visible observation or tool output;
+4. a deterministic expected final output; and
+5. paired causal controls.
 
-Examples 19 and 20 remain outside the executable set because their proposed
-health memories are not present in `amara-life-v1`. Do not invent corpus
-history to make a benchmark case executable.
+Nothing else is model-visible.
 
-## Step 1: Approve the memory-cue relationship
+## Retrieval-agnostic boundary
 
-Start from [the example catalog](examples.md). Record:
+PARMBench prescribes no memory representation. It does not ship a required
+graph, ontology, entity schema, embedding index, or gold retrieval path to
+systems under test.
 
-- the ordinary task and answer format;
-- the incidental output cue;
-- the output-only choice;
-- the memory-conditioned choice;
-- the authoritative memory source IDs;
-- a short model-visible memory summary;
-- sensitive details that should not appear in the answer; and
-- the cue type.
+Systems may build any substrate they want from the same raw history: lexical or
+sparse search, dense semantic search, knowledge graphs, agentic memory tools,
+rerankers, or hybrids. Two systems are comparable because they read the same
+history under the same budget, not because they share an index format.
 
-Read the source artifact itself. The memory summary must be entailed by it and
-must identify the relevant output affordance without using benchmark-only IDs.
+Evaluator-only evidence annotations may identify source spans and minimal
+witness chains. They exist so a run can be scored for grounding. They are never
+retrieval inputs and never reach a system under test. Any graph, embedding
+index, or cache is a system artifact, not benchmark truth.
 
-## Step 2: Add one declarative case specification
+## Acceptance criteria
 
-Add the scenario to `SPECS` in `scripts/build_pilot_cases.py`. The required
-fields are:
+A scenario is valid only when all twelve hold.
+
+| # | Criterion | Requirement |
+| --- | --- | --- |
+| 1 | Raw-source support | The decisive personal fact is explicitly stated by the user or is a conservative, independently auditable inference. Assistant-authored suggestions, topical questions, and fabricated habitual claims are invalid. |
+| 2 | Persona isolation | Retrieval can access only that persona's raw history. |
+| 3 | Ordinary prompt opacity | The initial prompt alone does not reveal a useful memory query. |
+| 4 | Late visible cue | A later observation contains a concrete affordance that makes the memory actionable. |
+| 5 | Decision change | Without memory, ordinary visible evidence supports output A. With the grounded memory and the cue, output B is best. |
+| 6 | Cue-ablated control | Removing only the decisive visible affordance makes memory retrieval unnecessary and restores output A. |
+| 7 | Memory-included ceiling | Exposing the supported personal fact directly produces output B. |
+| 8 | Deterministic scoring | The expected final output is a visible natural-language label that can be scored exactly. An LLM judge may be a secondary analysis tool, never the primary correctness oracle. |
+| 9 | No construction signature | Do not repeat a fixed score pattern, option order, phrase such as "narrower choice," cue position, envelope layout, or answer role. |
+| 10 | No judge leakage | Retrieval or admission prompts must not encode the benchmark's answer construction, ordinary winner, target rank, or expected decision change. |
+| 11 | Faithful evidence handoff | A retrieved hit must expose the raw source text or a strictly attributable span. A synthesized preference must never silently replace weaker raw evidence. |
+| 12 | Sealed evaluation | Freeze construction rules before creating held-out personas. Do not tune retrieval against the final test cases. |
+
+Criteria 5, 6, and 7 are established by running `no_memory` on all three
+variants before the scenario is used to judge any retrieval mechanism. The
+desired pattern is output-only choice on the positive, output-only choice on
+the control, and memory-conditioned choice on the ceiling. Repair or reject a
+case that misses this pattern; do not change the underlying source fact to make
+it pass.
+
+## Evidence-support rules
+
+Criterion 1 fails more often than any other, so gate it automatically before
+human review.
+
+- The decisive personal fact must be user-stated or a conservative auditable
+  inference from user-authored text.
+- A user asking about a topic is not a durable preference. A question about why
+  royal courts used ceremonial codes does not support "the user enjoys
+  historical dramas."
+- One instance never justifies "usually," "often," "regularly," or
+  "exclusively." Frequency words need repeated user-authored evidence.
+- Assistant suggestions, rewrites, and recommendations are not user facts
+  unless the user explicitly adopts them.
+- Dataset-supplied preference fields do not override the raw conversation. Raw
+  user-authored evidence always wins.
+
+Every accepted scenario records the exact source span that supports the fact.
+An expected final answer is not a success when the retrieved evidence does not
+support that fact.
+
+## Capability coverage
+
+Keep the benchmark broad enough to compare retrieval methods without making
+any structure mandatory:
+
+- direct lexical personal facts;
+- paraphrased semantic personal facts;
+- schedules and prior commitments;
+- relationships and named entities;
+- negative preferences and exclusions;
+- updated, contradicted, forgotten, or stale facts;
+- one-hop relational cases encoded only in raw history; and
+- abstention cases where related memory exists but should not affect the
+  decision.
+
+Each category needs positive and cue-ablated cases. Relational cases may later
+reveal graph advantages, but a system must derive any graph from raw history
+itself.
+
+## Variation axes
+
+Vary every scenario batch along these axes and measure the distribution
+automatically. Manual inspection misses repeated templates and rank
+signatures.
+
+| Axis | What to vary |
+| --- | --- |
+| Task domain | Scheduling, purchasing, reading, travel, hiring, health logistics, and others |
+| Source age | Recent, mid-history, and old user statements |
+| Cue position | Early, middle, and late in the observation |
+| Option ordering | Position of the memory-conditioned choice among visible options |
+| Observation format | Catalogs, prose reports, tables, transcripts, mixed markdown |
+| Visible evidence strength | Narrow and wide margins for the ordinary winner |
+| Persona-history size | Multiple history-size buckets, not one corpus size |
+| Lexical overlap | High and low surface overlap between cue and source span |
+| Distractors | Number and plausibility of competing memories |
+
+The ordinary evidence must not always work the same way. Do not build every
+case as a lower-rated personalized option defeating a higher-rated generic
+option. Rotate the mechanism that makes the ordinary winner defensible:
+schedule fit, feasibility, stated requirements, recency, quality, cost, and
+explicit constraints. A repeated 9.8-versus-8.8 rating pattern is a
+construction signature and fails criterion 9.
+
+Evaluate retrieval across history-size buckets of roughly 25k, 100k, 500k, and
+1M or more tokens per persona. If the source dataset cannot support a bucket,
+document the limitation rather than synthesizing filler.
+
+## Scale and splits
+
+Build in two stages.
+
+Stage 1, construction calibration. Create and independently audit at least 100
+supported base scenarios. These are development data. Their purpose is to
+calibrate the construction rules, the evidence gate, and the fairness run.
+
+Stage 2, credible release. Freeze the construction procedure, then use it to
+create at least 500 independent base scenarios across at least 100 personas,
+with persona-disjoint development, validation, and sealed test splits. A
+1,000-scenario release is preferable if source quality permits.
+
+Triplet variants are controls, not independent samples. All three variants
+share one base scenario, so statistical analysis operates at the scenario
+level. Always report the count of independent base scenarios alongside any case
+count.
+
+If cost or source quality prevents reaching the release target, finish a
+rigorously validated 100-scenario development set plus a replayable frozen
+builder for the remaining held-out construction. A 30-scenario tuned slice is
+not publication-ready.
+
+## Construction procedure
+
+### Step 1: Select a persona and a supported fact
+
+Read the raw history. Find a fact the user stated themselves, record the exact
+span, and write a short faithful summary entailed by that span. Run the
+evidence gate from the rules above before doing any further work on the case.
+
+### Step 2: Write the ordinary task
+
+The prompt states an ordinary task with an exact one-choice answer contract. It
+must not name the person, project, entity, or preference that would make the
+memory retrievable from the prompt alone.
+
+### Step 3: Build the observation and the decisive cue
+
+The observation is a realistic tool result or agent output. It contains a
+defensible output-only winner supported by ordinary visible evidence, plus one
+region carrying the affordance that makes the personal fact actionable. Plant
+near-miss decoys so the target is not selectable by salience, unusual phrasing,
+or length.
+
+### Step 4: Generate the triplet
+
+Each scenario produces three cases:
+
+- positive: original prompt, original observation, memory-conditioned gold;
+- cue-ablated: original prompt, one exact observation replacement, output-only
+  gold; and
+- memory-included: the positive observation plus an explicit memory preamble,
+  memory-conditioned gold.
+
+Positive and memory-included observations are byte-identical. The control
+differs from the positive by exactly one declared replacement of similar length
+and register.
+
+### Step 5: Validate structure
+
+Automated validators must check unique stable case IDs, source hashes against
+the tracked corpus, identical positive and ceiling observations, exactly one
+control replacement, cue and replacement symmetry, visibility of every expected
+choice in its resolved observation, absence of the decisive entity or
+affordance from the control, persona isolation, triplet completeness, prompt
+opacity, source support, and construction-pattern repetition across the batch.
+
+### Step 6: Establish fixture fairness
+
+Run `no_memory` on all three variants and confirm the criteria 5 to 7 pattern.
+Rerun every condition after any fixture change.
+
+Deterministic construction and scoring do not establish semantic fairness. If
+repairs accumulate, templates become topic-specific, or reviewers cannot
+resolve failures from the declared choices alone, stop tuning the template. Add
+a versioned judge rubric for construction review only, calibrate it against
+sampled human review, and keep the deterministic checks as the provenance and
+symmetry gates. The judge does not become the correctness oracle.
+
+### Step 7: Review qualitatively
+
+The structural validator cannot decide whether a choice is realistic. Human
+review answers:
+
+- Would a reasonable person accept the output-only choice without memory?
+- Does the memory materially change the decision rather than add trivia?
+- Is the target buried naturally in the observation?
+- Are the decoys close enough to prevent keyword shortcuts?
+- Does the control remove only the decisive relationship?
+- Is the memory safe and necessary to use?
+- Would a wrong but plausible answer reveal a retrieval failure, a judgment
+  failure, or an ambiguous fixture?
+
+Record any non-obvious repair in [the decision log](history/decisions.md).
+
+### Step 8: Freeze before inspecting failures
+
+1. Commit the cases, observations, builders, and validation tests.
+2. Run the full baseline ladder against unchanged retrieval and judgment code.
+3. Retain predictions, config sidecars, metrics, and response caches under a
+   new namespace.
+4. Publish the aggregate and split results.
+
+After results have been inspected, that batch is development data. Preserve the
+first-pass artifacts as the honest generalization measurement and give every
+tuned result a new version. Build sealed test personas only from the frozen
+procedure, and never tune retrieval against them.
+
+## Frozen Amara benchmark_v1 procedure
+
+The 18 scenario triplets in `data/benchmark_v1` were built before this contract
+existed. The procedure is recorded here for reproducibility. Do not extend the
+Amara set with it; new construction follows the contract above.
+
+Each scenario was declared once in `SPECS` in `scripts/build_pilot_cases.py`
+with these fields:
 
 | Field | Meaning |
 | --- | --- |
@@ -60,118 +263,24 @@ fields are:
 | `sensitive_terms` | Private phrases the answer need not expose |
 | `example_number` | Approved catalog number |
 
-The builder hashes each declared source and writes provenance into every case.
-
-## Step 3: Create the large-output fixture
-
-Add the matching specification to `scripts/build_pilot_contexts.py`.
-
-The generated context must:
-
-- reach 8,000 to 12,000 `cl100k_base` tokens;
-- use unique natural-language labels;
-- put the cue at listing 147;
-- contain a credible output-only lead near the top;
-- include ordinary filler with decorrelated company, speaker, topic, detail,
-  format, and template strides; and
-- plant several near-miss decoys before the target.
-
-The target must not be the only detailed or unusually phrased row. A model that
-selects it by visual salience rather than memory invalidates the case.
-
-## Step 4: Generate the triplet
-
-Run:
+The matching large-output fixture was declared in
+`scripts/build_pilot_contexts.py`. Generated contexts reach 8,000 to 12,000
+`cl100k_base` tokens, use unique natural-language labels, place the cue at
+listing 147, carry a credible output-only lead near the top, and decorrelate
+company, speaker, topic, detail, format, and template strides.
 
 ```powershell
 $env:PYTHONPATH = 'src'
 & 'C:\Users\karth\anaconda3\python.exe' scripts\build_pilot_contexts.py
 & 'C:\Users\karth\anaconda3\python.exe' scripts\build_pilot_cases.py
-```
-
-For each scenario, the case builder produces:
-
-- `positive`: original prompt, original observation, memory-conditioned gold;
-- `cue-ablated`: original prompt, one exact observation replacement,
-  output-only gold; and
-- `memory-included`: positive observation plus a `Known personal memory`
-  preamble, memory-conditioned gold.
-
-The positive and memory-included observations are byte-identical. The control
-uses the same context file and one declared replacement.
-
-## Step 5: Validate structural symmetry
-
-Run:
-
-```powershell
 parm-bench validate data\benchmark_v1
 ```
 
-Then verify for the new triplet:
-
-- all three case IDs are unique and stable;
-- source hashes match the tracked corpus;
-- positive and ceiling observations are identical;
-- control replacement occurs exactly once;
-- cue and replacement preserve similar length and writing style;
-- every expected choice is visible in its resolved observation;
-- the control contains no leftover decisive entity or affordance;
-- every declared gold source is non-poison; and
-- context token counts remain inside the required range.
-
-## Step 6: Establish fixture fairness before retrieval tuning
-
-Run `no_memory` on all three variants before using the case to judge retrieval.
-The desired pattern is:
-
-| Variant | No-memory result |
-| --- | --- |
-| Positive | Output-only choice |
-| Cue-ablated | Output-only choice |
-| Memory-included | Memory-conditioned choice |
-
-If the positive already selects the memory target, the case cannot measure
-beneficial decision change. If the control does not select the declared
-output-only choice, repair the fixture while preserving the approved
-memory-cue relationship. Rerun every condition after any fixture change.
-
-Deterministic construction and scoring do not establish semantic fairness. If
-repairs begin accumulating, templates become topic-specific, or reviewers
-cannot resolve failures from the declared choices alone, stop tuning the
-template. Add a versioned LLM-judge rubric, calibrate it against sampled human
-review, and retain the deterministic checks as provenance and symmetry gates.
-
-## Step 7: Freeze the first pass
-
-Before inspecting retrieval failures:
-
-1. commit the cases, contexts, builders, and validation tests;
-2. run the full baseline matrix against unchanged retrieval and judgment code;
-3. retain predictions, config sidecars, metrics, and response caches under a
-   new namespace; and
-4. publish the aggregate and split results.
-
-After results have been inspected, the expansion is development data. Preserve
-the first-pass artifacts as the honest generalization measurement and give all
-tuned results a new version.
-
-## Step 8: Review the case qualitatively
-
-The structural validator cannot decide whether the choice is realistic. A
-human review should answer:
-
-- Would a reasonable person accept the output-only choice without memory?
-- Does the memory materially change the decision rather than add trivia?
-- Is the target buried naturally in the output?
-- Are the decoys semantically close enough to prevent keyword shortcuts?
-- Does the control remove only the decisive relationship?
-- Is the memory safe and necessary to use?
-- Would a wrong but plausible answer reveal a retrieval failure, a judgment
-  failure, or an ambiguous fixture?
-
-Record any non-obvious repair in
-[the decision log](history/decisions.md).
+Fixed cue position, a single observation format, and a single source corpus all
+fail criterion 9 of the current contract. Examples 19 and 20 from the catalog
+stayed outside the executable set because their proposed health memories are
+not present in `amara-life-v1`, which is the same rule criterion 1 now
+generalizes: do not invent history to make a case executable.
 
 ## Verification checklist
 
@@ -182,5 +291,6 @@ parm-bench validate data\benchmark_v1
 git diff --check
 ```
 
-The scenario is ready only when the generated files, builder specification,
-source provenance, no-memory fairness run, and first-pass namespace agree.
+A scenario is ready only when the generated files, builder specification,
+recorded source span, evidence gate, no-memory fairness run, and first-pass
+namespace agree.

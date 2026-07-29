@@ -5,6 +5,25 @@ entries appear first. Current behavior is documented in
 [Architecture](../architecture.md) and the
 [Evaluation Contract](../benchmark-evaluation.md).
 
+## 2026-07-29 (later)
+
+### The calibration batch refroze at 157 scenarios after the v2 supplement
+
+**Why:** The freeze at 65 was a supply failure, and the fix was upstream of
+construction: `parmbench_claim_draft_v2` requires every claim to carry a
+decision lever, so undecidable biographical facts are declined before they
+cost a scenario. Nothing had inspected retrieval yet, so amending the drafting
+rubric was construction calibration, not benchmark tuning.
+
+**What:** 339 unspent rows from a 300-persona pool were drafted under v2; 201
+passed the gate; 193 supplement scenarios were built with the round-one
+machinery and `-s2` ids; 92 survived the same two-attempt fairness discipline.
+The merged batch froze at 157 scenarios, 471 cases, 140 personas, with the
+final frozen-replay sweep passing 157 of 157 and the 65 round-one scenarios
+byte-identical throughout. The supplement ceiling first-sweep pass rate was 88
+percent against 50 percent under v1, which confirms the lever requirement was
+the right repair.
+
 ## 2026-07-29
 
 ### A drafted claim has to be able to decide something

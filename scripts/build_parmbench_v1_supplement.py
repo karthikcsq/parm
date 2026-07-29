@@ -82,9 +82,56 @@ construction note, and it must not appear in any field you return.
 
 _WHITESPACE = re.compile(r"\s+")
 
+# A decision lever names what this person would choose, need, or rule out. The
+# openers below are the ones that say so. Anything else turned out to mark a
+# claim that fails the decision-relevance test rather than a lever that is
+# merely worded oddly: levers such as "eligible for Columbia-affiliated
+# research collaborations" or "invite to speak on justice panels" describe what
+# somebody else would do about the person, and "might consider seeking clinical
+# assessment" hedges instead of deciding. The list is deliberately a closed
+# allowlist, so an unfamiliar shape costs supply rather than admitting a
+# scenario whose memory decides nothing.
+LEVER_OPENERS = frozenset(
+    """attends avoid avoids books brings buys can cannot choose chooses declines
+    drinks eats favors favours keeps limits must need needs orders picks plays
+    prefer prefers reads refuses requires reserves rides schedule schedules
+    seeks shops skips sticks takes travels uses want wants watches will works
+    would""".split()
+)
+
+# A claim that reports what somebody asked about is not a durable fact, and the
+# evidence gate cannot see that: a conversation always supports a faithful
+# report of its own question, so the gate grades it "explicit". Both drafting
+# rubrics forbid treating curiosity as a preference and both were talked past,
+# 24 times out of 247 under v2.
+_QUESTION_SHAPED_CLAIM = re.compile(
+    r"^the user (is asking|asked|asks|is curious|wants to know|is wondering|"
+    r"wondered|has noticed|noticed|is considering|is interested in "
+    r"(?:learning|knowing)|inquired|is seeking (?:information|advice|"
+    r"clarification))",
+    re.IGNORECASE,
+)
+
 
 def normalise(text: str) -> str:
     return _WHITESPACE.sub(" ", str(text)).strip().casefold()
+
+
+def supply_rejection(claim: str, lever: str) -> str | None:
+    """Reasons a gated claim must not reach the construction call at all.
+
+    Both checks run before any model call, so a claim that cannot carry a
+    scenario costs nothing to reject.
+    """
+
+    if _QUESTION_SHAPED_CLAIM.match(str(claim).strip()):
+        return "claim_restates_a_question_rather_than_a_fact"
+    tokens = str(lever).strip().split()
+    if not tokens:
+        return "empty_decision_lever"
+    if tokens[0].lower().strip(",.;:") not in LEVER_OPENERS:
+        return "decision_lever_is_not_a_person_choice"
+    return None
 
 
 class SupplementConstructor(builder.CachedConstructor):
@@ -286,7 +333,19 @@ def main() -> int:
     builder.load_env(ROOT / ".env")
     encoding = tiktoken.get_encoding(builder.TOKENIZER)
 
-    claims = builder.load_jsonl(SUPPLY_PATH)
+    all_claims = builder.load_jsonl(SUPPLY_PATH)
+    claims: list[dict[str, Any]] = []
+    supply_rejected: list[dict[str, str]] = []
+    for row in all_claims:
+        reason = supply_rejection(
+            row["draft"]["claim"], row["draft"]["decision_lever"]
+        )
+        if reason is None:
+            claims.append(row)
+        else:
+            supply_rejected.append(
+                {"source_row_id": row["source_row_id"], "reason": reason}
+            )
     if args.limit:
         claims = claims[: args.limit]
     records_by_corpus: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -611,6 +670,15 @@ def main() -> int:
         DATASET_ROOT / "dropped_scenarios.jsonl", kept_drop_lines + dump(dropped)
     )
 
+    builder.atomic_write_json(
+        SUPPLY_PATH.parent / "supplement_supply_rejections.json",
+        {
+            "gated_claims": len(all_claims),
+            "rejected": sorted(
+                supply_rejected, key=lambda item: item["source_row_id"]
+            ),
+        },
+    )
     manifest["corpora"] = [corpora[key] for key in sorted(corpora)]
     manifest["supplement_builder_version"] = BUILDER_VERSION
     # The gate block describes a sweep over a different case list until the
@@ -623,6 +691,11 @@ def main() -> int:
     )
 
     summary = {
+        "gated_claims": len(all_claims),
+        "claims_rejected_before_construction": dict(
+            sorted(Counter(item["reason"] for item in supply_rejected).items())
+        ),
+        "claims_built_from": len(claims),
         "frozen_scenarios": len(kept_record_lines),
         "supplement_scenarios": len(construction_records),
         "total_scenarios": len(kept_record_lines) + len(construction_records),

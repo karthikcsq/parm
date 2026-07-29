@@ -1,6 +1,6 @@
 # PARMBench v1, calibration batch
 
-65 independent base scenarios, 195 cases, 61 PersonaMem personas. Every
+157 independent base scenarios, 471 cases, 140 PersonaMem personas. Every
 scenario is a triplet: a positive case, a cue-ablated control, and a
 memory-included ceiling. All three share one base scenario, so any statistic
 belongs at the scenario level and the case count is not a sample size.
@@ -151,12 +151,50 @@ construction-signature ceiling, so the carrier that shared the most
 high-frequency filler runs with the rest of the batch was removed and the share
 fell to 13.8%.
 
-The 100-scenario floor set for this batch was not reached. 65 survived. The
-shortfall is a supply problem rather than a construction problem: all 133 gated
-claims were already spent, and roughly half of them describe facts that cannot
-decide an ordinary task no matter how the options are written. Reaching the
-contract's stage 2 target needs a drafting rubric that asks for
-decision-relevant facts, not more repair attempts on these ones.
+Round one froze at 65 scenarios, short of the 100-scenario floor. The
+shortfall was a supply problem rather than a construction problem: all 133
+gated claims were already spent, and roughly half of them described facts that
+cannot decide an ordinary task no matter how the options are written.
+
+## Supplement round
+
+The fix was a second drafting rubric, `parmbench_claim_draft_v2`, which keeps
+every soundness rule from v1 and adds a decision-relevance test: the fact must
+be a durable preference, constraint, exclusion, requirement, schedule, or
+relationship that could steer a choice among ordinary options, and the drafter
+must name that choice in a `decision_lever` field. The lever is construction
+metadata. It may steer which affordance the builder writes, and a scenario is
+rejected if any model-visible field reuses its wording. Finished events and
+one-off anecdotes are declined even when plainly stated.
+
+Supply for the round: the source pool grew from 150 to 300 personas (rows 0
+to 699 at the pinned revision, 404 candidate rows), and 339 unspent rows were
+drafted under v2. 201 claims passed the gate, drawn from 163 personas. A
+re-drafted row is skipped when its v2 claim restates a claim that already
+failed both repair attempts in round one.
+
+`scripts/build_parmbench_v1_supplement.py` built 193 scenarios from those
+claims with the round-one machinery unchanged. Supplement ids carry an `-s2`
+suffix, axes are assigned under the round's own seed, and the 65 round-one
+scenarios pass through byte for byte. The same fairness procedure then ran
+with the same two-attempt discipline, tracked in
+`../parmbench-v1-supply/fairness_repairs_v2.json`:
+
+| pass | scenarios | positive | cue-ablated | memory-included | all three |
+| --- | --- | --- | --- | --- | --- |
+| supplement sweep | 258 | 178 | 194 | 170 | 111 |
+| repair round 1 | 255 | 209 | 216 | 177 | 142 |
+| repair round 2 | 254 | 214 | 222 | 187 | 157 |
+| frozen batch | 157 | 157 | 157 | 157 | 157 |
+
+The decision-lever rubric earned its keep at the ceiling: 88 percent of
+supplement ceilings passed the first sweep, against 50 percent under v1.
+101 supplement scenarios were dropped along the way: 97 after exhausting both
+repair attempts and 4 by builder rejection during repair rebuilds. 92
+supplement survivors joined the 65 round-one scenarios for a frozen batch of
+157 scenarios, 471 cases, and 140 personas, all above the 100-scenario floor.
+The final frozen-replay sweep passes 157 of 157 scenarios, and the fairness
+gate in `dataset_manifest.json` attests the complete merged set.
 
 Artifacts for every pass are preserved under
 `../benchmark-results/parmbench-v1-fairness/`: the four intermediate reports
@@ -173,12 +211,12 @@ Capability, one per scenario:
 
 | capability | scenarios |
 | --- | --- |
-| direct lexical fact | 20 |
-| paraphrased semantic fact | 14 |
-| one-hop relational | 12 |
-| schedule or commitment | 8 |
-| negative preference or exclusion | 6 |
-| relationship or named entity | 5 |
+| direct lexical fact | 49 |
+| paraphrased semantic fact | 33 |
+| schedule or commitment | 31 |
+| one-hop relational | 19 |
+| relationship or named entity | 13 |
+| negative preference or exclusion | 12 |
 
 Capability follows from the drafted fact and the sampled wording relationship.
 A claim that states a limitation the person has, such as an injury or a food
@@ -191,12 +229,12 @@ eligibility filter drops every PersonaMem row marked `updated`, so no
 superseded fact reaches the drafter at all. Abstention is not a separate
 category either: an abstention case has the same answer under both conditions
 and therefore cannot satisfy the positive decision-change rule the validator
-enforces. Instead, 17 scenarios carry `provenance.abstention_pressure`, meaning
+enforces. Instead, 41 scenarios carry `provenance.abstention_pressure`, meaning
 their distractor memories were chosen for topical closeness to the claim rather
 than at random, so a system that admits memory on similarity alone has
 something to trip over.
 
-Other axes, over 65 scenarios:
+Other axes, over 157 scenarios:
 
 - 14 envelope styles, 3 to 6 scenarios each, with openings, section markers,
   entry shapes, and filler shapes randomised inside each style;
@@ -256,7 +294,7 @@ would have to be rerun to say so.
 
 ## Files
 
-- `cases.jsonl`, 195 cases, 3 per base scenario;
+- `cases.jsonl`, 471 cases, 3 per base scenario;
 - `contexts/`, one observation document per base scenario;
 - `construction_records.jsonl`, per scenario: the gated claim, the gate verdict,
   the evidence span, the sampled axes, the seeds, the repair attempt, the

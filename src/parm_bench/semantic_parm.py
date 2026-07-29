@@ -10,6 +10,7 @@ from typing import Any, Protocol, Sequence
 
 import numpy as np
 
+from .service_tier import service_tier_kwargs
 from .retrieval import (
     SCOPED_RETRIEVER_CACHE_SIZE,
     ChunkRecord,
@@ -146,6 +147,7 @@ class CachedOpenAIAdmissionJudge:
             model=self.model_name,
             instructions=PARM_SEMANTIC_JUDGE_INSTRUCTIONS,
             input=input_text,
+            **service_tier_kwargs(),
             text={
                 "format": {
                     "type": "json_schema",

@@ -7,6 +7,45 @@ entries appear first. Current behavior is documented in
 
 ## 2026-07-29
 
+### A drafted claim has to be able to decide something
+
+**Why:** The calibration batch froze at 65 scenarios because 35 of its 60 final
+drops were unusable ceilings. `parmbench_claim_draft_v1` asked for a
+conservative, auditable fact and got one; it never asked whether the fact could
+change a choice. "The user fractured their left wrist in their 20s" passes both
+the span check and the evidence gate and then defeats every attempt to write
+options around it, because no ordinary task turns on it. Repair attempts cannot
+reach that: the defect is upstream in supply.
+
+**What:** `parmbench_claim_draft_v2` keeps every soundness rule of v1 and adds a
+decision-relevance test. The fact has to be a durable preference, constraint,
+exclusion, requirement, schedule or commitment, or relationship that could steer
+a choice among ordinary options, and the drafter has to name the
+`decision_lever`, the kind of choice it could steer. Facts that are finished,
+one-off, or purely opinions about abstract subjects are declined even when the
+user plainly stated them.
+
+The lever is construction metadata. It reaches the construction call, under
+`parmbench_construction_v2`, so the model can pick an affordance that settles
+the task rather than one that merely suits the person, and
+`scripts/build_parmbench_v1_supplement.py` rejects any scenario that reuses the
+lever's wording in the observation, the prompt, or the memory sentence. Nothing
+model-visible may carry a construction note.
+
+### A supplement round adds scenarios rather than rebuilding the batch
+
+**Why:** The round-one builder assigns every axis from pools sized to its own
+claim count, so adding claims to `gated_claims.jsonl` would reshuffle the axes
+of all 65 frozen scenarios. Those scenarios have already been read against the
+fairness sweep; regenerating them would silently retune a closed batch.
+
+**What:** Supplement scenarios are built by a separate script that reuses the
+round-one envelopes, assembly, rejection checks, distractor selection, and
+caches, assigns axes under its own seed over its own claim count, and carries an
+`-s2` suffix on every scenario id. Round one's case rows, construction records,
+and observation files are copied through byte for byte, and repairs for the new
+round are declared in their own `fairness_repairs_v2.json`.
+
 ### The ceiling prompt names the personal fact as memory
 
 **Why:** The first `no_memory` fairness sweep of `benchmark_parmbench_v1` passed

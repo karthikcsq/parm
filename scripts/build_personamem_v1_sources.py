@@ -153,6 +153,17 @@ def main() -> None:
         for entry in v0_manifest["artifacts"]["histories"]
     }
 
+    # Personas this pool already holds. Re-running to widen the pool must leave
+    # them byte-identical, and re-downloading a file the repository already
+    # tracks is a way to lose that guarantee for no gain.
+    existing_history_by_persona: dict[int, dict[str, Any]] = {}
+    if MANIFEST_PATH.exists():
+        existing_manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+        for entry in existing_manifest.get("artifacts", {}).get("histories", []):
+            path = SOURCE_ROOT / entry["path"]
+            if path.exists() and _sha256_file(path) == entry["sha256"]:
+                existing_history_by_persona[int(entry["persona_id"])] = entry
+
     # 1. Copy and verify the v0 rows 0-99 metadata page so v1 is
     #    self-contained (does not need to read from v0 at run time later).
     v0_metadata_path = (
@@ -309,6 +320,13 @@ def main() -> None:
             filename = Path(entry["path"]).name
             upstream_path = entry["upstream_path"]
             reused = True
+        elif persona_id in existing_history_by_persona:
+            entry = existing_history_by_persona[persona_id]
+            data = (SOURCE_ROOT / entry["path"]).read_bytes()
+            sha = entry["sha256"]
+            filename = Path(entry["path"]).name
+            upstream_path = entry["upstream_path"]
+            reused = False
         else:
             upstream_path = row.history_path
             filename = Path(upstream_path).name

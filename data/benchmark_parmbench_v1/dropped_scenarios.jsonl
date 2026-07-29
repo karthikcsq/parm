@@ -1,0 +1,6 @@
+{"base_case_id": "parmbench-v1-p205-11", "reason": "prompt_shares_too_much_wording_with_the_claim"}
+{"base_case_id": "parmbench-v1-p220-335", "reason": "cue_not_unique_in_observation"}
+{"base_case_id": "parmbench-v1-p540-105", "reason": "prompt_shares_too_much_wording_with_the_claim"}
+{"base_case_id": "parmbench-v1-p688-226", "reason": "evidence_span_leaks_into_memory_text"}
+{"base_case_id": "parmbench-v1-p819-55", "reason": "evidence_span_leaks_into_observation"}
+{"base_case_id": "parmbench-v1-p828-267", "reason": "evidence_span_leaks_into_memory_text"}

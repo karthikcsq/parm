@@ -9,6 +9,8 @@ from typing import Any, Protocol
 
 from openai import OpenAI
 
+from .service_tier import service_tier_kwargs
+
 
 RESPONSE_CACHE_SCHEMA = 1
 
@@ -115,7 +117,9 @@ class OpenAIResponsesModel:
     def _create_response(self, **kwargs: Any) -> Any:
         for attempt in range(3):
             try:
-                return self.client.responses.create(**kwargs)
+                return self.client.responses.create(
+                    **kwargs, **service_tier_kwargs()
+                )
             except json.JSONDecodeError:
                 if attempt == 2:
                     raise

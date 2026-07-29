@@ -65,6 +65,8 @@ from parmbench_v1_envelopes import (  # noqa: E402
     sentences,
 )
 
+from parm_bench.service_tier import service_tier_kwargs  # noqa: E402
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SUPPLY_PATH = ROOT / "data" / "parmbench-v1-supply" / "gated_claims.jsonl"
@@ -486,7 +488,9 @@ class CachedConstructor:
 
         for attempt in range(6):
             try:
-                return self.client.responses.create(**kwargs)
+                return self.client.responses.create(
+                    **kwargs, **service_tier_kwargs()
+                )
             except Exception:  # noqa: BLE001 - retried, then re-raised
                 if attempt == 5:
                     raise

@@ -57,6 +57,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from parm_bench.service_tier import service_tier_kwargs
 from parm_bench.evidence_gate import (
     CachedOpenAISupportJudge,
     EvidenceGateCacheMissError,
@@ -342,7 +343,9 @@ class CachedDrafter:
 
         for attempt in range(6):
             try:
-                return self.client.responses.create(**kwargs)
+                return self.client.responses.create(
+                    **kwargs, **service_tier_kwargs()
+                )
             except Exception:  # noqa: BLE001 - retried, then re-raised
                 if attempt == 5:
                     raise

@@ -148,6 +148,15 @@ def main(argv: list[str] | None = None) -> int:
         help="restrict the run to one or more variants (default: all)",
     )
     run.add_argument("--model")
+    run.add_argument(
+        "--limit",
+        type=int,
+        help=(
+            "restrict the run to the first N base scenarios (all their "
+            "variants) for cheap development iterations; full runs must "
+            "omit it"
+        ),
+    )
     run.add_argument("--out", required=True)
 
     score = commands.add_parser("score")
@@ -222,6 +231,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.model,
                 args.out,
                 args.variants,
+                args.limit,
             )
         if args.command == "score":
             return _score(args.results_jsonl, args.gold, args.out)
@@ -288,6 +298,7 @@ def _run(
     model_name: str | None,
     out: str,
     variants: list[str] | None = None,
+    limit: int | None = None,
 ) -> int:
     cases = load_cases(dataset_dir)
     validate_cases(cases)
@@ -299,6 +310,14 @@ def _run(
                 "no cases match the requested --variant filter: "
                 + ", ".join(sorted(wanted))
             )
+    if limit is not None:
+        if limit < 1:
+            raise ValueError("--limit must be a positive scenario count")
+        # Scenario-level truncation keeps triplets whole so paired metrics
+        # stay meaningful on the subset.
+        kept_bases = sorted({case["base_case_id"] for case in cases})[:limit]
+        kept = set(kept_bases)
+        cases = [case for case in cases if case["base_case_id"] in kept]
     implementation = get_baseline(
         baseline,
         BaselineConfiguration(

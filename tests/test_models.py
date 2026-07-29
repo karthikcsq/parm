@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import unittest
 from types import SimpleNamespace
 
@@ -38,6 +39,15 @@ class FakeResponses:
 
 
 class OpenAIResponsesModelTests(unittest.TestCase):
+    def setUp(self) -> None:
+        # The service tier is environment-driven and other tests may load the
+        # developer's .env; pin it off so call-shape assertions stay exact.
+        previous = os.environ.pop("OPENAI_SERVICE_TIER", None)
+        if previous is not None:
+            self.addCleanup(
+                os.environ.__setitem__, "OPENAI_SERVICE_TIER", previous
+            )
+
     def test_generate_uses_non_stored_responses_call(self) -> None:
         responses = FakeResponses()
         client = SimpleNamespace(responses=responses)

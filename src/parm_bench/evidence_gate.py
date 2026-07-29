@@ -20,6 +20,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Protocol, Sequence
 
+from .service_tier import service_tier_kwargs
+
 
 EVIDENCE_GATE_MODEL = "gpt-5-mini"
 EVIDENCE_GATE_RUBRIC = "personamem_source_support_v2"
@@ -331,6 +333,7 @@ class CachedOpenAISupportJudge:
             model=self.model_name,
             instructions=self.instructions,
             input=input_text,
+            **service_tier_kwargs(),
             text={
                 "format": {
                     "type": "json_schema",

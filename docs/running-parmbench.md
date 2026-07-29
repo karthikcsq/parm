@@ -25,6 +25,25 @@ $python = 'C:\Users\karth\anaconda3\python.exe'
 Copy `.env.example` to the ignored root `.env` and set `OPENAI_API_KEY` for
 live model-backed runs.
 
+## Controlling cost during development
+
+Two levers keep live spend down while iterating; neither changes what a run
+produces.
+
+Set `OPENAI_SERVICE_TIER=flex` in `.env` to send every eligible gpt-5-family
+call at OpenAI's discounted flex tier (about half price, higher latency,
+occasional queuing). The tier is deliberately excluded from every cache key,
+so entries populated under flex replay identically without it. Embedding
+calls are unaffected because the API does not tier them.
+
+Pass `--limit N` to `parm-bench run` to restrict a development iteration to
+the first N base scenarios. The cut is scenario-level, so triplets stay whole
+and paired metrics remain meaningful on the subset. Full, reportable runs
+must omit `--limit`.
+
+Replays are always free: any run against a populated response, expansion, or
+admission cache with a `frozen` policy makes no live calls at all.
+
 ## Validate and inspect the dataset
 
 ```powershell

@@ -12,6 +12,8 @@ from typing import Any, Callable, Protocol, Sequence
 
 import numpy as np
 
+from .service_tier import service_tier_kwargs
+
 
 EMBEDDING_MODEL = "openai:text-embedding-3-small"
 EMBEDDING_API_MODEL = "text-embedding-3-small"
@@ -838,6 +840,7 @@ class CachedOpenAIQueryExpander:
             self._client = OpenAI()
         response = self._client.responses.create(
             model=self.model,
+            **service_tier_kwargs(),
             instructions=(
                 "Generate exactly three distinct search queries that preserve the "
                 "user's intent while varying wording and likely memory anchors."

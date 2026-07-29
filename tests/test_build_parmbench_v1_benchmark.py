@@ -7,6 +7,7 @@ from scripts.build_parmbench_v1_benchmark import (
     capability_for,
     normalise_core,
     prompt_claim_overlap,
+    render_construction_request,
     scenario_rejection,
 )
 from scripts.draft_parmbench_v1_claims import span_rejection
@@ -171,6 +172,49 @@ class PromptOpacityTests(unittest.TestCase):
             scenario_rejection(text, core, prompt, row),
             "prompt_shares_too_much_wording_with_the_claim",
         )
+
+
+class RepairRequestTests(unittest.TestCase):
+    spec = {
+        "claim": "The user walks with a wheeled frame outdoors.",
+        "evidence_span": "I use a wheeled frame when I go out.",
+        "domain": "choosing a volunteering slot",
+        "mechanism": "schedule fit",
+        "ratings_allowed": False,
+        "overlap_mode": "paraphrase_only",
+        "decoy_count": 4,
+        "register": "log extract",
+    }
+
+    def test_an_unrepaired_scenario_renders_the_original_request(self) -> None:
+        rendered = render_construction_request({**self.spec, "repair_attempt": 0})
+        self.assertNotIn("Regeneration attempt", rendered)
+        self.assertEqual(
+            rendered, render_construction_request(dict(self.spec))
+        )
+
+    def test_a_repair_changes_the_request_per_attempt(self) -> None:
+        first = render_construction_request(
+            {**self.spec, "repair_attempt": 1, "repair_failed_variants": ()}
+        )
+        second = render_construction_request(
+            {**self.spec, "repair_attempt": 2, "repair_failed_variants": ()}
+        )
+        self.assertIn("Regeneration attempt: 1", first)
+        self.assertIn("Regeneration attempt: 2", second)
+        self.assertNotEqual(first, second)
+        self.assertNotEqual(first, render_construction_request(dict(self.spec)))
+
+    def test_the_failing_variant_is_named_in_the_repair_request(self) -> None:
+        rendered = render_construction_request(
+            {
+                **self.spec,
+                "repair_attempt": 1,
+                "repair_failed_variants": ("memory-included",),
+            }
+        )
+        self.assertIn("was not decisive for this task", rendered)
+        self.assertNotIn("already picked the", rendered)
 
 
 class CapabilityTests(unittest.TestCase):

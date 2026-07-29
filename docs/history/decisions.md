@@ -5,6 +5,52 @@ entries appear first. Current behavior is documented in
 [Architecture](../architecture.md) and the
 [Evaluation Contract](../benchmark-evaluation.md).
 
+## 2026-07-29
+
+### The ceiling prompt names the personal fact as memory
+
+**Why:** The first `no_memory` fairness sweep of `benchmark_parmbench_v1` passed
+only 64 of 127 memory-included ceilings, including scenarios whose cue repeated
+the user's own wording. The builder concatenated the memory sentence onto the
+front of the ordinary task with no label, and the answer model is instructed to
+follow the task using only the supplied observation, so an unlabelled leading
+sentence read as task text and was discounted.
+
+**What:** `ceiling_prompt` in `scripts/build_parmbench_v1_benchmark.py` now
+renders the fact under a `Known personal memory:` heading above the task, which
+is the shape the PersonaMem pilot used. Applied to every scenario at once; no
+claim, evidence span, or gold source changed.
+
+### Fairness repairs are declared in a tracked file, not applied by hand
+
+**Why:** A scenario that misses the criteria 5 to 7 pattern has to be rebuilt
+from the same claim, and the rebuild has to be reproducible. Editing a case in
+place would break the link between the dataset and its builder.
+
+**What:** `data/parmbench-v1-supply/fairness_repairs.json` records, per
+scenario, the repair attempt number and the variants that failed, or the reason
+it was dropped. The builder reseeds a repaired scenario and adds the attempt
+number plus a note about the failing variant to the construction request, so
+the cache cannot replay the core that failed. Two attempts per scenario, then
+the scenario is dropped with its last diagnosis.
+
+### The parmbench_v1 calibration batch froze at 65 scenarios, below the floor
+
+**Why:** The batch was meant to hold at least 100 scenarios. Two repair rounds
+took the fairness pass count from 28 to 66 of 127, and the 60 scenarios that
+exhausted both attempts were dropped, along with one carrier of an
+over-represented filler run. The dominant failure was the ceiling: 35 of the 60
+final drops were scenarios where a model told the personal fact still chose the
+output-only winner. The evidence gate accepts a claim because a user stated it,
+not because it could change a decision, so about half the supply describes
+facts that cannot decide an ordinary task however the options are written.
+Continuing to re-roll those scenarios would have selected on sweep noise rather
+than fixing them.
+
+**What:** Froze at 65 scenarios, 195 cases, 61 personas, and recorded the
+shortfall. Stage 2 needs a drafting rubric that asks for decision-relevant
+facts, not more repair attempts on the current pool.
+
 ## 2026-07-28
 
 ### PersonaMem-v2 stays the canonical raw-history source

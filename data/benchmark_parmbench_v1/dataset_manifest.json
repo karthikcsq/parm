@@ -10,16 +10,6 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-104",
-      "source_id_prefix": "notes/persona-104/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-108",
-      "source_id_prefix": "notes/persona-108/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-111",
       "source_id_prefix": "notes/persona-111/",
       "source_root": "../personamem-v2-train-v1/source"
@@ -40,18 +30,8 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-16",
-      "source_id_prefix": "notes/persona-16/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-170",
       "source_id_prefix": "notes/persona-170/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-171",
-      "source_id_prefix": "notes/persona-171/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -75,11 +55,6 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-19",
-      "source_id_prefix": "notes/persona-19/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-190",
       "source_id_prefix": "notes/persona-190/",
       "source_root": "../personamem-v2-train-v1/source"
@@ -87,11 +62,6 @@
     {
       "corpus_id": "personamem-v2/train/persona-191",
       "source_id_prefix": "notes/persona-191/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-192",
-      "source_id_prefix": "notes/persona-192/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -110,11 +80,6 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-212",
-      "source_id_prefix": "notes/persona-212/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-214",
       "source_id_prefix": "notes/persona-214/",
       "source_root": "../personamem-v2-train-v1/source"
@@ -130,18 +95,8 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-227",
-      "source_id_prefix": "notes/persona-227/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-232",
       "source_id_prefix": "notes/persona-232/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-250",
-      "source_id_prefix": "notes/persona-250/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -160,21 +115,6 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-316",
-      "source_id_prefix": "notes/persona-316/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-326",
-      "source_id_prefix": "notes/persona-326/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-348",
-      "source_id_prefix": "notes/persona-348/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-350",
       "source_id_prefix": "notes/persona-350/",
       "source_root": "../personamem-v2-train-v1/source"
@@ -187,16 +127,6 @@
     {
       "corpus_id": "personamem-v2/train/persona-38",
       "source_id_prefix": "notes/persona-38/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-390",
-      "source_id_prefix": "notes/persona-390/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-393",
-      "source_id_prefix": "notes/persona-393/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -215,26 +145,6 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-413",
-      "source_id_prefix": "notes/persona-413/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-418",
-      "source_id_prefix": "notes/persona-418/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-423",
-      "source_id_prefix": "notes/persona-423/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-435",
-      "source_id_prefix": "notes/persona-435/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-440",
       "source_id_prefix": "notes/persona-440/",
       "source_root": "../personamem-v2-train-v1/source"
@@ -242,11 +152,6 @@
     {
       "corpus_id": "personamem-v2/train/persona-448",
       "source_id_prefix": "notes/persona-448/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-454",
-      "source_id_prefix": "notes/persona-454/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -260,43 +165,8 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-481",
-      "source_id_prefix": "notes/persona-481/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-490",
-      "source_id_prefix": "notes/persona-490/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-501",
-      "source_id_prefix": "notes/persona-501/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-509",
       "source_id_prefix": "notes/persona-509/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-514",
-      "source_id_prefix": "notes/persona-514/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-538",
-      "source_id_prefix": "notes/persona-538/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-544",
-      "source_id_prefix": "notes/persona-544/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-552",
-      "source_id_prefix": "notes/persona-552/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -320,28 +190,13 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-611",
-      "source_id_prefix": "notes/persona-611/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-614",
       "source_id_prefix": "notes/persona-614/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-62",
-      "source_id_prefix": "notes/persona-62/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-628",
       "source_id_prefix": "notes/persona-628/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-640",
-      "source_id_prefix": "notes/persona-640/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -385,23 +240,8 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-743",
-      "source_id_prefix": "notes/persona-743/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-747",
       "source_id_prefix": "notes/persona-747/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-752",
-      "source_id_prefix": "notes/persona-752/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-754",
-      "source_id_prefix": "notes/persona-754/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -420,23 +260,8 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-791",
-      "source_id_prefix": "notes/persona-791/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-817",
       "source_id_prefix": "notes/persona-817/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-831",
-      "source_id_prefix": "notes/persona-831/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-847",
-      "source_id_prefix": "notes/persona-847/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -455,16 +280,6 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-869",
-      "source_id_prefix": "notes/persona-869/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-87",
-      "source_id_prefix": "notes/persona-87/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-874",
       "source_id_prefix": "notes/persona-874/",
       "source_root": "../personamem-v2-train-v1/source"
@@ -472,21 +287,6 @@
     {
       "corpus_id": "personamem-v2/train/persona-877",
       "source_id_prefix": "notes/persona-877/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-878",
-      "source_id_prefix": "notes/persona-878/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-880",
-      "source_id_prefix": "notes/persona-880/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-886",
-      "source_id_prefix": "notes/persona-886/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
@@ -500,56 +300,32 @@
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
-      "corpus_id": "personamem-v2/train/persona-908",
-      "source_id_prefix": "notes/persona-908/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-91",
-      "source_id_prefix": "notes/persona-91/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
       "corpus_id": "personamem-v2/train/persona-916",
       "source_id_prefix": "notes/persona-916/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-919",
-      "source_id_prefix": "notes/persona-919/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-93",
-      "source_id_prefix": "notes/persona-93/",
       "source_root": "../personamem-v2-train-v1/source"
     },
     {
       "corpus_id": "personamem-v2/train/persona-956",
       "source_id_prefix": "notes/persona-956/",
       "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-98",
-      "source_id_prefix": "notes/persona-98/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-981",
-      "source_id_prefix": "notes/persona-981/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-983",
-      "source_id_prefix": "notes/persona-983/",
-      "source_root": "../personamem-v2-train-v1/source"
-    },
-    {
-      "corpus_id": "personamem-v2/train/persona-993",
-      "source_id_prefix": "notes/persona-993/",
-      "source_root": "../personamem-v2-train-v1/source"
     }
   ],
+  "fairness_gate": {
+    "baseline": "no_memory",
+    "cases": 195,
+    "evaluator_version": "parmbench_fairness_v1",
+    "passed_cases": 195,
+    "passed_scenarios": 65,
+    "path": "../benchmark-results/parmbench-v1-fairness/fairness.json",
+    "predictions_path": "../benchmark-results/parmbench-v1-fairness/no-memory.jsonl",
+    "predictions_sha256": "a64bfa469786d9d7d0407b356f1924b288cc96f4a989307175409f3e59e9df4c",
+    "resolved_models": [
+      "gpt-5-mini-2025-08-07"
+    ],
+    "response_cache": "../response-caches/parmbench-v1-fairness",
+    "scenarios": 65,
+    "sha256": "1d7a219662e5918c43be73515c0abbfe7e41736a409b8f97d362a1b70cb554e6"
+  },
   "schema_version": 1,
   "validation_profile": "parmbench_v1"
 }

@@ -68,6 +68,9 @@ from parmbench_v1_envelopes import (  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 SUPPLY_PATH = ROOT / "data" / "parmbench-v1-supply" / "gated_claims.jsonl"
+FAIRNESS_REPAIRS_PATH = (
+    ROOT / "data" / "parmbench-v1-supply" / "fairness_repairs.json"
+)
 RECORDS_PATH = ROOT / "data" / "personamem-v2-train-v1" / "records.jsonl"
 DATASET_ROOT = ROOT / "data" / "benchmark_parmbench_v1"
 CONTEXT_ROOT = DATASET_ROOT / "contexts"
@@ -368,13 +371,69 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+CEILING_MEMORY_HEADING = "Known personal memory:"
+
+
+def ceiling_prompt(memory_text: str, prompt: str) -> str:
+    """Render the memory-included prompt with the fact under its own heading.
+
+    The first fairness sweep concatenated the memory sentence onto the front of
+    the task. The answer model is instructed to follow the task using only the
+    supplied observation, and an unlabelled leading sentence reads as part of
+    that task, so the fact was discounted and the ceiling collapsed on
+    scenarios whose cue plainly matched it. Naming the fact as personal memory,
+    the way the PersonaMem pilot did, separates it from the task text.
+    """
+
+    return f"{CEILING_MEMORY_HEADING}\n{memory_text.strip()}\n\n{prompt.strip()}"
+
+
 # --------------------------------------------------------------------------
 # construction call
 # --------------------------------------------------------------------------
 
 
+REPAIR_PREAMBLE = """\
+An earlier version of this scenario was tested on a reader who was given the
+document with no personal information, and on a reader who was given the
+personal fact as well. It did not behave as it must. Write a completely
+different set of options for the same personal fact and the same task domain.
+
+Three readings have to come out right at once:
+
+1. A reader with no personal information picks the winner.
+2. That reader still picks the winner when the cue sentence is swapped for the
+   neutral sentence.
+3. A reader who is told the personal fact picks the target instead.
+"""
+
+REPAIR_NOTES = {
+    "positive": """\
+What went wrong: a reader who knew nothing about the person already picked the
+target. The affordance was doing work on its own. Make the cue sentence read as
+a plain factual detail that no uninformed reader would weigh, and make the
+winner's case on the ordinary mechanism unmistakably stronger.
+""",
+    "cue-ablated": """\
+What went wrong: a reader who knew nothing about the person did not pick the
+winner even after the affordance was removed. Either a decoy read better or the
+target read better on ordinary grounds. State the winner's advantage on the
+ordinary mechanism in concrete, checkable terms, give the target no ordinary
+advantage at all, and make every decoy fall visibly short.
+""",
+    "memory-included": """\
+What went wrong: a reader who was told the personal fact still picked the
+winner, so the affordance was not decisive for this task. Choose an affordance
+that settles the task for someone who knows the fact: knowing it must make the
+winner unsuitable or unusable for this person, not merely make the target a
+pleasant extra. The affordance must bear on the task being done, not on an
+unrelated interest of theirs.
+""",
+}
+
+
 def render_construction_request(spec: Mapping[str, Any]) -> str:
-    return (
+    request = (
         f"Personal fact: {spec['claim']}\n"
         f"The person's own words: {spec['evidence_span']}\n"
         f"Task domain: {spec['domain']}\n"
@@ -384,6 +443,16 @@ def render_construction_request(spec: Mapping[str, Any]) -> str:
         f"Number of near-miss decoys: {spec['decoy_count']}\n"
         f"Document register: {spec['register']}\n"
     )
+    # A repaired scenario keeps its claim, evidence span, and axes and asks for
+    # a fresh core. The attempt number and the variant that broke are part of
+    # the request, so the rebuild cannot replay the core that failed and the
+    # rewrite is aimed at the reading that came out wrong.
+    if spec.get("repair_attempt"):
+        request += f"Regeneration attempt: {spec['repair_attempt']}\n"
+        request += REPAIR_PREAMBLE
+        for variant in spec.get("repair_failed_variants", ()):
+            request += REPAIR_NOTES[variant]
+    return request
 
 
 class CachedConstructor:
@@ -405,6 +474,25 @@ class CachedConstructor:
             self._client = OpenAI()
         return self._client
 
+    def _create(self, **kwargs: Any) -> Any:
+        """Call the API, waiting out rate limits and transient network faults.
+
+        A batch of repairs is large enough that one refused connection would
+        otherwise drop a scenario that has nothing wrong with it.
+        """
+
+        import random
+        import time
+
+        for attempt in range(6):
+            try:
+                return self.client.responses.create(**kwargs)
+            except Exception:  # noqa: BLE001 - retried, then re-raised
+                if attempt == 5:
+                    raise
+                time.sleep(min(60.0, 2.0 * 2**attempt) * (0.5 + random.random()))
+        raise AssertionError("unreachable construction retry state")
+
     def build(self, spec: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
         input_text = render_construction_request(spec)
         request = {
@@ -419,7 +507,7 @@ class CachedConstructor:
             return cached["result"], request_hash
         if self.offline:
             raise RuntimeError(f"missing construction cache entry: {request_hash}")
-        response = self.client.responses.create(
+        response = self._create(
             model=CONSTRUCTION_MODEL,
             instructions=CONSTRUCTION_INSTRUCTIONS,
             input=input_text,
@@ -477,7 +565,7 @@ class CachedConstructor:
             return str(cached["result"]["neutral_clause"]), request_hash
         if self.offline:
             raise RuntimeError(f"missing repair cache entry: {request_hash}")
-        response = self.client.responses.create(
+        response = self._create(
             model=CONSTRUCTION_MODEL,
             instructions=NEUTRAL_REPAIR_INSTRUCTIONS,
             input=input_text,
@@ -753,7 +841,7 @@ def scenario_rejection(
     if span.casefold() in memory_text.casefold():
         return "evidence_span_leaks_into_memory_text"
     prompt_folded = prompt.casefold()
-    ceiling_folded = f"{memory_text} {prompt}".casefold()
+    ceiling_folded = ceiling_prompt(memory_text, prompt).casefold()
     if "exactly one" not in prompt_folded:
         return "prompt_missing_answer_contract"
     for label in labels:
@@ -851,9 +939,44 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     ]
 
 
+def load_fairness_repairs() -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+    """Read the tracked repair and drop decisions from the fairness run.
+
+    `repairs` maps a scenario to its attempt number and the variants that
+    failed, which reseeds the scenario and asks the construction model for a
+    fresh core aimed at the reading that broke. `drops` maps a scenario to the
+    reason it was abandoned. Both are declared in one tracked file so a rebuild
+    reproduces the repaired batch exactly.
+    """
+
+    if not FAIRNESS_REPAIRS_PATH.exists():
+        return {}, {}
+    payload = json.loads(FAIRNESS_REPAIRS_PATH.read_text(encoding="utf-8"))
+    repairs = {
+        str(key): {
+            "attempt": int(value["attempt"]),
+            "failed_variants": tuple(
+                variant
+                for variant in ("positive", "cue-ablated", "memory-included")
+                if variant in set(value.get("failed_variants", ()))
+            ),
+        }
+        for key, value in dict(payload.get("repairs", {})).items()
+    }
+    drops = {
+        str(item["base_case_id"]): str(item["reason"])
+        for item in payload.get("drops", [])
+    }
+    overlap = sorted(set(repairs) & set(drops))
+    if overlap:
+        raise ValueError(f"scenarios both repaired and dropped: {overlap}")
+    return repairs, drops
+
+
 def build_specs(claims: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """Assign every construction axis from balanced, seeded pools."""
 
+    repairs, _ = load_fairness_repairs()
     axis_rng = random.Random(AXIS_SEED)
     count = len(claims)
     domains = balanced_assignment(DOMAINS, count, axis_rng)
@@ -874,12 +997,22 @@ def build_specs(claims: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
             f"parmbench-v1-p{row['persona_id']}-"
             f"{str(row['source_row_id']).split(':')[-1]}"
         )
-        seed = int(sha256_text(base_case_id)[:16], 16)
+        repair = repairs.get(base_case_id)
+        repair_attempt = repair["attempt"] if repair else 0
+        repair_failed_variants = repair["failed_variants"] if repair else ()
+        seed_key = (
+            f"{base_case_id}#repair{repair_attempt}"
+            if repair_attempt
+            else base_case_id
+        )
+        seed = int(sha256_text(seed_key)[:16], 16)
         rng = random.Random(seed)
         envelope = next(e for e in ENVELOPES if e.name == envelopes[index])
         specs.append(
             {
                 "base_case_id": base_case_id,
+                "repair_attempt": repair_attempt,
+                "repair_failed_variants": repair_failed_variants,
                 "claim_row": row,
                 "claim": row["draft"]["claim"],
                 "evidence_span": row["draft"]["evidence_span"],
@@ -922,6 +1055,7 @@ def main() -> int:
         records_by_corpus[record["corpus_id"]].append(record)
 
     specs = build_specs(claims)
+    _, fairness_drops = load_fairness_repairs()
     constructor = CachedConstructor(CONSTRUCTION_CACHE, offline=args.offline)
 
     def warm(spec: Mapping[str, Any]) -> None:
@@ -931,7 +1065,16 @@ def main() -> int:
             print(f"construction failed for {spec['base_case_id']}: {exc}")
 
     with ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
-        list(pool.map(warm, specs))
+        list(
+            pool.map(
+                warm,
+                [
+                    spec
+                    for spec in specs
+                    if spec["base_case_id"] not in fairness_drops
+                ],
+            )
+        )
 
     CONTEXT_ROOT.mkdir(parents=True, exist_ok=True)
     for stale in CONTEXT_ROOT.glob("*.md"):
@@ -945,6 +1088,14 @@ def main() -> int:
     for spec in specs:
         if args.max_scenarios and len(construction_records) >= args.max_scenarios:
             break
+        if spec["base_case_id"] in fairness_drops:
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": fairness_drops[spec["base_case_id"]],
+                }
+            )
+            continue
         row = spec["claim_row"]
         try:
             raw_core, request_hash = constructor.build(spec)
@@ -1068,6 +1219,7 @@ def main() -> int:
             "persona_id": persona_id,
             "ratings_allowed": spec["ratings_allowed"],
             "neutral_clause_repaired": neutral_repaired,
+            "fairness_repair_attempt": spec["repair_attempt"],
             "seeds": {
                 "axis_seed": AXIS_SEED,
                 "scenario_seed": spec["seed"],
@@ -1087,7 +1239,11 @@ def main() -> int:
 
         for variant in ("positive", "cue-ablated", "memory-included"):
             cue_present = variant != "cue-ablated"
-            case_prompt = f"{memory_text} {prompt}" if variant == "memory-included" else prompt
+            case_prompt = (
+                ceiling_prompt(memory_text, prompt)
+                if variant == "memory-included"
+                else prompt
+            )
             cases.append(
                 {
                     "case_id": f"{spec['base_case_id']}-{variant}",
@@ -1141,6 +1297,7 @@ def main() -> int:
                 "capability": capability,
                 "abstention_pressure": spec["abstention_pressure"],
                 "neutral_clause_repaired": neutral_repaired,
+                "fairness_repair_attempt": spec["repair_attempt"],
                 "axes": {
                     "domain": spec["domain"],
                     "envelope_style": spec["envelope"],
@@ -1195,6 +1352,11 @@ def main() -> int:
         "scenarios": len(construction_records),
         "cases": len(cases),
         "personas": len({record["persona_id"] for record in construction_records}),
+        "repaired": sum(
+            1
+            for record in construction_records
+            if record["fairness_repair_attempt"]
+        ),
         "dropped": len(dropped),
         "dropped_reasons": dict(
             sorted(Counter(item["reason"].split(":")[0] for item in dropped).items())

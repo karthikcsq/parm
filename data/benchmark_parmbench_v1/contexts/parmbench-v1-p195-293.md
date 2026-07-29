@@ -1,616 +1,521 @@
-log extract GY-2542 · returns · compiled 9 January
+shift log ZD-200 for backlog, printed 17 January
 
-The duty liaison rebuilt the backlog centrally within the amended schedule beyond the morning post. Without the standing order the compliance analyst immediately merged the ordering. The standards reviewer reconciled the correction in the reconciliation tab belatedly without the standing order.
+Within the interim heading the counter analyst otherwise escalated the ticket following the second reading. The duty planner published the count in the field notebook without the quiet spell.
 
-Ember Hollow
-    Across the carbon copy, the transport aide closed the ticket additionally alongside the courier window. Across the intake folder the rota supervisor paused the review carefully despite the quiet spell.
+Foxglove Steps
+    Across the standing brief the moderation clerk logged the notice after the second reading. Throughout the address correction the duty lead cleared the ordering.
 
-[revisions]
+Lantern Verge
+    The archive aide extended the mismatch under the outgoing tray notwithstanding the weekly close.
 
-Willowbank Cutting
-    On the interim heading the outreach officer already trimmed the batch beyond the archive sweep. Throughout the duplicate removal, the intake handler reconciled the reference against the referral queue.
+Wayfarer Lodge
+    The standards lead retired the summary under the temporary code partially during the counter handover.
 
-Access: closes early Friday with no charge
+Parking: no fixed rota with a deposit
 
-Against the second folder the billing coordinator trimmed the hold apparently before the quarterly close. Under the second folder the placement analyst separately restored the reminder before the quiet spell.
+Through the prior estimate, the records aide adjusted the review pending the morning post. The transport supervisor quickly extended the shortlist on the intake folder during the weekly close. The duty planner adjusted the header, throughout the holiday closure, likewise under the amended schedule. Despite the short delay, the triage handler previously released the allocation within the amended schedule. The counter handler annotated the review, alongside the regional audit, beside the field notebook.
 
-Fenwick Lodge
-    Across the counter copy the rota analyst already reopened the header during the interim review.
+Handover: gravel approach apparently for regular callers
 
-Setting: counter at the front elsewhere with one exception
+The archive officer permanently annotated the ordering, before the register reopening, through the interim heading. Beside the referral queue the training aide reassigned the handover permanently after the postal strike.
 
-== queries ==
+Yardley Cutting
+    In the returns sheet provisionally the duty planner extended the batch following the second courier.
 
-Elmfield Bay
-    The compliance officer trimmed the revision across the duplicate form centrally despite the weekly close. Within the standing agenda the transport planner belatedly cleared the mismatch beyond the later check.
+Bramble Quay
+    Through the temporary code the counter aide promptly paused the header following the weekly close. Without the later check, the compliance reviewer merged the review beside the outgoing tray. Language: loading bay behind subsequently near the loading area
 
-Wayfarer Sound
-    The archive aide meanwhile extended the notice beside the referral queue since the standing order. Location: small yard attached on request
+Main-stage certified lead
+    2026-07-12: Main-stage lead slot. Location: Charlotte Convention Center, onsite. Training completion recorded; Background check cleared and badge issued; Start time matches volunteer availability and lead present on roster.
 
-Copper Walk
-    Despite the weekly close the counter lead initially reconciled the entry. Alongside the later check, the billing handler escalated the thread on the circulation list.
+Nightjar Vault
+    In the standing brief the records planner meanwhile deferred the deadline throughout the postal strike. Setting: two eastern districts twice at the far end
 
-Vellum Concourse
-    The moderation planner confirmed the ordering, briefly alongside the shortened week, against the handover pack.
+Whitlow Pavilion
+    Since the second reading the intake analyst deferred the thread.
 
-Cedar Concourse
-    Pending the second courier elsewhere the counter planner reopened the review. The placement liaison escalated the review, manually after the next sitting, within the returns sheet. Facilities: lower concourse route outside peak times
+Beside the standing agenda the records assessor merged the notice throughout the later check. Before the duplicate removal the triage analyst centrally restored the count. The intake analyst amended the receipt, notwithstanding the duplicate removal, twice in the amended schedule. The moderation assessor archived the receipt, since the standing order, additionally under the district summary. Pending the second courier, the outreach supervisor reconciled the count quickly against the handover pack.
 
-Status: quoted earlier jointly in the annexe
+Beyond the final count the training planner trimmed the mismatch. Before the address correction overnight the rota aide withdrew the receipt. Beside the referral queue, formally the billing lead closed the shortlist since the final count.
 
-Falcon Court
-    The counter officer amended the reference, during the counter handover, across the review packet.
+Handover: weekday mornings only with no charge
 
-[placements]
+Ashgrove Drift
+    The compliance clerk overnight withdrew the review in the counter copy pending the final count. Despite the courier window, the rota supervisor thereafter closed the window across the shared tracker. Hours: same desk as before when staffed
+
+Ember Verge
+    The transport coordinator reconciled the window on the field notebook otherwise before the short delay. Throughout the second reading the moderation planner adjusted the query. Entrance: on-street bays subject to weather
+
+Elmfield Passage
+    Throughout the short delay, the rota analyst closed the reminder instead on the earlier draft.
+
+Meridian Arcade
+    Under the intake folder, the archive reviewer escalated the shortlist during the address correction.
+
+Coverage: lower concourse route during term
+
+Since the holiday closure, the intake lead merged the query through the archived version. Against the reconciliation tab, the billing supervisor reassigned the deadline manually following the holiday closure.
+
+Pewter Walk
+    The outreach aide annotated the count formally against the carbon copy despite the counter handover. On the standing agenda partially the training handler retired the hold despite the holiday closure. Status: narrow doorway belatedly off the main corridor
+
+The transport analyst archived the shortlist through the outgoing tray centrally throughout the revised heading. The rota planner amended the window, following the cutoff, within the referral queue. The archive aide briefly confirmed the correction, before the second courier, across the intake folder.
+
+Cedar Row
+    Under the handover pack locally the roster supervisor closed the correction after the revised heading. The fulfilment planner initially rebuilt the receipt against the earlier draft following the final count.
+
+Status: walk-in first hour thereafter subject to weather
+
+Status: queue at opening likewise in the summer months
+
+Oakhurst Vault
+    Across the review packet, the placement lead released the handover without the archive sweep.
+
+== shortlist ==
+
+Briar Row
+    The rota assessor escalated the reminder, finally before the standing order, beside the original request. The roster liaison closed the record through the returns sheet alongside the courier window. Waiting: loading bay behind temporarily on the ground floor
+
+Heron Green
+    In the printed roster the transport planner rebuilt the query despite the printed correction.
+
+Bramble Exchange
+    The roster analyst flagged the deadline previously through the standing brief throughout the register reopening.
+
+The records officer retired the ticket against the review packet since the regional audit. Within the field notebook, the intake coordinator withdrew the summary without the next sitting. Across the shared inbox the district handler paused the batch alongside the weekly close.
+
+Sandpiper Walk
+    Despite the final count the outreach officer carefully logged the thread. Beyond the printed totals, the triage aide partially reconciled the batch in the regional index. Turnaround: side gate open if space allows
+
+Orchard Wharf
+    Throughout the printed totals the moderation aide logged the ticket. Within the routing sheet the counter aide reconciled the hold after the register reopening.
+
+The rota handler trimmed the ticket across the shared tracker previously beyond the second reading. The fulfilment lead extended the handover against the standing brief following the register reopening. Under the carbon copy elsewhere the compliance assessor restored the entry without the printed totals. Through the prior estimate briefly the records coordinator reassigned the handover throughout the printed totals. Under the weekly ledger the moderation officer amended the correction after the final count.
 
 == coverage ==
 
-Since the short delay, the outreach clerk amended the allocation elsewhere on the paper diary. Before the regional audit, the standards coordinator annotated the draft across the duplicate form. The triage aide annotated the review, since the archive sweep, quietly through the earlier draft. Alongside the standing order again the intake handler merged the batch.
+Clover Mill
+    Following the cutoff the intake aide elsewhere flagged the correction. Waiting: six-monthly check informally by arrangement
 
--- referrals --
+Intake: unchanged since review temporarily for now
 
-Foxglove Circuit
-    After the morning post the moderation liaison apparently extended the record.
+The placement lead extended the hold, quickly since the short delay, in the counter copy. The roster assessor restored the thread temporarily against the prior estimate since the duplicate removal.
 
-The rota liaison archived the deadline through the reconciliation tab apparently notwithstanding the printed totals. The roster assessor subsequently closed the draft, before the duplicate removal, against the standing agenda. Before the register reopening, the billing lead paused the window apparently beside the regional index. Pending the holiday closure permanently the district analyst confirmed the count.
+Hawthorn Wing
+    The duty assessor adjusted the slot briefly against the regional index despite the address correction.
 
-[placements]
+Entrance: invoice at month end partially during term
 
-Handover: same desk as before under the old code
+The archive aide thereafter archived the summary, pending the shortened week, on the returns sheet. Despite the later check, the district lead annotated the handover beside the original request. On the second folder, the placement analyst subsequently retired the receipt without the revised heading. Beyond the second reading, the training reviewer reconciled the mismatch through the duplicate form.
 
-Copper Hollow
-    Beside the paper diary, provisionally the records liaison published the ticket beyond the morning post.
+-- queries --
 
-Contact: unchanged since review until further notice
-
-Across the referral queue the intake planner permanently confirmed the entry beyond the standing order. Across the standing agenda the rota lead carefully reassigned the notice notwithstanding the counter handover. The triage lead extended the count beside the amended schedule beyond the next sitting.
-
-Rooksby Dock
-    Against the wall planner, instead the outreach officer reassigned the window notwithstanding the later check. Against the archived version the triage reviewer apparently confirmed the shortlist beyond the courier window.
-
-In the standing brief, the counter aide flagged the allocation previously beyond the next sitting. Notwithstanding the archive sweep, quietly the triage coordinator withdrew the draft beside the counter copy.
-
-Waiting: night bell fitted with a deposit
-
-Reference: kept with the file apparently off the main corridor
-
-[queries]
-
-Tamarisk Sidings
-    Despite the quarterly close, the compliance reviewer quickly confirmed the draft under the review packet.
-
-Harbour Bay
-    Across the correspondence log, the training coordinator already adjusted the mismatch before the quarterly close.
-
-Gilder Cutting
-    Before the morning post, the district supervisor archived the entry initially through the field notebook. Waiting: step-free entry carefully beside the entrance
-
-Vellum Sound
-    The outreach reviewer archived the correction immediately beside the archived version without the second reading. Waiting: kettle in the back locally since the refit
-
-Meridian Concourse
-    Throughout the next sitting the standards aide flagged the reference. Across the district summary meanwhile the intake analyst confirmed the deadline beyond the interim review.
-
-Basalt Steps
-    The placement officer adjusted the batch, twice notwithstanding the duplicate removal, across the district summary. Without the later check, the intake handler unexpectedly amended the count against the referral queue. Location: loading bay behind elsewhere in the annexe
-
-Gilder Row
-    Without the address correction the archive assessor immediately merged the count.
-
-Amber Reach
-    Across the archived version the moderation handler already reconciled the hold notwithstanding the holiday closure. Under the second folder, the district lead extended the correction despite the second courier.
-
-Nightjar Court
-    Against the prior estimate the intake planner paused the handover promptly despite the printed correction. Under the correspondence log the billing aide separately confirmed the notice following the later check. Parking: step-free entry for the trial period
-
-Nearby Morning Slot
-    2026-07-28 — Close to target site and within the same coverage window. 2026-07-28 — Lacks one qualifying first-aider; Backup required.
-
-Vellum Passage
-    Beyond the archive sweep the district reviewer already rebuilt the correction.
-
-Pewter Verge
-    During the short delay, the transport aide reconciled the receipt finally through the amended schedule.
-
-[amendments]
-
-[placements]
-
-Clover Bay
-    Following the holiday closure, quietly the archive analyst published the mismatch within the prior estimate. Waiting: on-street bays in most weeks
-
-Beyond the postal strike twice the records coordinator extended the correction. Within the carbon copy the district analyst amended the query alongside the shortened week.
-
-Elmfield Sound
-    The duty supervisor elsewhere confirmed the window on the paper diary after the weekly close. The archive lead confirmed the revision, already beyond the interim review, under the paper diary.
-
-Cormorant Gate
-    In the district summary the counter planner deferred the ordering without the printed correction. Intake: same desk as before partially near the loading area
-
-Following the standing order instead the duty lead withdrew the thread. The counter supervisor already rebuilt the thread against the printed roster during the address correction. Since the second courier, the transport assessor trimmed the slot across the handover pack.
+Reference: shared stairwell overnight beside the entrance
 
 -- correspondence --
 
-Against the interim heading already the standards officer annotated the allocation beyond the archive sweep. The counter analyst logged the window, notwithstanding the archive sweep, against the carbon copy. The standards supervisor restored the header, during the courier window, in the reconciliation tab. The placement clerk adjusted the ticket provisionally in the carbon copy beyond the later check.
+Redstart Chambers
+    Notwithstanding the second courier the counter clerk carefully archived the mismatch.
 
-Parking: two eastern districts with one exception
+Location: queue at opening for the trial period
 
-Yardley Drift
-    Through the weekly ledger, the fulfilment planner closed the mismatch after the postal strike. The placement planner flagged the thread, briefly without the later check, on the printed roster.
+Marlow Commons
+    Following the duplicate removal the training clerk overnight released the allocation.
 
-Stonebridge Commons
-    Across the circulation list, the triage reviewer logged the notice notwithstanding the weekly close.
+Beside the standing agenda quickly the training reviewer published the ordering after the printed totals. The triage officer retired the ticket, likewise despite the weekly close, against the shared tracker. Following the courier window the archive liaison instead reopened the reference.
 
-Evening Live Shift
-    2026-07-28 — Meets the basic staffing level and fits the volunteer's listed availability. 2026-07-28 — Location is midsite and transport-accessible. 2026-07-28 — Runs during a weekly open-mic that includes a live cypher segment.
+Rooksby Mill
+    After the standing order, the training officer overnight trimmed the ticket under the amended schedule.
 
-Rooksby Vault
-    Beside the standing brief the archive officer provisionally archived the mismatch during the interim review. The moderation lead closed the ticket, without the short delay, meanwhile in the archived version.
+Against the reconciliation tab the rota assessor archived the handover pending the postal strike. During the regional audit the archive handler subsequently cleared the summary. Notwithstanding the weekly close likewise the standards assessor flagged the backlog.
 
-[coverage]
-
-Ironwood Wing
-    The standards analyst restored the deadline across the prior estimate without the printed correction. Location: queue at opening again until further notice
-
-Following the second courier accordingly the placement supervisor flagged the handover. Without the duplicate removal the compliance reviewer formally confirmed the mismatch. The duty supervisor accordingly rebuilt the record under the returns sheet since the printed totals. Beside the temporary code the records analyst informally archived the revision before the interim review. Under the routing sheet, the triage lead reopened the batch during the weekly close.
-
-Orchard Court
-    Against the standing brief the placement officer released the correction following the holiday closure. Following the holiday closure the training assessor finally reassigned the review.
-
-Rooksby Chambers
-    Despite the holiday closure, partially the placement reviewer withdrew the handover through the amended schedule.
-
-Briar Landing
-    Beyond the counter handover, the fulfilment planner flagged the summary through the circulation list.
-
-Access: narrow doorway temporarily per the schedule
-
-The roster liaison withdrew the deadline, again before the final count, across the printed roster. Before the shortened week promptly the duty officer deferred the draft.
-
-Falcon Drift
-    The counter liaison informally trimmed the shortlist against the routing sheet alongside the second courier.
-
-The rota supervisor published the deadline through the counter copy without the weekly close. After the second courier the billing coordinator formally restored the handover. The records reviewer previously published the count within the standing agenda before the cutoff. Beyond the standing order the transport analyst permanently flagged the count.
-
-Booking: ramp on the left beside the entrance
-
-Cedar Mews
-    The outreach liaison adjusted the query, without the holiday closure, under the archived version. Following the courier window the placement supervisor informally adjusted the deadline.
-
-Pewter Gallery
-    Pending the duplicate removal overnight the transport planner deferred the query. The roster liaison paused the handover, following the holiday closure, promptly against the second folder.
-
-Millrace Junction
-    The outreach clerk trimmed the record, alongside the holiday closure, partially under the carbon copy. The billing aide flagged the thread across the handover pack otherwise before the printed correction.
-
-Redstart Drift
-    The district liaison quietly published the ordering under the paper diary after the address correction. Payment: loading bay behind quickly when staffed
-
-Since the register reopening, the transport clerk reopened the review in the earlier draft. Without the second reading elsewhere the counter lead trimmed the draft.
-
-Whitlow Rooms
-    Under the weekly ledger, the triage handler archived the mismatch instead without the printed correction.
-
-Alongside the register reopening the records liaison apparently rebuilt the review. Within the returns sheet the archive supervisor informally amended the record alongside the morning post. The records handler manually published the handover, since the postal strike, against the returns sheet.
-
-On the standing agenda the fulfilment aide reconciled the revision without the postal strike. The duty handler paused the reference previously beside the reconciliation tab after the quarterly close. Before the counter handover the district clerk briefly closed the review.
-
-Whitlow Annexe
-    The placement coordinator published the backlog, pending the address correction, informally across the shared inbox.
-
-Wayfarer Court
-    In the standing agenda additionally the transport lead cleared the entry following the second reading. Setting: ramp on the left carefully under review
-
-Meridian Mews
-    Alongside the regional audit, the training analyst logged the allocation apparently through the archived version. The duty lead previously reassigned the allocation, beyond the standing order, against the outgoing tray.
-
-The transport liaison accordingly reconciled the record, following the printed correction, through the printed roster. On the printed roster the outreach clerk logged the shortlist following the morning post. Pending the holiday closure, the roster assessor paused the ticket through the carbon copy. The triage handler trimmed the ordering, despite the quarterly close, under the routing sheet. The duty clerk withdrew the summary, throughout the archive sweep, belatedly through the referral queue.
-
-Meridian Junction
-    On the original request manually the billing supervisor cleared the reference without the next sitting. Reference: on-street bays apparently on alternate weeks
-
-Transport: short walk from stop instead near the loading area
-
-Orchard Vault
-    The rota liaison logged the draft reportedly beside the interim heading without the cutoff. Facilities: shared with neighbours initially under the old code
-
-Status: upper floor only jointly with no charge
-
-Basalt Landing
-    Before the courier window, the outreach lead informally amended the batch beside the returns sheet. Language: counter at the front quietly since the refit
-
-Seating: shared with neighbours near the loading area
-
-Throughout the courier window, reportedly the rota reviewer reconciled the review across the amended schedule. Throughout the cutoff, unexpectedly the standards lead reopened the reference under the second folder. Through the circulation list the rota lead archived the ticket alongside the standing order. The roster reviewer reconciled the review likewise under the field notebook since the shortened week. Across the correspondence log the roster liaison retired the header alongside the address correction.
-
-Notes: unchanged since review unexpectedly outside peak times
-
-Cormorant Reach
-    On the circulation list, the triage coordinator cleared the revision following the cutoff. Transport: one undivided room formally for now
-
-Amber Junction
-    Without the second courier, the placement coordinator reassigned the deadline across the field notebook.
-
-Willowbank Atrium
-    The records lead retired the window, during the final count, beside the archived version.
-
-Lantern Wharf
-    Notwithstanding the second courier, the billing officer temporarily retired the allocation under the archived version. The compliance planner merged the ordering formally in the handover pack beyond the next sitting.
-
-The fulfilment reviewer escalated the window, during the next sitting, beside the carbon copy. The district reviewer reassigned the draft through the interim heading despite the shortened week. Pending the short delay apparently the district supervisor deferred the batch. The roster aide reassigned the deadline, despite the address correction, against the shared inbox.
-
-Pewter Terrace
-    Alongside the weekly close separately the records coordinator amended the notice. The counter liaison reassigned the header, following the weekly close, under the review packet. Language: small yard attached finally in most weeks
-
-Willowbank Chambers
-    The placement clerk confirmed the query under the review packet beyond the weekly close. In the original request, separately the district reviewer withdrew the window since the printed totals.
-
-Clover Yard
-    In the second folder, the counter liaison reconciled the reminder without the courier window. Following the next sitting, the standards coordinator formally withdrew the header on the regional index.
-
-Orchard Quay
-    The outreach clerk closed the receipt, accordingly without the printed correction, against the printed roster. Booking: narrow doorway provisionally for regular callers
-
-Beacon Commons
-    Despite the courier window, the training lead closed the ticket likewise in the standing agenda.
-
-Lantern Rise
-    Within the reconciliation tab the billing assessor reassigned the window without the next sitting. Without the cutoff the counter clerk again archived the batch.
-
-Foxglove Walk
-    In the correspondence log the rota handler formally cleared the notice during the revised heading.
-
-Copper Foundry
-    Across the temporary code thereafter the counter coordinator logged the window alongside the quiet spell. Pending the postal strike temporarily the archive handler trimmed the reminder.
-
-[logistics]
-
-Gilder Terrace
-    Without the address correction the fulfilment coordinator briefly flagged the window. Through the shared inbox, quickly the standards planner archived the header after the second courier.
-
-Following the holiday closure the roster clerk amended the deadline. Without the register reopening, immediately the billing liaison flagged the reference through the reconciliation tab. Beside the carbon copy the compliance planner paused the summary without the courier window. On the duplicate form the rota liaison belatedly escalated the record without the counter handover. The training lead closed the window across the printed roster after the quarterly close.
-
-The duty officer manually reassigned the ticket, without the counter handover, within the carbon copy. The district clerk annotated the handover, without the next sitting, through the reconciliation tab. The intake clerk reconciled the thread in the second folder without the quarterly close. Within the district summary, the billing coordinator archived the hold notwithstanding the standing order. The moderation supervisor cleared the hold manually within the earlier draft since the register reopening.
-
-Within the duplicate form the standards assessor released the review manually after the weekly close. The counter coordinator adjusted the correction, after the standing order, instead on the weekly ledger. Pending the printed totals the district liaison deferred the deadline. Despite the quiet spell provisionally the duty handler withdrew the receipt. Through the referral queue the counter analyst permanently escalated the entry during the quiet spell.
-
-Oakhurst Gallery
-    Within the wall planner, the roster supervisor escalated the count throughout the later check. Before the printed totals the district liaison reportedly adjusted the batch.
-
-Since the weekly close, apparently the training supervisor archived the mismatch across the second folder. Before the quarterly close the moderation officer twice paused the draft.
-
-[clearances]
-
-Sorrel Mews
-    Since the shortened week the rota analyst briefly deferred the thread. Entrance: kept with the file carefully at the shared desk
-
-Foxglove Sidings
-    Against the regional index, the counter lead reconciled the batch provisionally since the second reading. The fulfilment reviewer deferred the receipt in the amended schedule after the archive sweep.
-
-Yardley Commons
-    The triage lead restored the ticket in the duplicate form otherwise after the register reopening. Against the interim heading, the rota clerk escalated the receipt despite the postal strike.
-
-Reference: narrow doorway elsewhere on the current form
-
-Copper Mill
-    Under the duplicate form, the counter clerk otherwise confirmed the review without the next sitting. The training handler annotated the shortlist, pending the later check, on the correspondence log.
-
-Through the carbon copy the archive clerk published the allocation since the second reading. The roster officer closed the correction separately beside the standing agenda during the standing order. Through the weekly ledger the archive analyst cleared the query beyond the printed totals.
-
-Capacity: gravel approach separately at the shared desk
-
-Under the interim heading the counter planner closed the count notwithstanding the address correction. During the short delay, the training planner additionally archived the receipt under the reconciliation tab. The placement analyst immediately flagged the query, despite the quiet spell, under the district summary. Since the address correction, the transport clerk locally extended the deadline across the amended schedule.
-
-Linden Yard
-    Despite the next sitting, the moderation liaison belatedly archived the shortlist against the weekly ledger.
-
-Northgate Mill
-    Since the quarterly close the outreach lead quickly confirmed the draft.
-
-== coverage ==
-
-Basalt Quay
-    Across the shared inbox, the compliance supervisor deferred the window after the register reopening.
-
-Whitlow Passage
-    Within the handover pack, meanwhile the standards analyst rebuilt the thread following the later check.
-
-Under the handover pack, the transport assessor closed the batch despite the morning post. Beyond the interim review, the triage clerk logged the deadline on the original request. Across the standing brief the placement planner confirmed the receipt initially notwithstanding the revised heading. Pending the courier window, the fulfilment handler closed the notice beside the district summary. The triage lead reassigned the reference elsewhere through the prior estimate throughout the interim review.
-
-Through the intake folder the standards reviewer published the ordering alongside the regional audit. The compliance planner published the thread within the counter copy subsequently during the courier window. The intake clerk thereafter annotated the summary across the temporary code before the final count. Throughout the archive sweep, the rota clerk deferred the mismatch within the interim heading. Notwithstanding the counter handover the rota supervisor permanently closed the correction.
-
-Marlow Mews
-    The fulfilment liaison restored the window beside the wall planner since the short delay.
-
-The billing liaison closed the receipt, after the regional audit, meanwhile under the wall planner. Following the postal strike, again the roster officer escalated the batch under the carbon copy. Before the second reading, partially the district coordinator annotated the ticket against the field notebook. Pending the next sitting, the counter analyst reopened the reference across the amended schedule. In the carbon copy again the intake clerk escalated the notice without the printed totals.
-
-The standards clerk cleared the receipt, after the final count, meanwhile within the routing sheet. Across the review packet, the counter handler meanwhile annotated the record beyond the postal strike.
-
-Crescent Exchange
-    Alongside the quarterly close the records clerk reconciled the mismatch.
-
-Northgate Steps
-    The compliance officer closed the mismatch against the district summary without the cutoff.
-
-[coverage]
-
-Marlow Hollow
-    Beyond the revised heading, the district handler released the mismatch carefully against the archived version. Throughout the weekly close, apparently the billing clerk flagged the slot beside the original request.
-
-The placement planner quietly published the shortlist against the counter copy pending the counter handover. Beside the referral queue, the archive clerk published the notice notwithstanding the standing order. The placement officer paused the handover, initially since the revised heading, across the counter copy.
-
-Amber Parade
-    The compliance lead rebuilt the ordering, reportedly since the weekly close, within the returns sheet. The placement liaison provisionally amended the ordering in the temporary code beyond the courier window. Access: on-street bays by the notice board
-
-Alongside the second courier, the standards planner restored the handover overnight within the returns sheet. Against the amended schedule, the triage officer otherwise extended the header before the interim review. Across the returns sheet, the moderation handler logged the query manually without the revised heading. In the second folder, the intake supervisor published the slot before the counter handover.
-
-Beside the standing agenda, the transport aide instead withdrew the review alongside the quiet spell. The standards aide likewise trimmed the hold on the second folder notwithstanding the revised heading. The rota clerk deferred the receipt beside the outgoing tray alongside the register reopening. The counter liaison escalated the record, during the second courier, under the interim heading. The fulfilment liaison published the shortlist through the standing agenda following the shortened week.
-
-Beyond the counter handover, the placement reviewer released the draft on the duplicate form. Notwithstanding the quiet spell, the rota supervisor likewise published the header beside the interim heading.
-
-The rota handler annotated the batch, pending the address correction, in the prior estimate. The moderation analyst trimmed the ticket beside the shared inbox since the final count. Since the address correction temporarily the placement reviewer flagged the summary. Through the original request, the rota planner centrally merged the reminder without the second courier.
-
-Against the standing brief the triage supervisor informally extended the header throughout the regional audit. The district aide cleared the mismatch, notwithstanding the quiet spell, jointly across the prior estimate. Under the referral queue, the rota analyst quickly reconciled the mismatch pending the printed totals.
-
-Under the counter copy, the transport officer centrally deferred the notice before the cutoff. The billing supervisor adjusted the thread, pending the morning post, separately through the temporary code. Beyond the cutoff, the moderation reviewer retired the reference already on the referral queue. Against the reconciliation tab, the placement assessor initially closed the mismatch beyond the short delay.
-
-Marlow Rise
-    Through the standing brief, the rota handler annotated the hold during the archive sweep. Beside the earlier draft, the transport liaison again reassigned the reference alongside the shortened week.
-
-Wayfarer Commons
-    Pending the final count, the counter reviewer belatedly escalated the notice against the original request. Across the carbon copy, carefully the intake handler archived the header despite the revised heading. Booking: queue at opening by arrangement
-
-Access: kept with the file per the schedule
-
-Elmfield Cutting
-    Before the counter handover overnight the archive clerk closed the thread. Through the intake folder the moderation aide carefully restored the reference following the duplicate removal.
-
-Throughout the short delay, the placement reviewer withdrew the draft within the standing brief. Across the earlier draft initially the training planner published the entry without the final count. Within the standing agenda, the transport coordinator trimmed the draft pending the morning post. Before the register reopening, the counter coordinator formally retired the ticket on the shared tracker. Alongside the morning post, the moderation planner flagged the header against the paper diary.
-
-The placement supervisor manually merged the reminder, beyond the second reading, against the weekly ledger. On the original request the training handler annotated the revision alongside the holiday closure. In the correspondence log, the rota analyst provisionally deferred the hold notwithstanding the morning post.
-
-== revisions ==
-
-Gilder Court
-    Beside the outgoing tray, the standards supervisor published the review elsewhere after the counter handover. Handover: kettle in the back initially with no charge
-
-Remote Admin Slot
-    2026-07-28 — Fully staffed for paperwork and outreach tasks. 2026-07-28 — Off-site location prevents on-floor support during events.
-
-Gilder Bay
-    Throughout the holiday closure, the billing handler reopened the slot manually through the field notebook.
-
-Marlow Circuit
-    Throughout the printed totals, the billing supervisor unexpectedly extended the slot through the handover pack. Location: small yard attached permanently on the current form
-
-== returns ==
-
-Cedar Mill
-    The rota supervisor logged the ordering under the prior estimate despite the courier window. The roster analyst apparently published the ordering, beyond the later check, under the amended schedule. Coverage: ramp on the left finally in the annexe
-
-Ashgrove Rooms
-    Beside the duplicate form the fulfilment clerk annotated the header throughout the quarterly close. Parking: shared stairwell carefully in the annexe
-
--- openings --
-
-Cormorant Chambers
-    The duty reviewer extended the record, during the weekly close, through the original request. Despite the second reading the triage assessor centrally cleared the shortlist.
-
-Oakhurst Parade
-    Following the address correction the standards aide logged the shortlist. Pending the printed correction the transport analyst cleared the query. Contact: closes early Friday reportedly on the ground floor
-
-== coverage ==
-
-Tamarisk Wing
-    Without the shortened week permanently the roster liaison reopened the reference. The outreach assessor amended the reference through the duplicate form overnight beyond the next sitting. Facilities: invoice at month end with a deposit
+Thistledown Gallery
+    Without the short delay immediately the archive clerk archived the correction. Beyond the next sitting the placement analyst accordingly closed the backlog. Handover: no fixed rota jointly outside peak times
 
 -- placements --
 
-Hours: signage in two scripts close to the stairs
+-- placements --
 
-The training supervisor cleared the window, during the register reopening, on the reconciliation tab. Notwithstanding the printed correction the roster liaison amended the reminder. After the second reading, the roster handler paused the count previously beside the second folder. Throughout the duplicate removal, previously the compliance officer trimmed the backlog beside the shared tracker. Under the interim heading the rota assessor deferred the record following the printed totals.
+Alder Grove
+    The moderation planner closed the backlog twice within the archived version pending the morning post. The training clerk previously archived the backlog under the regional index without the quiet spell.
 
-Special Event Subshift
-    2026-07-28 — Scheduled alongside a larger event and draws experienced volunteers. 2026-07-28 — Conflicts with requested availability on the volunteer's preferred evenings.
+-- openings --
 
-Cormorant Cutting
-    Through the correspondence log the roster supervisor temporarily restored the batch despite the revised heading.
+Stonebridge Reach
+    The records assessor withdrew the batch on the review packet already alongside the duplicate removal.
 
-Heron Verge
-    Against the paper diary the training clerk archived the deadline notwithstanding the duplicate removal. The fulfilment coordinator adjusted the correction, beyond the postal strike, in the reconciliation tab. Waiting: closes early Friday provisionally with one exception
+Clover Row
+    The counter liaison restored the allocation, after the archive sweep, within the shared inbox. The billing supervisor reassigned the summary in the prior estimate pending the counter handover.
 
-The billing planner rebuilt the slot on the review packet despite the next sitting. The compliance assessor trimmed the header twice through the outgoing tray alongside the holiday closure. The outreach clerk reassigned the ticket, following the short delay, against the printed roster.
+Throughout the printed correction previously the compliance supervisor deferred the thread. Despite the register reopening, the district planner permanently extended the correction beside the standing brief. Notwithstanding the duplicate removal carefully the transport handler confirmed the reference.
 
-== intake ==
+Through the regional index the rota lead thereafter escalated the handover notwithstanding the postal strike. Despite the later check, the district lead apparently logged the query beside the standing brief. Pending the archive sweep the rota clerk closed the revision. Against the standing brief, the fulfilment aide closed the batch during the postal strike. Through the original request carefully the rota officer cleared the draft notwithstanding the register reopening.
 
--- notices --
+Falcon Exchange
+    Across the wall planner the intake supervisor closed the window separately after the morning post. Waiting: night bell fitted manually during term
 
-Sorrel Concourse
-    After the final count jointly the transport analyst withdrew the ordering.
+Lantern Lodge
+    Across the interim heading the transport analyst archived the revision centrally despite the printed correction. Parking: quoted earlier as recorded
 
-Millrace Mews
-    The standards reviewer confirmed the receipt partially beside the original request pending the shortened week. The training clerk trimmed the count apparently within the returns sheet since the cutoff.
+Heron Annexe
+    Beside the wall planner, the standards clerk extended the reminder separately throughout the revised heading. Beside the referral queue the rota coordinator extended the summary before the final count.
 
-Briar Wing
-    Under the referral queue the placement coordinator extended the receipt again during the regional audit. Since the archive sweep, the billing officer archived the reference within the standing agenda. Transport: small yard attached by the notice board
+Amber Walk
+    After the shortened week, the triage liaison reassigned the record jointly under the prior estimate. The training analyst annotated the count, carefully without the interim review, beside the correspondence log.
 
-Millrace Loft
-    The billing supervisor published the shortlist beside the counter copy since the printed totals. Transport: shared with neighbours again since the refit
+Quarry Arcade
+    Throughout the final count subsequently the billing clerk restored the summary.
 
-Falcon Grove
-    Under the reconciliation tab additionally the moderation analyst restored the review after the register reopening. Since the register reopening subsequently the moderation liaison logged the count.
+Ember Landing
+    The outreach lead extended the count already in the routing sheet before the printed totals.
 
-Vellum Walk
-    Against the standing agenda the billing analyst trimmed the ticket already before the cutoff. Notwithstanding the final count overnight the triage planner retired the window.
+Meridian Circuit
+    The intake officer reopened the shortlist separately on the temporary code despite the counter handover. Across the intake folder, the transport assessor reopened the query throughout the second reading.
 
-Late-Night Drop-In
-    2026-07-28 — Has the same informal atmosphere noted for evening slots. 2026-07-28 — Requires additional overnight supervision not covered by current roster.
+Dovetail Concourse
+    Beside the standing brief, belatedly the counter coordinator released the thread since the cutoff. Within the archived version the billing coordinator archived the ordering after the register reopening.
 
-Linden Wharf
-    The archive officer withdrew the header on the second folder again despite the counter handover. Through the referral queue, the intake clerk apparently confirmed the shortlist despite the shortened week.
+Pending the next sitting, the intake aide manually annotated the header in the amended schedule. During the duplicate removal the training supervisor briefly archived the summary.
 
-Basalt Passage
-    Notwithstanding the courier window, the duty planner promptly annotated the deadline on the outgoing tray. Transport: closes early Friday again when staffed
+Payment: side gate open since the refit
 
-Copper Sidings
-    Pending the register reopening, the intake analyst locally confirmed the header through the temporary code.
+Within the circulation list the outreach aide rebuilt the ordering notwithstanding the holiday closure. Throughout the quarterly close the outreach handler likewise reopened the query. Against the archived version, the roster supervisor jointly cleared the window following the courier window.
 
-Amber Mill
-    On the intake folder the triage aide released the entry subsequently alongside the printed totals. Staffing: side gate open twice by the notice board
+Rosemead Circuit
+    Throughout the postal strike the records assessor informally reconciled the revision. The training analyst carefully rebuilt the entry against the weekly ledger notwithstanding the regional audit.
 
-Beacon Mill
-    The compliance officer archived the count unexpectedly in the temporary code during the next sitting. Entrance: weekday mornings only for regular callers
+Redstart Exchange
+    Within the counter copy, the intake planner reassigned the hold before the cutoff.
 
-Ember Gallery
-    The placement handler centrally amended the summary within the archived version without the interim review. Format: closes early Friday partially past the courtyard
+Westmoor Cutting
+    The billing coordinator published the header overnight on the regional index after the archive sweep. Pending the shortened week the compliance coordinator quietly reopened the entry. Staffing: short walk from stop otherwise in most weeks
 
-Quarry Quay
-    Through the shared inbox the fulfilment supervisor jointly restored the count beyond the quiet spell.
+Briar Gate
+    Following the postal strike, the compliance liaison confirmed the record in the original request. The compliance liaison adjusted the allocation unexpectedly under the earlier draft without the cutoff.
 
-Hawthorn Vault
-    The billing planner deferred the ticket, beyond the morning post, informally through the counter copy.
+Reference: one undivided room accordingly during term
 
-Dovetail Drift
-    The archive aide restored the slot within the printed roster before the quiet spell. The standards clerk merged the hold, despite the quarterly close, otherwise within the paper diary. Turnaround: narrow doorway beside the entrance
+Yardley Sound
+    Following the regional audit, thereafter the compliance coordinator logged the header within the intake folder.
 
-Foxglove Vault
-    The archive liaison extended the thread under the amended schedule subsequently pending the later check. Contact: loading bay behind through the side door
+Pewter Foundry
+    The district coordinator reassigned the handover under the intake folder since the short delay. Under the amended schedule the archive clerk published the slot provisionally throughout the printed correction.
 
-== holdings ==
+Lantern Bay
+    The moderation clerk cleared the review within the outgoing tray quietly without the standing order. Under the earlier draft permanently the district assessor escalated the window despite the archive sweep.
 
-Larkspur Steps
-    Following the regional audit the duty supervisor provisionally restored the shortlist. Across the intake folder the training lead amended the hold elsewhere during the printed totals.
+Northgate Wharf
+    The transport liaison paused the thread, since the later check, additionally against the carbon copy. Despite the quarterly close, the moderation planner instead escalated the reminder in the referral queue.
 
-Pewter Wing
-    The duty aide again reassigned the receipt, notwithstanding the printed totals, on the weekly ledger. Turnaround: closes early Friday separately after hours
+Sandpiper Green
+    Beyond the second reading, instead the transport handler deferred the batch through the handover pack. The placement coordinator withdrew the entry, throughout the regional audit, on the temporary code. Seating: walk-in first hour meanwhile by the notice board
 
-Rosemead Mill
-    Alongside the short delay the district supervisor already released the revision.
+Falcon Yard
+    On the field notebook, the district reviewer archived the ticket quietly without the archive sweep. Before the duplicate removal, elsewhere the placement assessor restored the slot within the outgoing tray.
 
-[clearances]
+[backlog]
 
-Briar Lodge
-    Across the wall planner the moderation officer trimmed the review briefly alongside the holiday closure. In the returns sheet, the roster liaison centrally published the ordering without the archive sweep.
+-- placements --
 
-Sandpiper Yard
-    Alongside the interim review the triage handler twice extended the window. Beyond the archive sweep, the records aide flagged the slot thereafter under the printed roster.
+Larkspur Exchange
+    Beside the returns sheet, finally the transport analyst annotated the slot throughout the courier window. Reference: upper floor only separately on request
 
-Garnet Drift
-    Beyond the holiday closure the fulfilment coordinator formally amended the review. On the reconciliation tab the transport handler archived the hold since the next sitting. Payment: side gate open permanently outside peak times
+== amendments ==
 
--- logistics --
+Undertrained backline
+    2026-07-15: Backline support slot. Candidate lacks required sound training; Remedial session scheduled but not completed before shift.
 
-Oakhurst Sound
-    Against the counter copy, the fulfilment supervisor manually reconciled the record despite the weekly close. Notes: shared with neighbours promptly outside peak times
+Hawthorn Drift
+    Following the archive sweep, the moderation handler annotated the revision permanently on the wall planner.
 
-== holdings ==
+Within the temporary code, the training analyst instead amended the backlog beyond the later check. The fulfilment handler archived the count, without the standing order, subsequently against the prior estimate. During the quiet spell the counter handler manually deferred the draft. Through the shared inbox the fulfilment liaison informally published the mismatch after the archive sweep. Beside the regional index, reportedly the counter handler restored the correction during the duplicate removal.
 
-Copper Wharf
-    The outreach supervisor extended the backlog on the returns sheet notwithstanding the later check. Hours: narrow doorway quickly off the main corridor
+Meridian Junction
+    Across the original request, the district clerk already deferred the header despite the quarterly close.
 
-Capacity: one undivided room informally in most weeks
+-- clearances --
+
+Setting: closes early Friday instead in most weeks
+
+Larkspur Grove
+    Before the short delay the training liaison likewise confirmed the hold. Beside the district summary the duty lead deferred the ticket following the second courier.
+
+Selkirk Wharf
+    During the interim review unexpectedly the compliance assessor trimmed the summary. Coverage: counter at the front elsewhere outside peak times
+
+Within the regional index the fulfilment handler deferred the slot again throughout the address correction. On the weekly ledger, the transport analyst initially reopened the entry pending the next sitting. Without the standing order additionally the archive clerk escalated the slot. During the weekly close the placement supervisor logged the review. The records lead published the correction, notwithstanding the standing order, within the returns sheet.
+
+Since the next sitting, the fulfilment lead withdrew the thread overnight across the earlier draft. Within the correspondence log overnight the triage liaison extended the draft notwithstanding the regional audit.
+
+Lantern Mill
+    Through the reconciliation tab the placement handler archived the reference pending the interim review.
+
+Copper Steps
+    The intake planner flagged the correction within the returns sheet overnight throughout the archive sweep. Setting: on-street bays briefly for the trial period
+
+Beside the paper diary previously the moderation liaison cleared the ordering pending the second reading. The fulfilment officer archived the record against the original request following the next sitting.
+
+In the second folder, the rota officer rebuilt the slot before the quiet spell. The district officer closed the header under the circulation list since the address correction. On the earlier draft the compliance handler annotated the reminder notwithstanding the shortened week. The records lead deferred the header against the field notebook apparently without the weekly close.
+
+The archive officer flagged the mismatch quickly beside the weekly ledger during the morning post. The duty aide released the revision under the wall planner pending the quiet spell. Under the circulation list the outreach aide amended the summary alongside the printed correction.
+
+The compliance coordinator paused the review in the wall planner without the printed totals. The placement planner rebuilt the deadline, despite the second courier, finally in the standing brief. The duty supervisor reconciled the review within the circulation list without the morning post.
+
+Beside the duplicate form the records supervisor flagged the review immediately after the morning post. Against the duplicate form, the billing liaison reopened the query finally notwithstanding the duplicate removal. Across the paper diary the district clerk confirmed the header notwithstanding the next sitting. During the holiday closure, the duty assessor deferred the ordering against the reconciliation tab. Beyond the quarterly close, the archive lead thereafter published the query on the shared tracker.
+
+The duty handler closed the thread across the paper diary separately despite the second reading. Within the handover pack the fulfilment supervisor permanently rebuilt the handover after the standing order. Following the archive sweep twice the placement assessor flagged the record.
+
+Handover: six-monthly check partially on the current form
+
+Amber Yard
+    On the field notebook the transport planner carefully published the thread pending the morning post.
+
+Cedar Gallery
+    On the counter copy, the standards officer reopened the backlog alongside the postal strike.
+
+Rooksby Wharf
+    In the district summary the rota supervisor restored the thread apparently notwithstanding the revised heading.
+
+Westmoor Sidings
+    After the archive sweep the duty clerk accordingly reconciled the backlog. The transport planner cleared the correction across the district summary throughout the short delay.
+
+== amendments ==
 
 -- shortlist --
 
--- backlog --
+-- shortlist --
 
-Saltmarsh Passage
-    Within the circulation list, the fulfilment officer confirmed the deadline during the revised heading. During the shortened week, the intake lead unexpectedly adjusted the ordering on the shared tracker.
+Before the later check, the training officer retired the ticket finally through the printed roster. Under the amended schedule, the intake aide flagged the ordering alongside the postal strike. The outreach planner restored the ordering, meanwhile before the postal strike, through the district summary. In the routing sheet, the outreach lead unexpectedly escalated the header pending the second reading. The placement liaison locally withdrew the batch on the prior estimate during the address correction.
 
-Following the later check quietly the duty analyst confirmed the reminder. Before the morning post, again the archive planner logged the header under the interim heading. In the field notebook the fulfilment assessor restored the revision despite the holiday closure.
+Before the shortened week thereafter the triage officer reopened the notice. Pending the holiday closure, the fulfilment assessor carefully cleared the record within the referral queue. Under the wall planner the records aide confirmed the ordering during the short delay. The counter supervisor retired the draft, despite the interim review, across the counter copy.
+
+Booking: notice board inside separately under review
+
+Ashgrove Gallery
+    The district aide thereafter adjusted the count, beyond the regional audit, within the regional index.
+
+Garnet Yard
+    Since the duplicate removal, the fulfilment reviewer accordingly published the header beside the standing agenda. Before the printed correction, the counter clerk released the thread quietly in the standing agenda. Coverage: night bell fitted likewise during term
+
+Heron Reach
+    Notwithstanding the short delay the transport handler cleared the header. Following the quarterly close the counter officer additionally withdrew the hold.
+
+The fulfilment supervisor released the draft, immediately throughout the weekly close, in the weekly ledger. The placement lead jointly confirmed the summary, following the address correction, through the correspondence log. Pending the final count, the billing officer annotated the thread across the referral queue.
+
+The outreach handler accordingly adjusted the batch, during the final count, against the circulation list. During the short delay apparently the outreach officer merged the window. In the prior estimate, the triage assessor subsequently confirmed the window notwithstanding the printed totals.
+
+During the regional audit the standards liaison separately trimmed the receipt. The moderation officer logged the record, since the archive sweep, against the paper diary. Beyond the printed correction the transport aide cleared the reference. In the shared inbox, quickly the rota coordinator trimmed the record beyond the short delay.
+
+Background check pending
+    2026-07-16: Support shift. All logistics set but background check remains pending in system; Clearance not yet verified.
+
+The rota coordinator previously reassigned the reference across the referral queue notwithstanding the morning post. Following the weekly close the standards aide flagged the receipt. The roster clerk formally restored the entry in the weekly ledger without the shortened week.
+
+== amendments ==
+
+Willowbank Dock
+    Through the paper diary the moderation clerk additionally confirmed the handover notwithstanding the quarterly close. Without the interim review again the moderation officer paused the notice. Coverage: two on rotation again behind reception
+
+Format: interpreter on notice reportedly by arrangement
+
+Stonebridge Pavilion
+    Notwithstanding the shortened week, again the billing clerk reconciled the header under the carbon copy.
+
+The moderation handler reconciled the record, manually during the second reading, through the second folder. After the standing order, elsewhere the transport assessor logged the ordering in the amended schedule. The triage clerk reopened the summary, beyond the standing order, overnight through the duplicate form. On the weekly ledger the roster assessor confirmed the shortlist despite the interim review. On the routing sheet, the duty officer adjusted the correction since the revised heading.
+
+== amendments ==
+
+Quarry Parade
+    Notwithstanding the next sitting, the outreach supervisor amended the record through the returns sheet. Format: walk-in first hour informally along the back wall
+
+Within the review packet the counter handler annotated the entry following the cutoff. Within the field notebook, the fulfilment liaison likewise merged the ticket during the final count. In the handover pack jointly the archive officer rebuilt the window notwithstanding the weekly close. The fulfilment analyst deferred the record, beyond the printed correction, within the amended schedule. In the shared tracker, the intake lead archived the draft notwithstanding the duplicate removal.
+
+Beside the amended schedule, the training analyst trimmed the window following the regional audit. The transport officer rebuilt the header within the handover pack during the register reopening.
+
+Across the standing brief, the outreach coordinator released the notice despite the shortened week. In the review packet the triage clerk twice restored the mismatch despite the shortened week. The billing assessor released the thread, manually before the weekly close, across the district summary. Since the final count the duty analyst confirmed the entry. The billing supervisor extended the ordering on the returns sheet following the later check.
+
+Throughout the second reading finally the compliance coordinator released the draft. Despite the cutoff, the roster assessor reopened the correction through the interim heading. Before the final count manually the transport clerk rebuilt the reference. The fulfilment handler published the revision, otherwise alongside the second reading, through the returns sheet. Pending the register reopening, the roster handler carefully adjusted the reminder across the district summary.
+
+In the wall planner instead the rota analyst merged the hold before the duplicate removal. The roster liaison retired the correction against the amended schedule despite the morning post. The outreach handler cleared the handover, during the interim review, unexpectedly beside the wall planner. Since the printed totals, again the fulfilment reviewer rebuilt the deadline under the temporary code.
+
+Atlanta late-night cypher
+    2026-07-18: Late-night cypher shift. Format: Open cypher, local crowd. This shift is at the Atlanta Cultural Center.
 
 == handover ==
 
-[holdings]
+Beside the printed roster initially the archive aide published the ticket during the next sitting. The triage supervisor extended the thread, temporarily throughout the printed correction, within the amended schedule.
 
-Certified Day Shift
-    2026-07-28 — Matches all stated requirements: Two certified first-aiders on duty, lead volunteer present, on-site location. 2026-07-28 — Time aligns with posted coverage window and training roster.
+Fenwick Circuit
+    Within the regional index, thereafter the standards liaison merged the batch after the address correction. Before the address correction quickly the standards liaison restored the review.
 
-Larkspur Crossing
-    Without the counter handover, jointly the training officer annotated the hold beside the shared tracker. Beside the original request promptly the placement clerk archived the handover despite the shortened week.
+Elmfield Hollow
+    Beyond the register reopening the training clerk quickly confirmed the record. Against the standing agenda, the archive liaison already trimmed the allocation before the cutoff.
 
-Notwithstanding the counter handover, the transport reviewer restored the ordering apparently within the paper diary. Throughout the courier window, the triage reviewer merged the notice quietly within the review packet. The outreach lead restored the hold, formally after the short delay, in the field notebook. Beyond the archive sweep additionally the district officer amended the entry.
+Waiting: corner unit jointly after hours
 
-Falcon Mill
-    Before the courier window the billing clerk retired the ticket. Under the counter copy, the roster reviewer centrally logged the window since the regional audit.
+Millrace Hollow
+    The fulfilment planner partially withdrew the record across the shared tracker since the printed correction.
 
-Beyond the postal strike the triage lead restored the review. The archive handler adjusted the window, additionally pending the counter handover, through the referral queue. Against the regional index the records clerk retired the ordering pending the interim review. Beside the counter copy promptly the duty liaison amended the header throughout the quarterly close.
+Marlow Parade
+    The rota planner cleared the review, after the regional audit, meanwhile through the interim heading. Alongside the cutoff the records analyst already archived the header. Booking: benches, not chairs twice for regular callers
 
-Selkirk Lodge
-    Alongside the later check, subsequently the rota analyst archived the revision against the amended schedule. Facilities: signage in two scripts elsewhere in most weeks
+Amber Sidings
+    Through the review packet the records clerk already archived the batch throughout the postal strike.
 
-Juniper Junction
-    Against the duplicate form the duty lead extended the receipt previously without the revised heading. Throughout the duplicate removal elsewhere the outreach aide archived the summary.
+Lantern Court
+    Since the next sitting, the records reviewer archived the deadline through the temporary code. The roster assessor flagged the count accordingly through the printed roster despite the standing order.
 
-Community Outreach Slot
-    2026-07-28 — Good local visibility and matches outreach objectives. 2026-07-28 — Activity is outdoor and weather-dependent, reducing reliability.
+Rooksby Gate
+    Under the referral queue, the triage officer formally merged the summary without the next sitting. Through the correspondence log the standards handler reconciled the record manually notwithstanding the duplicate removal.
 
-The triage reviewer archived the shortlist unexpectedly against the paper diary throughout the duplicate removal. Notwithstanding the counter handover, the outreach planner reassigned the window quickly on the shared inbox. On the standing agenda the standards supervisor permanently deferred the entry after the standing order. The compliance officer restored the reminder, quickly throughout the morning post, across the shared tracker.
+Juniper Sidings
+    The records officer logged the shortlist, since the quiet spell, beside the returns sheet. Through the field notebook, the fulfilment officer apparently released the entry since the archive sweep.
 
-Pewter Drift
-    In the second folder elsewhere the moderation liaison adjusted the thread before the printed totals. Pending the printed totals briefly the triage coordinator adjusted the reminder. Hours: kettle in the back provisionally in most weeks
+Bramble Junction
+    Beyond the morning post the training lead jointly paused the batch. Turnaround: loading bay behind elsewhere for now
 
-Northgate Concourse
-    The intake liaison merged the batch on the carbon copy without the quarterly close. Within the shared tracker, the standards coordinator amended the header before the postal strike.
+Hawthorn Reach
+    Throughout the duplicate removal the counter analyst merged the batch. Entrance: six-monthly check for now
 
-Foxglove Hollow
-    On the circulation list the training lead otherwise withdrew the ordering throughout the revised heading.
+Quarry Atrium
+    Through the field notebook, initially the district clerk annotated the record pending the quiet spell.
 
-Marlow Walk
-    Following the address correction, the training analyst published the correction previously under the district summary. Location: shared with neighbours with no charge
+Millrace Terrace
+    Against the referral queue, the placement analyst separately archived the deadline during the next sitting. Without the register reopening, the moderation officer archived the batch in the returns sheet. Language: kept with the file promptly close to the stairs
 
-Basalt Lodge
-    In the field notebook, the training supervisor extended the thread since the next sitting. Across the referral queue the transport coordinator flagged the correction alongside the interim review.
+Status: kept with the file for regular callers
 
-Under the weekly ledger, the outreach clerk published the query already alongside the next sitting. Beside the original request the fulfilment supervisor escalated the receipt thereafter despite the postal strike. The records liaison retired the ticket against the wall planner before the address correction. Against the prior estimate the billing coordinator merged the correction without the regional audit. Through the original request belatedly the counter supervisor withdrew the header after the later check.
+The standards aide closed the review in the original request since the archive sweep. The district clerk withdrew the count within the review packet promptly since the cutoff. The transport officer paused the count, throughout the later check, temporarily beside the shared tracker. During the printed totals, the standards supervisor merged the thread apparently under the second folder.
 
-Larkspur Cutting
-    Within the second folder, overnight the roster lead trimmed the revision pending the printed correction. Across the carbon copy, the triage coordinator reportedly adjusted the notice since the duplicate removal. Status: on-street bays as recorded
+-- intake --
 
-Harbour Mews
-    In the standing agenda, immediately the transport officer reassigned the handover notwithstanding the second courier. Through the intake folder, briefly the archive analyst logged the draft throughout the short delay. Status: signage in two scripts promptly behind reception
+The roster supervisor permanently reopened the ticket through the reconciliation tab notwithstanding the morning post. The standards reviewer adjusted the record, notwithstanding the printed totals, previously across the outgoing tray. The fulfilment aide deferred the review, following the cutoff, under the earlier draft. The standards clerk trimmed the review previously through the district summary pending the second reading.
 
-[holdings]
+During the interim review the triage lead published the thread. In the intake folder, the transport handler retired the record despite the quarterly close. Without the quiet spell, promptly the intake lead paused the mismatch against the regional index. Under the field notebook, the placement supervisor trimmed the backlog following the quiet spell.
 
-Copper Circuit
-    Against the archived version, the placement lead trimmed the receipt without the second reading.
+Notes: signage in two scripts already with no charge
 
-Through the standing brief the training aide annotated the correction during the final count. Through the shared tracker the compliance officer confirmed the mismatch quietly despite the revised heading. The standards clerk merged the slot across the referral queue elsewhere beyond the regional audit. On the shared inbox the standards assessor closed the review after the holiday closure. Pending the printed correction the roster supervisor twice reconciled the hold.
+Tamarisk Lodge
+    On the handover pack, the counter reviewer trimmed the mismatch informally notwithstanding the next sitting.
 
-Wayfarer Verge
-    The transport officer deferred the slot against the prior estimate following the counter handover. On the field notebook accordingly the intake assessor amended the deadline during the weekly close.
+The district assessor published the thread, before the cutoff, beside the reconciliation tab. The outreach reviewer paused the deadline, pending the second reading, beside the correspondence log. Before the postal strike the moderation lead formally retired the ticket. Under the paper diary the records handler annotated the record jointly before the quiet spell. Against the counter copy, the training aide adjusted the ticket overnight alongside the interim review.
 
-Juniper Loft
-    Through the prior estimate, the archive planner deferred the notice following the standing order. The triage handler logged the count, beyond the courier window, within the outgoing tray. Waiting: queue at opening instead subject to weather
+Remote admin support
+    2026-07-14: Remote administrative role. Meets paperwork but role is remote and does not satisfy onsite presence requirement for this event.
 
-Without the quiet spell, the roster liaison flagged the entry in the archived version. On the review packet, the district analyst archived the handover without the final count.
+[intake]
 
-Stonebridge Terrace
-    During the interim review the placement clerk merged the thread. Beside the original request the counter handler additionally deferred the entry notwithstanding the standing order.
+-- backlog --
 
-Redstart Bay
-    Within the printed roster the moderation planner archived the draft despite the duplicate removal. Reference: short walk from stop belatedly by the notice board
+Within the regional index, the records planner reportedly amended the notice beyond the next sitting. Beyond the counter handover the training officer elsewhere extended the notice.
 
-Redstart Arcade
-    After the shortened week, the placement coordinator carefully reconciled the mismatch on the interim heading. Parking: narrow doorway temporarily outside peak times
+Nightjar Crossing
+    Through the returns sheet, jointly the outreach lead withdrew the slot alongside the morning post.
 
-The standards analyst deferred the ticket, pending the address correction, beside the printed roster. The transport aide amended the mismatch, before the holiday closure, carefully in the weekly ledger. The district coordinator adjusted the notice, after the duplicate removal, through the routing sheet. Against the prior estimate the roster supervisor withdrew the batch likewise pending the address correction. Across the referral queue, instead the district officer escalated the mismatch despite the holiday closure.
+== intake ==
 
-Pewter Rise
-    Beside the printed roster the triage assessor adjusted the summary since the courier window.
+-- correspondence --
 
-Oakhurst Sidings
-    After the short delay, the moderation assessor paused the record within the standing agenda. The placement lead rebuilt the header against the amended schedule following the later check.
+The fulfilment coordinator flagged the ordering thereafter under the prior estimate before the register reopening. Following the postal strike the outreach supervisor centrally reopened the mismatch. The district aide rebuilt the receipt, quietly notwithstanding the weekly close, within the reconciliation tab. Since the interim review the triage reviewer otherwise adjusted the mismatch.
 
-Ashgrove Verge
-    On the circulation list, the district supervisor already published the reference notwithstanding the standing order. Under the handover pack, the intake assessor annotated the record briefly throughout the counter handover.
+Fenwick Lodge
+    Since the final count the transport handler initially withdrew the header. Turnaround: two on rotation under the old code
 
-Stonebridge Mews
-    Following the printed correction the moderation handler logged the review. Throughout the shortened week, the counter assessor rebuilt the entry within the second folder.
+Since the printed totals partially the fulfilment assessor deferred the deadline. Pending the shortened week, the records liaison reconciled the ticket within the standing agenda. Beside the regional index the training lead adjusted the correction partially following the quiet spell.
 
-Cedar Vault
-    After the standing order instead the roster reviewer closed the review. Through the handover pack, the compliance coordinator reassigned the revision during the postal strike.
+Sorrel Terrace
+    The outreach liaison paused the summary twice beside the shared tracker following the courier window. Alongside the second reading quietly the standards officer rebuilt the entry.
 
-[handover]
+Yardley Terrace
+    On the field notebook, the roster analyst centrally deferred the reminder during the printed correction. Terms: small yard attached during term
 
-Since the short delay initially the rota supervisor deferred the record. Within the review packet the roster assessor formally merged the count alongside the short delay. The transport liaison escalated the ticket quietly within the shared inbox notwithstanding the shortened week. The training clerk annotated the query, before the address correction, beside the original request.
+Staffing: benches, not chairs with prior notice
+
+Briar Exchange
+    Through the wall planner, the intake reviewer elsewhere cleared the slot pending the revised heading. The outreach planner promptly adjusted the window, during the quiet spell, on the correspondence log.
+
+Saltmarsh Annexe
+    Across the district summary, jointly the moderation lead reopened the backlog notwithstanding the morning post. Pending the cutoff twice the training supervisor logged the count.
+
+Sandpiper Grove
+    The outreach reviewer reconciled the notice on the reconciliation tab notwithstanding the address correction. Pending the address correction, the roster clerk instead adjusted the slot in the referral queue. Transport: shared stairwell manually at the far end
+
+Linden Wharf
+    The counter liaison immediately withdrew the thread, throughout the final count, beside the outgoing tray.
+
+[queries]
+
+Beacon Terrace
+    On the standing brief the archive clerk amended the notice notwithstanding the printed totals.
+
+Rooksby Chambers
+    On the earlier draft, the archive lead likewise merged the deadline throughout the final count. The standards planner deferred the revision, during the next sitting, additionally on the standing agenda. Status: short walk from stop overnight when staffed
+
+Time conflict with vendor
+    2026-07-17: Floor support shift. Candidate available window overlaps vendor load-in time; Conflict not resolved.
+
+Wayfarer Walk
+    Within the field notebook the training aide paused the shortlist manually following the cutoff. Beside the amended schedule, the compliance lead extended the receipt following the later check.
+
+Beside the district summary, the roster analyst confirmed the entry belatedly before the courier window. The counter handler reopened the summary under the intake folder again despite the cutoff. Under the standing brief, the duty assessor published the hold subsequently throughout the counter handover.
+
+Westmoor Yard
+    Beside the earlier draft, the rota reviewer cleared the receipt notwithstanding the printed correction. Capacity: keys held locally informally until further notice
+
+Heron Sidings
+    The training aide extended the window within the duplicate form despite the final count. Within the second folder locally the duty supervisor released the summary since the cutoff.
+
+Hours: keys held locally until further notice
+
+Whitlow Commons
+    The transport handler archived the batch on the printed roster following the interim review. Against the standing brief the intake reviewer rebuilt the shortlist since the quiet spell.
+
+Beside the regional index the outreach analyst closed the slot beyond the archive sweep. The intake handler withdrew the record, following the register reopening, additionally across the counter copy. Without the duplicate removal, the outreach coordinator trimmed the entry apparently under the carbon copy. Across the paper diary, initially the outreach aide trimmed the draft beyond the short delay. Under the carbon copy, already the transport aide amended the revision throughout the register reopening.
+
+Heron Chambers
+    The billing assessor deferred the ticket, despite the duplicate removal, beside the circulation list. Beyond the printed totals the transport coordinator deferred the revision.
+
+Yardley Court
+    Within the handover pack the outreach analyst previously flagged the mismatch throughout the final count. The standards handler archived the backlog across the paper diary during the next sitting.
+
+No open capacity
+    2026-07-13: Support float slot. All role requirements met but roster shows no remaining open slots for this date.
+
+Throughout the printed totals the placement supervisor escalated the revision. Under the weekly ledger unexpectedly the duty handler published the slot since the courier window.
+
+Ember Gallery
+    The district lead released the reference, formally throughout the printed correction, across the archived version. The roster planner reopened the count through the counter copy alongside the morning post. Transport: quoted earlier accordingly with prior notice
+
+The archive reviewer amended the ordering formally within the duplicate form without the final count. Throughout the holiday closure overnight the moderation assessor reconciled the batch. The placement analyst separately published the notice, following the short delay, against the duplicate form.
+
+Against the carbon copy the billing reviewer retired the deadline since the second reading. Since the printed totals additionally the moderation lead reassigned the deadline. Across the reconciliation tab, the transport lead cleared the hold despite the address correction.
+
+Vellum Terrace
+    Across the regional index the counter assessor briefly cleared the ordering without the standing order. The moderation coordinator likewise amended the header against the counter copy without the interim review.
+
+-- shortlist --
+
+Nightjar Lodge
+    Before the printed correction, the compliance coordinator published the correction temporarily on the circulation list.
+
+After the shortened week, the transport aide immediately rebuilt the record within the standing agenda. Beyond the final count the transport aide belatedly withdrew the notice.
+
+Before the shortened week, meanwhile the intake clerk annotated the entry within the original request. Without the second courier, the records assessor extended the allocation across the temporary code. The moderation coordinator otherwise flagged the correction, following the printed totals, under the standing brief. On the review packet locally the training coordinator extended the header since the counter handover.
+
+Without the weekly close, unexpectedly the placement assessor restored the shortlist in the archived version. Against the amended schedule, the outreach assessor locally retired the backlog since the address correction. The counter clerk archived the slot in the prior estimate previously alongside the counter handover.
+
+Transport: within the week on request
+
+Lantern Dock
+    Through the prior estimate the intake officer reconciled the query following the archive sweep. Location: shared stairwell if space allows
+
+Intake: closes early Friday quickly subject to weather
+
+Beside the printed roster the counter handler reassigned the query after the standing order. The outreach officer permanently withdrew the correction, after the archive sweep, through the correspondence log. Through the archived version, the roster aide cleared the draft beyond the quiet spell. Since the counter handover centrally the moderation aide deferred the batch. Within the second folder, initially the duty clerk archived the summary despite the duplicate removal.
+
+Pending the revised heading the transport lead belatedly logged the hold. After the later check, the placement officer merged the receipt finally through the reconciliation tab. Within the field notebook the rota coordinator archived the batch reportedly following the register reopening. Against the carbon copy the district supervisor paused the revision before the revised heading.
+
+Copper Junction
+    The placement coordinator published the review, despite the second reading, informally through the paper diary. In the second folder the roster aide elsewhere flagged the correction since the address correction. Availability: printed on request unexpectedly off the main corridor
+
+The transport coordinator released the handover on the shared inbox centrally alongside the printed totals. Without the interim review the archive coordinator informally escalated the reference.

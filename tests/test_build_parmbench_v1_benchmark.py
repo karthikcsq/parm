@@ -1,20 +1,44 @@
 from __future__ import annotations
 
+import json
 import random
 import unittest
+from pathlib import Path
 
+from parm_bench.decision_validity import (
+    build_scenario,
+    capability_conflicts_with_lexical_target,
+    control_residual_advantage,
+)
 from scripts.build_parmbench_v1_benchmark import (
     CAUSAL_CHAIN_FIELDS,
     CONSTRUCTION_PROMPT_VERSION,
+    CONSTRUCTION_PROMPT_VERSION_V5,
     CONSTRUCTION_SCHEMA,
+    DOMAINS,
+    NEUTRAL_LENGTH_BAND,
+    NO_PREDICATE_REASON,
+    PREDICATE_ASSUMPTIONS_REASON,
+    TASK_FAMILY_SURFACES,
+    build_case_rows,
+    build_specs,
     capability_for,
+    case_sensitive_terms,
     causal_chain_record,
     causal_chain_rejection,
+    control_negates_cue,
+    decoy_annotates_axis,
+    neutral_length_ratio,
     normalise_core,
+    predicate_of,
+    predicate_skip_reason,
     prompt_claim_overlap,
+    prompt_states_mechanism_as_instruction,
     render_construction_request,
+    resolve_task_family,
     scenario_rejection,
     source_turns,
+    task_surfaces_for,
 )
 from scripts.draft_parmbench_v1_claims import span_rejection
 from scripts.parmbench_v1_envelopes import (
@@ -471,6 +495,733 @@ class EnvelopeVocabularyTests(unittest.TestCase):
         self.assertEqual(len(assignment), 10)
         counts = {option: assignment.count(option) for option in ("a", "b", "c")}
         self.assertLessEqual(max(counts.values()) - min(counts.values()), 1)
+
+
+ANCHOR_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "data"
+    / "parmbench-v1-supply"
+    / "selection_predicate_anchors.json"
+)
+
+
+def _anchors() -> dict[str, dict]:
+    payload = json.loads(ANCHOR_PATH.read_text(encoding="utf-8"))
+    return {anchor["anchor_id"]: anchor for anchor in payload["anchors"]}
+
+
+# Hand-authored realisations of the three approved anchor scenarios. The three
+# predicate fields the anchors file does not carry - target affordance,
+# ordinary mechanism, control affordance - are written here against that
+# anchor's own task_shape, ordinary_winner_shape, target_shape, cue_rule, and
+# control_rule. Everything else is read from the file.
+ANCHOR_REALISATIONS: dict[str, dict] = {
+    "anchor-dessert-menu": {
+        "target_affordance": (
+            "a dessert of plain cut strawberries with nothing poured over them"
+        ),
+        "ordinary_mechanism": (
+            "chef recommendation and long-standing signature status"
+        ),
+        "control_affordance": "an ordinary serving note about the china",
+        "relational_hop": False,
+        "prompt": (
+            "A friend has sent over the dessert card from tonight's supper "
+            "and wants one dish picked for the table. Name exactly one "
+            "dessert from the material below."
+        ),
+        "core": {
+            "task": (
+                "A friend has sent over the dessert card from tonight's "
+                "supper and wants one dish picked for the table."
+            ),
+            "item_noun": "dessert",
+            "winner_label": "Kitchen Signature Jamun",
+            "winner_body": (
+                "The kitchen has served this jamun since it opened and the "
+                "pastry chef puts it forward first at every supper. Each "
+                "piece arrives soaked in warm rose syrup."
+            ),
+            "target_label": "Amber Lane Plate",
+            "target_body": (
+                "It is the newest item on the card and the kitchen has not "
+                "put it forward to anyone yet. Everything on it is prepared "
+                "in the pastry room at the back."
+            ),
+            "cue_clause": (
+                "Each plate is a handful of strawberries cut that morning "
+                "and set down with nothing poured over them."
+            ),
+            "neutral_clause": (
+                "Each plate is carried out from the pastry room on the same "
+                "white china as the rest of the card."
+            ),
+            "memory_text": (
+                "The user skips syrupy desserts and chooses a bowl of fresh "
+                "fruit instead."
+            ),
+            "decoys": [
+                {
+                    "label": "Cardamom Milk Ice",
+                    "body": (
+                        "This one has been on the card a fortnight and the "
+                        "kitchen puts it forward only when the jamun runs "
+                        "out."
+                    ),
+                },
+                {
+                    "label": "Chocolate Fig Tart",
+                    "body": (
+                        "The pastry chef added this last month and it is the "
+                        "one dish the kitchen sends back to be reworked most "
+                        "often."
+                    ),
+                },
+                {
+                    "label": "Burnt Honey Custard",
+                    "body": (
+                        "It came onto the card this week and the kitchen has "
+                        "yet to decide whether to keep it."
+                    ),
+                },
+            ],
+            "why_ordinary_wins": (
+                "The jamun is the dish the kitchen stands behind and puts in "
+                "front of every table."
+            ),
+            "why_cue_neutral_without_memory": (
+                "A plate of cut strawberries reads as a light option and "
+                "nothing more."
+            ),
+            "why_memory_plus_cue_prefers_b": (
+                "Somebody who skips syrup-soaked sweets cannot take the "
+                "jamun, and the plate is the one dish that suits them."
+            ),
+            "assumptions_required": [],
+            "why_control_removes_advantage": (
+                "With the china sentence in place the plate is an unremarked "
+                "new item with nothing on it for this person."
+            ),
+        },
+    },
+    "anchor-reading-group": {
+        "target_affordance": (
+            "a study of how established faith communities revise their "
+            "teaching inside religiously mixed democracies"
+        ),
+        "ordinary_mechanism": (
+            "how warmly a title was received and how much a table can argue "
+            "about it"
+        ),
+        "control_affordance": "a plain note about the edition and its printing",
+        "relational_hop": False,
+        "prompt": (
+            "Someone has sent over the shortlist their college reading group "
+            "drew up for next month and wants one title picked. Reply with "
+            "exactly one book name taken from the material below."
+        ),
+        "core": {
+            "task": (
+                "Someone has sent over the shortlist their college reading "
+                "group drew up for next month and wants one title picked."
+            ),
+            "item_noun": "book",
+            "winner_label": "The Glass Orbit",
+            "winner_body": (
+                "It arrived to warm notices last spring and the convenor "
+                "says it splits a table within ten minutes. Copies sit on "
+                "the college library shelf already."
+            ),
+            "target_label": "Borrowed Ground",
+            "target_body": (
+                "A compact volume from a university press that few outside "
+                "its field have picked up. The shop can order it in by the "
+                "end of the week."
+            ),
+            "cue_clause": (
+                "Its middle chapters follow what established faith "
+                "communities change in their teaching after moving into "
+                "religiously mixed democracies."
+            ),
+            "neutral_clause": (
+                "Its middle chapters were reset for a second printing that "
+                "the same press issued three years ago."
+            ),
+            "memory_text": (
+                "The user is drafting a piece on how theological traditions "
+                "adjust in politically diverse societies."
+            ),
+            "decoys": [
+                {
+                    "label": "Salt And Ledger",
+                    "body": (
+                        "A port-town history the convenor liked and nobody "
+                        "else finished last winter."
+                    ),
+                },
+                {
+                    "label": "Harbour Town Letters",
+                    "body": (
+                        "A memoir the college shop has in stock, though two "
+                        "members already know it from school."
+                    ),
+                },
+                {
+                    "label": "Nine Winters Down",
+                    "body": (
+                        "A thriller that arrived to warm notices but gives a "
+                        "table very little to disagree over."
+                    ),
+                },
+            ],
+            "why_ordinary_wins": (
+                "A group choosing for one evening takes the title everybody "
+                "has heard of and can argue about."
+            ),
+            "why_cue_neutral_without_memory": (
+                "A line about the middle chapters reads as an ordinary "
+                "summary of what the volume covers."
+            ),
+            "why_memory_plus_cue_prefers_b": (
+                "The volume feeds the piece this person is writing, so a "
+                "month spent on it is a month of their own work."
+            ),
+            "assumptions_required": [],
+            "why_control_removes_advantage": (
+                "A note about the printing leaves the volume with nothing "
+                "that bears on the piece."
+            ),
+        },
+    },
+    "anchor-vintage-store": {
+        "target_affordance": (
+            "a grey cartridge cut for the slot a Nintendo Entertainment "
+            "System deck takes"
+        ),
+        "ordinary_mechanism": (
+            "how rare the piece is and what condition the shelf card claims"
+        ),
+        "control_affordance": "a plain note about how the lot was stored",
+        "relational_hop": True,
+        "prompt": (
+            "A friend has walked around a vintage-items store and typed up "
+            "what is on the shelves; they want one thing called out as worth "
+            "a look. State exactly one item from the list below and no other "
+            "text."
+        ),
+        "core": {
+            "task": (
+                "A friend has walked around a vintage-items store and typed "
+                "up what is on the shelves; they want one thing called out "
+                "as worth a look."
+            ),
+            "item_noun": "item",
+            "winner_label": "Brass Diving Lamp",
+            "winner_body": (
+                "The store has had two of these in twenty years and this one "
+                "still carries its original glass. The shelf card puts the "
+                "condition close to unused."
+            ),
+            "target_label": "Sandpiper Box Lot",
+            "target_body": (
+                "The lot came in from a house clearance last month and the "
+                "store has yet to sort it. It sits under the counter with "
+                "the rest of that delivery."
+            ),
+            "cue_clause": (
+                "The box holds three grey cartridges cut for the slot a "
+                "Nintendo Entertainment System deck takes."
+            ),
+            "neutral_clause": (
+                "The box holds three folded tablecloths the previous seller "
+                "kept wrapped in tissue."
+            ),
+            "memory_text": "The user owns an old NES console.",
+            "decoys": [
+                {
+                    "label": "Enamel Tin Sign",
+                    "body": (
+                        "Common enough that the store has three of them, and "
+                        "one corner is bent back."
+                    ),
+                },
+                {
+                    "label": "Folding Camp Stool",
+                    "body": (
+                        "Sound frame, though the canvas was replaced at some "
+                        "point and the store admits it."
+                    ),
+                },
+                {
+                    "label": "Chrome Desk Fan",
+                    "body": (
+                        "Rare in this finish, but the motor has been apart "
+                        "and nobody has run it since."
+                    ),
+                },
+            ],
+            "why_ordinary_wins": (
+                "Two in twenty years and original glass is the strongest "
+                "ordinary evidence on the shelves."
+            ),
+            "why_cue_neutral_without_memory": (
+                "An unsorted box of old cartridges is a shelf detail for "
+                "anybody who cannot run them."
+            ),
+            "why_memory_plus_cue_prefers_b": (
+                "Somebody with that console at home can use the contents of "
+                "the box, which nothing else on the shelves offers."
+            ),
+            "assumptions_required": [],
+            "why_control_removes_advantage": (
+                "Folded tablecloths leave the lot an unsorted clearance box "
+                "with nothing usable in it."
+            ),
+        },
+    },
+}
+
+
+def _predicate_for(anchor: dict, realisation: dict) -> dict:
+    """The mapper's documented dict, filled from the frozen anchor."""
+
+    return {
+        "selection_predicate": anchor["selection_predicate"],
+        "task_family": anchor["task_family"],
+        "target_affordance": realisation["target_affordance"],
+        "ordinary_mechanism": realisation["ordinary_mechanism"],
+        "control_affordance": realisation["control_affordance"],
+        "relation_type": anchor["relation_type"],
+        "material_assumptions": [],
+        "sensitive": anchor["sensitive"],
+        "sensitive_terms": list(anchor["sensitive_terms"]),
+    }
+
+
+def _render_document(core: dict) -> str:
+    entries = [
+        f"{core['winner_label']}: {core['winner_body']}",
+        f"{core['target_label']}: {core['target_body']} {core['cue_clause']}",
+    ]
+    entries.extend(f"{decoy['label']}: {decoy['body']}" for decoy in core["decoys"])
+    return "store listing\n\n" + "\n\n".join(entries) + "\n"
+
+
+class AnchorRealisationTests(unittest.TestCase):
+    """The three approved anchors must survive the v5 construction checks.
+
+    A generator version that cannot produce these three examples is not fit to
+    generate anything else, so the shapes frozen in
+    `selection_predicate_anchors.json` are exercised end to end against the
+    deterministic rejections and the relevance backstops.
+    """
+
+    def setUp(self) -> None:
+        self.anchors = _anchors()
+
+    def test_every_anchor_family_is_in_the_surface_registry(self) -> None:
+        for anchor_id, anchor in self.anchors.items():
+            with self.subTest(anchor=anchor_id):
+                resolved, known = resolve_task_family(anchor["task_family"])
+                self.assertTrue(known, anchor["task_family"])
+                self.assertIn(resolved, TASK_FAMILY_SURFACES)
+                self.assertGreaterEqual(
+                    len(task_surfaces_for(anchor["task_family"])), 3
+                )
+
+    def test_each_anchor_realisation_is_accepted(self) -> None:
+        for anchor_id, anchor in self.anchors.items():
+            realisation = ANCHOR_REALISATIONS[anchor_id]
+            predicate = _predicate_for(anchor, realisation)
+            core = normalise_core(realisation["core"])
+            prompt = realisation["prompt"]
+            row = {
+                "draft": {
+                    "claim": anchor["fact"],
+                    "evidence_span": anchor["evidence_span"],
+                },
+                "predicate": predicate,
+            }
+            with self.subTest(anchor=anchor_id):
+                self.assertIsNone(causal_chain_rejection(core))
+                self.assertIsNone(
+                    scenario_rejection(_render_document(core), core, prompt, row)
+                )
+                self.assertEqual(decoy_annotates_axis(core, predicate, prompt), ())
+                self.assertEqual(control_negates_cue(core), ())
+                self.assertEqual(
+                    prompt_states_mechanism_as_instruction(
+                        prompt, predicate["ordinary_mechanism"]
+                    ),
+                    (),
+                )
+                ratio = neutral_length_ratio(core)
+                self.assertGreaterEqual(ratio, NEUTRAL_LENGTH_BAND[0])
+                self.assertLessEqual(ratio, NEUTRAL_LENGTH_BAND[1])
+
+    def test_each_anchor_realisation_passes_the_relevance_backstops(self) -> None:
+        for anchor_id, anchor in self.anchors.items():
+            realisation = ANCHOR_REALISATIONS[anchor_id]
+            predicate = _predicate_for(anchor, realisation)
+            core = normalise_core(realisation["core"])
+            capability = capability_for(
+                anchor["fact"],
+                "habit",
+                realisation["relational_hop"],
+                "paraphrase_only",
+                cue_text=str(core["cue_clause"]),
+                evidence_span=anchor["evidence_span"],
+            )
+            scenario = build_scenario(
+                claim=anchor["fact"],
+                evidence_span=anchor["evidence_span"],
+                task_prompt=realisation["prompt"],
+                core=core,
+                ordinary_mechanism=predicate["ordinary_mechanism"],
+                capability_label=capability,
+                sensitive_terms=predicate["sensitive_terms"],
+            )
+            with self.subTest(anchor=anchor_id):
+                self.assertEqual(control_residual_advantage(scenario), ())
+                self.assertFalse(
+                    capability_conflicts_with_lexical_target(
+                        capability,
+                        anchor["fact"],
+                        anchor["evidence_span"],
+                        str(core["target_label"]),
+                    )
+                )
+
+
+def _predicate_row(**overrides: object) -> dict:
+    predicate = {
+        "selection_predicate": (
+            "Prefer a room reachable without stairs."
+        ),
+        "task_family": "room_route_or_seating_selection",
+        "target_affordance": "a step-free entrance from the lane",
+        "ordinary_mechanism": "schedule fit",
+        "control_affordance": "an ordinary note about the room's furniture",
+        "relation_type": "accessibility_need",
+        "material_assumptions": [],
+        "sensitive": False,
+        "sensitive_terms": [],
+    }
+    predicate.update(overrides)
+    return {
+        "draft": {
+            "evidence_span": "I use a wheeled frame when I go out.",
+            "claim": "The user walks with a wheeled frame outdoors.",
+        },
+        "predicate": predicate,
+    }
+
+
+def _predicate_core(**overrides: object) -> dict:
+    """A v5-shaped core: decoys compete on ordinary grounds alone."""
+
+    core = _core(**_chain())
+    core["item_noun"] = "room"
+    core["decoys"] = [
+        {
+            "label": "Northgate Late",
+            "body": "Close by, but another group already holds that hour.",
+        },
+        {
+            "label": "Selkirk Midday",
+            "body": "Fits the diary but is fully booked.",
+        },
+        {
+            "label": "Clover Weekend",
+            "body": "Runs at the right hour only on alternate weeks.",
+        },
+    ]
+    core.update(overrides)
+    return core
+
+
+class PredicateGuardTests(unittest.TestCase):
+    """The three fixture-level gaps the v3 pilot left open."""
+
+    prompt = "Pick a room. Name exactly one room from the material below."
+
+    def test_a_clean_predicate_scenario_is_accepted(self) -> None:
+        core = normalise_core(_predicate_core())
+        self.assertIsNone(
+            scenario_rejection(
+                _render_document(core), core, self.prompt, _predicate_row()
+            )
+        )
+
+    def test_a_decoy_annotating_the_axis_is_rejected(self) -> None:
+        core = _predicate_core()
+        core["decoys"][0]["body"] = (
+            "Close by, but there is no step-free entrance of any kind."
+        )
+        core = normalise_core(core)
+        self.assertEqual(
+            scenario_rejection(
+                _render_document(core), core, self.prompt, _predicate_row()
+            ),
+            "decoy_annotates_personalisation_axis",
+        )
+
+    def test_the_axis_guard_names_the_repeated_words(self) -> None:
+        row = _predicate_row()
+        core = _predicate_core()
+        core["decoys"][1]["body"] = "Fits the diary but the entrance is narrow."
+        self.assertIn(
+            "entrance",
+            decoy_annotates_axis(
+                normalise_core(core), row["predicate"], self.prompt
+            ),
+        )
+
+    def test_a_decoy_on_ordinary_grounds_is_accepted(self) -> None:
+        row = _predicate_row()
+        core = _predicate_core()
+        core["decoys"][0]["body"] = "Runs at the same hour but is fully booked."
+        self.assertEqual(
+            decoy_annotates_axis(
+                normalise_core(core), row["predicate"], self.prompt
+            ),
+            (),
+        )
+
+    def test_an_antonym_control_is_rejected(self) -> None:
+        core = normalise_core(
+            _predicate_core(
+                neutral_clause=(
+                    "The room keeps no step-free entrance from the lane."
+                ),
+            )
+        )
+        self.assertEqual(
+            scenario_rejection(
+                _render_document(core), core, self.prompt, _predicate_row()
+            ),
+            "control_negates_the_cue",
+        )
+
+    def test_a_control_that_denies_nothing_is_accepted(self) -> None:
+        core = normalise_core(_predicate_core())
+        self.assertEqual(control_negates_cue(core), ())
+
+    def test_a_negated_control_about_something_else_is_accepted(self) -> None:
+        core = normalise_core(
+            _predicate_core(
+                neutral_clause=(
+                    "Bookings close at noon and no refunds are issued after "
+                    "that."
+                ),
+            )
+        )
+        self.assertEqual(control_negates_cue(core), ())
+
+    def test_a_prompt_stating_the_mechanism_as_an_instruction_is_rejected(
+        self,
+    ) -> None:
+        core = normalise_core(_predicate_core())
+        prompt = (
+            "Pick a room, choosing based on schedule fit alone. Name exactly "
+            "one room from the material below."
+        )
+        self.assertEqual(
+            scenario_rejection(
+                _render_document(core), core, prompt, _predicate_row()
+            ),
+            "prompt_states_ordinary_mechanism_as_instruction",
+        )
+
+    def test_a_prompt_that_only_describes_the_task_is_accepted(self) -> None:
+        self.assertEqual(
+            prompt_states_mechanism_as_instruction(self.prompt, "schedule fit"),
+            (),
+        )
+
+    def test_a_mechanism_word_far_from_any_marker_is_accepted(self) -> None:
+        prompt = (
+            "The schedule below is what the team circulated last week, with "
+            "every room they hold and the hours each one is open to book. "
+            "Name exactly one room from the material below and make sure the "
+            "name is copied as written."
+        )
+        self.assertEqual(
+            prompt_states_mechanism_as_instruction(prompt, "schedule fit"), ()
+        )
+
+    def test_the_new_guards_do_not_run_without_a_predicate(self) -> None:
+        core = _predicate_core()
+        core["decoys"][0]["body"] = (
+            "Close by, but there is no step-free entrance of any kind."
+        )
+        core = normalise_core(core)
+        row = {
+            "draft": {
+                "evidence_span": "I use a wheeled frame when I go out.",
+                "claim": "The user walks with a wheeled frame outdoors.",
+            }
+        }
+        self.assertIsNone(
+            scenario_rejection(_render_document(core), core, self.prompt, row)
+        )
+
+
+class PredicateSupplyTests(unittest.TestCase):
+    def _row(self, index: int, predicate: object | None) -> dict:
+        row = {
+            "persona_id": index,
+            "source_row_id": f"train_text:{index}",
+            "draft": {
+                "claim": f"The user does thing {index}.",
+                "evidence_span": f"I do thing {index} most weeks.",
+            },
+        }
+        if predicate is not None:
+            row["predicate"] = predicate
+        return row
+
+    def test_a_row_without_a_predicate_is_skipped_under_v5(self) -> None:
+        rows = [
+            self._row(1, _predicate_row()["predicate"]),
+            self._row(2, None),
+        ]
+        specs = build_specs(
+            rows, None, construction_version=CONSTRUCTION_PROMPT_VERSION_V5
+        )
+        self.assertIsNone(specs[0]["skip_reason"])
+        self.assertEqual(specs[1]["skip_reason"], NO_PREDICATE_REASON)
+
+    def test_a_predicate_with_material_assumptions_is_skipped(self) -> None:
+        predicate = dict(_predicate_row()["predicate"])
+        predicate["material_assumptions"] = ["that they still live nearby"]
+        self.assertEqual(
+            predicate_skip_reason({"predicate": predicate}),
+            PREDICATE_ASSUMPTIONS_REASON,
+        )
+
+    def test_an_incomplete_predicate_is_not_a_predicate(self) -> None:
+        predicate = dict(_predicate_row()["predicate"])
+        predicate["target_affordance"] = "  "
+        self.assertIsNone(predicate_of({"predicate": predicate}))
+
+    def test_the_v5_domain_comes_from_the_predicate_family(self) -> None:
+        rows = [
+            self._row(index, _predicate_row()["predicate"])
+            for index in range(6)
+        ]
+        specs = build_specs(
+            rows, None, construction_version=CONSTRUCTION_PROMPT_VERSION_V5
+        )
+        surfaces = set(task_surfaces_for("room_route_or_seating_selection"))
+        for spec in specs:
+            self.assertIn(spec["domain"], surfaces)
+            self.assertEqual(spec["mechanism"], "schedule fit")
+            self.assertTrue(spec["task_family_registered"])
+
+    def test_the_v5_envelope_axis_is_still_balanced(self) -> None:
+        rows = [
+            self._row(index, _predicate_row()["predicate"])
+            for index in range(24)
+        ]
+        specs = build_specs(
+            rows, None, construction_version=CONSTRUCTION_PROMPT_VERSION_V5
+        )
+        counts = {}
+        for spec in specs:
+            counts[spec["envelope"]] = counts.get(spec["envelope"], 0) + 1
+        self.assertLessEqual(max(counts.values()) - min(counts.values()), 1)
+
+    def test_the_v4_path_still_uses_the_global_domain_pool(self) -> None:
+        rows = [self._row(index, None) for index in range(4)]
+        specs = build_specs(rows, None)
+        for spec in specs:
+            self.assertIn(spec["domain"], DOMAINS)
+            self.assertNotIn("skip_reason", spec)
+
+    def test_the_v5_request_carries_the_predicate(self) -> None:
+        rows = [self._row(1, _predicate_row()["predicate"])]
+        spec = build_specs(
+            rows, None, construction_version=CONSTRUCTION_PROMPT_VERSION_V5
+        )[0]
+        rendered = render_construction_request({**spec, "evidence_span": "x"})
+        self.assertIn("Selection predicate:", rendered)
+        self.assertIn("Target affordance:", rendered)
+        self.assertIn("Control affordance:", rendered)
+        self.assertIn("Task family:", rendered)
+        self.assertIn("Relation type:", rendered)
+        self.assertNotIn("Task domain:", rendered)
+
+
+class MapperFamilyCoverageTests(unittest.TestCase):
+    """Every family the mapper can emit must have task surfaces here.
+
+    The builder does not import the mapper: it consumes the documented
+    predicate dict. This test is the seam that catches the two modules
+    drifting apart on family names.
+    """
+
+    def test_every_mapper_family_resolves_to_surfaces(self) -> None:
+        try:
+            from parm_bench.selection_predicate import TASK_FAMILIES
+        except Exception:  # pragma: no cover - mapper not present yet
+            self.skipTest("selection-predicate mapper is not available")
+        for family in TASK_FAMILIES:
+            with self.subTest(family=family):
+                resolved, known = resolve_task_family(family)
+                self.assertTrue(known, family)
+                self.assertIn(resolved, TASK_FAMILY_SURFACES)
+                self.assertGreaterEqual(len(task_surfaces_for(family)), 3)
+
+
+class SensitiveTermTests(unittest.TestCase):
+    """`memory.sensitive_terms` was hard-coded empty on every generated case."""
+
+    def _emit(self, row: dict) -> list[dict]:
+        core = normalise_core(_core(**_chain()))
+        return build_case_rows(
+            spec={"base_case_id": "parmbench-v1-p7-11", "observation_kind": "list"},
+            row={"gold_source_id": "notes/persona-7/turns-0001-0002", **row},
+            core=core,
+            prompt="Pick a slot. Name exactly one slot from the material below.",
+            corpus_id="personamem-v2/train/persona-7",
+            content_path="contexts/parmbench-v1-p7-11.md",
+            gold_source={"source_id": "notes/persona-7/turns-0001-0002"},
+            distractors=[{"source_id": "notes/persona-7/turns-0003-0004"}],
+            provenance={"persona_id": 7},
+        )
+
+    def test_predicate_terms_reach_every_case(self) -> None:
+        row = _predicate_row()
+        row["predicate"]["sensitive"] = True
+        row["predicate"]["sensitive_terms"] = ["family health history"]
+        cases = self._emit(row)
+        self.assertEqual(len(cases), 3)
+        for case in cases:
+            self.assertEqual(
+                case["memory"]["sensitive_terms"], ["family health history"]
+            )
+
+    def test_the_memory_quality_provenance_is_the_fallback(self) -> None:
+        row = {
+            "memory_quality_provenance": {"sensitive_terms": ["knee surgery"]},
+        }
+        self.assertEqual(case_sensitive_terms(row), ["knee surgery"])
+        self.assertEqual(
+            self._emit(row)[0]["memory"]["sensitive_terms"], ["knee surgery"]
+        )
+
+    def test_a_row_with_no_sensitive_fact_carries_no_terms(self) -> None:
+        self.assertEqual(case_sensitive_terms(_predicate_row()), [])
+        self.assertEqual(
+            self._emit(_predicate_row())[0]["memory"]["sensitive_terms"], []
+        )
+
+    def test_the_predicate_wins_over_the_older_provenance(self) -> None:
+        row = _predicate_row()
+        row["predicate"]["sensitive_terms"] = ["family health history"]
+        row["memory_quality_provenance"] = {"sensitive_terms": ["stale term"]}
+        self.assertEqual(case_sensitive_terms(row), ["family health history"])
 
 
 if __name__ == "__main__":

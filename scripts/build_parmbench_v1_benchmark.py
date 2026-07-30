@@ -23,11 +23,21 @@ Axes are assigned from balanced pools under one fixed seed, so domain,
 envelope, mechanism, and wording relationship stay evenly spread without a
 positional formula.
 
+Two construction versions live here. `parmbench_construction_v5`, the default,
+reads the selection predicate a mapper attached to the supply row and builds
+the options inside that predicate's task family; a row with no predicate object
+is skipped as `no_selection_predicate`. `parmbench_construction_v4` is the
+earlier unconstrained-domain prompt, kept so the frozen batch and the v3 pilot
+replay from their caches unchanged.
+
 Usage:
 
     $env:PYTHONPATH = 'src'
     & 'C:\\Users\\karth\\anaconda3\\python.exe' \\
       scripts\\build_parmbench_v1_benchmark.py
+    & 'C:\\Users\\karth\\anaconda3\\python.exe' \\
+      scripts\\build_parmbench_v1_benchmark.py --offline \\
+      --construction-version parmbench_construction_v4
 """
 
 from __future__ import annotations
@@ -102,8 +112,35 @@ BUILDER_VERSION = "parmbench_v1_builder_v1"
 # fresh cores, so the hard reject on a non-empty list starved the batch. Old
 # caches are keyed by the previous versions and stay untouched.
 CONSTRUCTION_PROMPT_VERSION = "parmbench_construction_v4"
+# v5 stops asking the construction model to invent the causal relationship. It
+# receives the selection predicate a mapper derived from the raw fact and
+# builds the options inside the task family that predicate belongs to. Rows
+# without a predicate object are not buildable under v5.
+CONSTRUCTION_PROMPT_VERSION_V5 = "parmbench_construction_v5"
+CONSTRUCTION_PROMPT_VERSIONS = (
+    CONSTRUCTION_PROMPT_VERSION,
+    CONSTRUCTION_PROMPT_VERSION_V5,
+)
+DEFAULT_CONSTRUCTION_VERSION = CONSTRUCTION_PROMPT_VERSION_V5
 CONSTRUCTION_MODEL = "gpt-5-mini"
 AXIS_SEED = 20260728
+
+# The mapper's evaluator-only contract, documented in
+# `docs/benchmark-construction.md`. The builder consumes this dict off the
+# supply row; it never imports the mapper.
+PREDICATE_FIELDS = (
+    "selection_predicate",
+    "task_family",
+    "target_affordance",
+    "ordinary_mechanism",
+    "control_affordance",
+    "relation_type",
+    "material_assumptions",
+    "sensitive",
+    "sensitive_terms",
+)
+NO_PREDICATE_REASON = "no_selection_predicate"
+PREDICATE_ASSUMPTIONS_REASON = "predicate_declares_material_assumptions"
 
 TOKENIZER = "cl100k_base"
 MIN_TOKENS = 6_400
@@ -126,6 +163,165 @@ DOMAINS = (
     "selecting a delivery or collection option",
     "choosing a seat, desk, or working space",
     "picking an evening event to go to",
+)
+
+# Under v5 the task surface comes from the predicate's family, not from the
+# global pool above. Each family lists concrete framings of the same ordinary
+# decision, so variety is applied inside a compatible family instead of across
+# incompatible ones. Family names follow the registry in
+# `docs/benchmark-construction.md` and the three anchor scenarios.
+# Keys are the mapper's own family ids (`TASK_FAMILY_REGISTRY` in
+# `parm_bench.selection_predicate`), written out here rather than imported so
+# the builder consumes the documented dict alone.
+TASK_FAMILY_SURFACES: dict[str, tuple[str, ...]] = {
+    "menu_or_catering_selection": (
+        "choosing one dish from a menu at a sit-down meal",
+        "choosing a dessert to finish a shared meal",
+        "picking a caterer's set menu for a small event",
+        "choosing a lunch order for a working session",
+    ),
+    "grocery_selection": (
+        "picking a grocery box or produce order",
+        "choosing a food supplier for a weekly order",
+        "picking one item from a shop's stocked list",
+    ),
+    "reading_or_study_material_selection": (
+        "finding a book for a reading group to discuss",
+        "choosing a course reading for a study session",
+        "picking one title from a library shortlist",
+        "choosing an archive or collection to read in",
+        "choosing a talk to sit in on from a programme",
+    ),
+    "compatible_accessory_or_part_selection": (
+        "choosing an accessory from a stockist's list",
+        "picking a replacement part from a supplier list",
+        "choosing a repair shop for something at home",
+        "choosing an add-on from a shop's catalogue",
+    ),
+    "vintage_or_secondhand_finds": (
+        "saying whether anything at a vintage-items store is worth a look",
+        "picking one lot from a secondhand sale list",
+        "choosing an item from a house-clearance listing",
+    ),
+    "event_or_workshop_selection": (
+        "picking an evening event to go to",
+        "choosing a club or group session to join",
+        "picking a short course to enrol on",
+        "choosing a workshop from a season listing",
+    ),
+    "supplies_selection": (
+        "picking a supplier for materials",
+        "choosing a kit from a shop's stocked list",
+        "picking one set of supplies from a quote sheet",
+    ),
+    "appointment_or_slot_selection": (
+        "booking a repeat appointment slot",
+        "choosing a session time from an availability list",
+        "selecting a delivery or collection window",
+        "picking a departure from a timetable extract",
+    ),
+    "room_route_or_seating_selection": (
+        "choosing a room to hold a small gathering in",
+        "picking a route or a way to travel",
+        "choosing a seat, desk, or working space",
+        "picking a venue for a regular session",
+    ),
+    "gift_or_visit_selection": (
+        "choosing a gift from a shop's listing",
+        "picking a visit or outing to arrange",
+        "choosing a card, note, or message service",
+    ),
+}
+
+# Names that mean a family above. Matching normalises case, spaces, and hyphens
+# first, so only genuine synonyms live here.
+TASK_FAMILY_ALIASES: dict[str, str] = {
+    "menu_selection": "menu_or_catering_selection",
+    "dessert_selection": "menu_or_catering_selection",
+    "catering_selection": "menu_or_catering_selection",
+    "grocery_or_food_supply_selection": "grocery_selection",
+    "book_selection": "reading_or_study_material_selection",
+    "reading_group_selection": "reading_or_study_material_selection",
+    "study_material_selection": "reading_or_study_material_selection",
+    "talks_courses_or_workshops_selection": (
+        "reading_or_study_material_selection"
+    ),
+    "archive_selection": "reading_or_study_material_selection",
+    "vintage_finds": "vintage_or_secondhand_finds",
+    "secondhand_finds": "vintage_or_secondhand_finds",
+    "compatible_game_or_accessory_selection": (
+        "compatible_accessory_or_part_selection"
+    ),
+    "parts_selection": "compatible_accessory_or_part_selection",
+    "repair_or_service_selection": "compatible_accessory_or_part_selection",
+    "hobby_events_supplies_or_clubs": "event_or_workshop_selection",
+    "hobby_selection": "event_or_workshop_selection",
+    "event_selection": "event_or_workshop_selection",
+    "course_selection": "event_or_workshop_selection",
+    "schedule_slot_selection": "appointment_or_slot_selection",
+    "appointment_selection": "appointment_or_slot_selection",
+    "delivery_or_travel_slot_selection": "appointment_or_slot_selection",
+    "travel_slot_selection": "appointment_or_slot_selection",
+    "accessible_room_route_or_seating": "room_route_or_seating_selection",
+    "accessibility_selection": "room_route_or_seating_selection",
+    "room_or_route_selection": "room_route_or_seating_selection",
+    "seating_selection": "room_route_or_seating_selection",
+    "transport_selection": "room_route_or_seating_selection",
+    "gift_selection": "gift_or_visit_selection",
+    "visit_selection": "gift_or_visit_selection",
+    "communication_selection": "gift_or_visit_selection",
+}
+
+# Keywords that route an unregistered family name to a registered one before
+# the generic surfaces are used. The mapper is a separate module under its own
+# version, so a name it invents should still land in a compatible family.
+TASK_FAMILY_KEYWORDS: tuple[tuple[str, str], ...] = (
+    ("dessert", "menu_or_catering_selection"),
+    ("menu", "menu_or_catering_selection"),
+    ("cater", "menu_or_catering_selection"),
+    ("restaurant", "menu_or_catering_selection"),
+    ("grocer", "grocery_selection"),
+    ("food", "grocery_selection"),
+    ("book", "reading_or_study_material_selection"),
+    ("read", "reading_or_study_material_selection"),
+    ("archive", "reading_or_study_material_selection"),
+    ("study", "reading_or_study_material_selection"),
+    ("talk", "reading_or_study_material_selection"),
+    ("vintage", "vintage_or_secondhand_finds"),
+    ("secondhand", "vintage_or_secondhand_finds"),
+    ("antique", "vintage_or_secondhand_finds"),
+    ("accessor", "compatible_accessory_or_part_selection"),
+    ("part", "compatible_accessory_or_part_selection"),
+    ("game", "compatible_accessory_or_part_selection"),
+    ("repair", "compatible_accessory_or_part_selection"),
+    ("course", "event_or_workshop_selection"),
+    ("workshop", "event_or_workshop_selection"),
+    ("hobby", "event_or_workshop_selection"),
+    ("club", "event_or_workshop_selection"),
+    ("event", "event_or_workshop_selection"),
+    ("suppl", "supplies_selection"),
+    ("material", "supplies_selection"),
+    ("appointment", "appointment_or_slot_selection"),
+    ("slot", "appointment_or_slot_selection"),
+    ("schedul", "appointment_or_slot_selection"),
+    ("deliver", "appointment_or_slot_selection"),
+    ("travel", "appointment_or_slot_selection"),
+    ("transport", "room_route_or_seating_selection"),
+    ("room", "room_route_or_seating_selection"),
+    ("route", "room_route_or_seating_selection"),
+    ("seat", "room_route_or_seating_selection"),
+    ("venue", "room_route_or_seating_selection"),
+    ("gift", "gift_or_visit_selection"),
+    ("visit", "gift_or_visit_selection"),
+    ("communicat", "gift_or_visit_selection"),
+)
+
+# Used only when a family name matches nothing above. The scenario is still
+# built, and the construction record says the family was unregistered.
+FALLBACK_TASK_SURFACES = (
+    "picking one entry from a shortlist somebody has drawn up",
+    "choosing one option from a list somebody has been sent",
+    "picking one item from a listing somebody is reading through",
 )
 
 MECHANISMS = (
@@ -235,6 +431,120 @@ Rules:
   text you return. Only memory_text may state it.
 - Write every body in the given document register.
 """
+
+CONSTRUCTION_INSTRUCTIONS_V5 = """\
+You build the semantic core of one scenario for a personal-memory benchmark.
+
+The decision rule is already settled before you are called. You are given a
+personal fact, the person's own words, the selection predicate that follows
+from that fact, the task family the predicate belongs in, one concrete task
+surface inside that family, the visible property of the target that satisfies
+the predicate, the ordinary reason a different option wins for a reader who
+does not know the fact, and the neutral property the control puts in the
+target's place. Write the options that realise exactly that structure. Do not
+invent a different relationship, a different affordance, or a different reason
+the winner wins.
+
+Return these fields.
+
+- task: one or two sentences describing the ordinary task on the given task
+  surface. It asks for an ordinary choice and nothing more. It must not mention
+  the personal fact, the person's history, remembering, or personalisation, and
+  it must not name any option. It must not turn the ordinary evidence mechanism
+  into an instruction, a requirement, or a list of criteria: do not write that
+  the choice must, should, or has to follow cost, timing, ratings, or anything
+  else, and do not write "based on", "prioritise", or "go by". The mechanism
+  belongs in the winner's own entry as visible evidence. Somebody who knows the
+  personal fact and picks the target has to be exercising judgement, never
+  disobeying the task.
+- item_noun: the singular noun for what the options are, for example dessert,
+  book, cartridge, slot.
+- winner_label, target_label, and one label per decoy: short distinct names of
+  two to four words. No shared numbering scheme, no shared prefix, and no label
+  may be a substring of another. Do not use the words option, choice, pick,
+  recommended, or best inside a label.
+- winner_body: two or three sentences that make the winner the sensible pick
+  through the given ordinary mechanism, written as visible evidence about the
+  winner. The evidence must be good but overridable: the kind of advantage one
+  personal fact can outweigh. Do not write that the winner is the best, the
+  strongest, the safest, the only workable one, unanimous, unbeatable, or far
+  ahead of everything else, and do not stack several decisive advantages on it.
+  Never reference the personal fact.
+- target_body: two or three sentences that read as an ordinary entry with no
+  advantage of any kind. They must not claim the target is strong on the
+  ordinary mechanism, and they must not carry the target affordance, any word
+  of the affordance, or any distinctive word from the person's own text. The
+  affordance lives in cue_clause alone. target_label is under the same rule: it
+  must not name the affordance and must not echo the person's words.
+- cue_clause: exactly one sentence, written to sit at the end of target_body. It
+  states the given target affordance as a concrete, checkable property of the
+  target. A reader who knows the personal fact sees at once why this makes the
+  target the right pick. A reader who does not know the fact reads it as an
+  ordinary detail. Describe a property of the target. Never describe the
+  person, and never state the personal fact.
+- neutral_clause: exactly one sentence of similar length and register that
+  replaces cue_clause in the control arm. It states the given control property
+  as an ordinary detail of the same option. It must not be the opposite of the
+  affordance, must not deny, withdraw, or rule out the affordance, and must not
+  mention the affordance at all. Do not build it from "no", "not", "without",
+  or "lacks": the control reads as a different ordinary detail, not as a
+  removal. It must leave the target neither more nor less attractive.
+- decoys: near misses that compete on ordinary grounds. Each one nearly
+  satisfies the ordinary mechanism and falls short in a way the text states
+  plainly. No decoy may name, restate, negate, or comment on the axis the
+  personal fact runs along: not the affordance, not its absence, not a
+  substitute for it, and not a note that the decoy lacks it, does not support
+  it, or cannot take it. Annotating that axis tells a reader with no personal
+  information which axis matters.
+- memory_text: one short sentence stating the personal fact plainly, starting
+  with "The user". Keep it faithful to the person's own words and add nothing.
+
+Then state the causal chain behind the scenario. These five fields are read by
+the builder alone. They are never shown to any system under test, so write them
+plainly and do not soften them.
+
+- why_ordinary_wins: why a reader with no personal information picks the winner
+  on the given ordinary mechanism.
+- why_cue_neutral_without_memory: why that same reader treats cue_clause as an
+  ordinary detail worth no extra weight.
+- why_memory_plus_cue_prefers_b: why the personal fact together with the
+  affordance makes the target the better pick for this person, and why the
+  winner becomes unsuitable or clearly worse for them.
+- assumptions_required: every MATERIAL assumption your justification needs
+  that the person never stated: a possession, permission, relationship,
+  location, medical conclusion, future plan, or unstated preference that is
+  not already part of the personal fact. One short phrase each. Do not list
+  restatements of the fact itself, background facts true of nearly anyone, or
+  ordinary implications of the stated fact. The predicate you were given
+  follows from the fact alone, so a scenario that stays inside it needs
+  nothing here. A non-empty list rejects the scenario.
+- why_control_removes_advantage: why swapping cue_clause for neutral_clause
+  leaves the target with no remaining advantage for this person anywhere in its
+  entry, including sentences you wrote outside the cue.
+
+Wording relationship setting:
+- share_wording: cue_clause may reuse some of the same content words the person
+  used.
+- paraphrase_only: cue_clause must not reuse the person's distinctive content
+  words. Carry the affordance with different vocabulary.
+
+Rules:
+- No ratings, scores, star counts, or decimal numbers anywhere unless numeric
+  ratings are allowed.
+- Never write that an option is the strongest, the consensus, the default, the
+  obvious one, or narrower than another, and never write that nobody challenged
+  it.
+- Do not mention ranking, ordering, or how many options exist.
+- Do not use the words memory, preference, persona, or profile.
+- The personal fact must not be stated or paraphrased anywhere in the document
+  text you return. Only memory_text may state it.
+- Write every body in the given document register.
+"""
+
+CONSTRUCTION_INSTRUCTIONS_BY_VERSION = {
+    CONSTRUCTION_PROMPT_VERSION: CONSTRUCTION_INSTRUCTIONS,
+    CONSTRUCTION_PROMPT_VERSION_V5: CONSTRUCTION_INSTRUCTIONS_V5,
+}
 
 NEUTRAL_REPAIR_PROMPT_VERSION = "parmbench_neutral_repair_v1"
 NEUTRAL_REPAIR_INSTRUCTIONS = """\
@@ -425,6 +735,273 @@ def sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+# --------------------------------------------------------------------------
+# selection predicate
+# --------------------------------------------------------------------------
+
+
+def predicate_of(row: Mapping[str, Any]) -> dict[str, Any] | None:
+    """The mapper's predicate object carried on a supply row, if it is usable.
+
+    The mapper lives in `parm_bench.selection_predicate` under its own version.
+    Nothing is imported from it here: the builder consumes the documented dict
+    and treats an absent, malformed, or incomplete object as an unmapped row.
+    """
+
+    predicate = row.get("predicate")
+    if not isinstance(predicate, Mapping):
+        return None
+    for field in ("selection_predicate", "task_family", "target_affordance"):
+        if not str(predicate.get(field, "")).strip():
+            return None
+    return dict(predicate)
+
+
+def predicate_skip_reason(row: Mapping[str, Any]) -> str | None:
+    """Why a supply row cannot be built under the selection-predicate stage."""
+
+    predicate = predicate_of(row)
+    if predicate is None:
+        return NO_PREDICATE_REASON
+    if any(
+        str(item).strip() for item in predicate.get("material_assumptions", ())
+    ):
+        return PREDICATE_ASSUMPTIONS_REASON
+    return None
+
+
+def predicate_sensitive_terms(predicate: Mapping[str, Any] | None) -> list[str]:
+    if not predicate:
+        return []
+    return [
+        str(term).strip()
+        for term in predicate.get("sensitive_terms", ())
+        if str(term).strip()
+    ]
+
+
+def _normalise_family_name(family: str) -> str:
+    value = re.sub(r"[\s\-]+", "_", str(family or "").strip().casefold())
+    return re.sub(r"_+", "_", value).strip("_")
+
+
+def resolve_task_family(family: str) -> tuple[str, bool]:
+    """Map a mapper-supplied family name onto the surface registry.
+
+    Returns the registered family and whether the name was recognised. An
+    unrecognised family still builds, on generic surfaces, and the construction
+    record keeps the original name so the registry can be extended from real
+    mapper output rather than from guesses.
+    """
+
+    value = _normalise_family_name(family)
+    if value in TASK_FAMILY_SURFACES:
+        return value, True
+    alias = TASK_FAMILY_ALIASES.get(value)
+    if alias:
+        return alias, True
+    for keyword, resolved in TASK_FAMILY_KEYWORDS:
+        if keyword in value:
+            return resolved, True
+    return value, False
+
+
+def task_surfaces_for(family: str) -> tuple[str, ...]:
+    """The concrete task framings a family may be realised on."""
+
+    resolved, known = resolve_task_family(family)
+    if not known:
+        return FALLBACK_TASK_SURFACES
+    return TASK_FAMILY_SURFACES[resolved]
+
+
+# --------------------------------------------------------------------------
+# personalisation-axis guards
+# --------------------------------------------------------------------------
+
+
+def _stem(word: str) -> str:
+    """Crude suffix stripping, matching `decision_validity._lemma` in spirit.
+
+    The guards below compare two short phrases somebody else wrote, so
+    "fresh"/"freshly" and "support"/"supports" have to collide.
+    """
+
+    if len(word) > 4 and word.endswith("ies"):
+        return word[:-3] + "y"
+    for suffix in ("ing", "ly"):
+        if len(word) > 5 and word.endswith(suffix):
+            return word[: -len(suffix)]
+    for suffix in ("ed", "es"):
+        if len(word) > 4 and word.endswith(suffix):
+            return word[: -len(suffix)]
+    if len(word) > 3 and word.endswith("s") and not word.endswith("ss"):
+        return word[:-1]
+    return word
+
+
+def stems(text: str) -> set[str]:
+    return {_stem(word) for word in content_words(text)}
+
+
+def axis_guard_words(
+    core: Mapping[str, Any],
+    predicate: Mapping[str, Any],
+    prompt: str,
+) -> frozenset[str]:
+    """Distinctive words that would annotate the personalisation axis.
+
+    The axis is what the predicate and the target affordance are about. Words
+    the ordinary task, the ordinary mechanism, or the winner's own entry
+    already use are not distinctive: a decoy repeating them tells a reader
+    nothing about which axis the personal fact runs along.
+    """
+
+    axis = stems(
+        f"{predicate.get('selection_predicate', '')} "
+        f"{predicate.get('target_affordance', '')}"
+    )
+    ordinary = stems(
+        " ".join(
+            [
+                str(prompt),
+                str(core.get("item_noun", "")),
+                str(core.get("winner_label", "")),
+                str(core.get("winner_body", "")),
+                str(predicate.get("ordinary_mechanism", "")),
+            ]
+        )
+    )
+    return frozenset(axis - ordinary)
+
+
+def decoy_annotates_axis(
+    core: Mapping[str, Any],
+    predicate: Mapping[str, Any],
+    prompt: str,
+) -> tuple[str, ...]:
+    """Axis words a decoy repeats, names, or denies.
+
+    Gap 2 of the v3 relevance audit: a decoy that says it has no press access
+    for reviewers puts the personalisation axis in front of a reader who was
+    given no personal information at all. Decoys compete on ordinary grounds,
+    so any distinctive axis word inside one is a rejection.
+    """
+
+    guard = axis_guard_words(core, predicate, prompt)
+    if not guard:
+        return ()
+    hits: set[str] = set()
+    for decoy in core.get("decoys", ()):
+        text = f"{decoy.get('label', '')} {decoy.get('body', '')}"
+        hits |= stems(text) & guard
+    return tuple(sorted(hits))
+
+
+_NEGATION_PATTERN = re.compile(
+    r"\b(no|not|never|without|nor|lack|lacks|lacking|cannot|unable|"
+    r"neither|excludes?|excluding|unavailable)\b|n't",
+    re.IGNORECASE,
+)
+
+
+def control_negates_cue(core: Mapping[str, Any]) -> tuple[str, ...]:
+    """Content words a negated control replacement shares with the cue.
+
+    A control that denies the affordance is not a neutral replacement: it
+    tells the reader the property existed and was taken away, which is a
+    conspicuous edit rather than an ordinary alternative detail.
+    """
+
+    neutral = str(core.get("neutral_clause", "")).strip()
+    cue = str(core.get("cue_clause", "")).strip()
+    if not neutral or not cue:
+        return ()
+    if not _NEGATION_PATTERN.search(neutral):
+        return ()
+    return tuple(sorted(stems(neutral) & stems(cue)))
+
+
+# Phrases that turn a described mechanism into an order. "based on" and
+# "prioritise" are the two the v3 pilot actually produced.
+INSTRUCTION_MARKERS = (
+    "must",
+    "should",
+    "has to",
+    "have to",
+    "needs to",
+    "require",
+    "required",
+    "requirement",
+    "requirements",
+    "prioritise",
+    "prioritize",
+    "prioritises",
+    "prioritizes",
+    "prioritising",
+    "prioritizing",
+    "based on",
+    "based primarily on",
+    "make sure",
+    "only consider",
+    "rank by",
+    "sort by",
+    "go by",
+    "judge on",
+    "weigh",
+    "weighing",
+)
+_INSTRUCTION_PATTERN = re.compile(
+    r"\b(?:" + "|".join(re.escape(m) for m in INSTRUCTION_MARKERS) + r")\b",
+    re.IGNORECASE,
+)
+INSTRUCTION_WINDOW = 80
+
+
+def prompt_states_mechanism_as_instruction(
+    prompt: str, ordinary_mechanism: str
+) -> tuple[str, ...]:
+    """Mechanism words the prompt states as a rule rather than as context.
+
+    Gap 3 of the v3 relevance audit: a prompt that says to choose "based
+    primarily on price and availability" makes the personalised answer an
+    instruction violation instead of a judgement.
+    """
+
+    mechanism = stems(ordinary_mechanism)
+    if not mechanism:
+        return ()
+    folded = str(prompt).casefold()
+    hits: set[str] = set()
+    for match in _INSTRUCTION_PATTERN.finditer(folded):
+        window = folded[
+            max(0, match.start() - INSTRUCTION_WINDOW) : match.end()
+            + INSTRUCTION_WINDOW
+        ]
+        hits |= stems(window) & mechanism
+    return tuple(sorted(hits))
+
+
+def predicate_rejection(
+    core: Mapping[str, Any],
+    prompt: str,
+    predicate: Mapping[str, Any] | None,
+) -> str | None:
+    """Deterministic v5 rejections, run only on a mapped scenario."""
+
+    if not predicate:
+        return None
+    if decoy_annotates_axis(core, predicate, prompt):
+        return "decoy_annotates_personalisation_axis"
+    if control_negates_cue(core):
+        return "control_negates_the_cue"
+    if prompt_states_mechanism_as_instruction(
+        prompt, str(predicate.get("ordinary_mechanism", ""))
+    ):
+        return "prompt_states_ordinary_mechanism_as_instruction"
+    return None
+
+
 CEILING_MEMORY_HEADING = "Known personal memory:"
 
 
@@ -486,7 +1063,36 @@ unrelated interest of theirs.
 }
 
 
+def render_construction_request_v5(spec: Mapping[str, Any]) -> str:
+    """The construction input for a scenario built from a selection predicate."""
+
+    predicate = spec["predicate"]
+    request = (
+        f"Personal fact: {spec['claim']}\n"
+        f"The person's own words: {spec['evidence_span']}\n"
+        f"Selection predicate: {predicate['selection_predicate']}\n"
+        f"Task family: {predicate['task_family']}\n"
+        f"Task surface: {spec['domain']}\n"
+        f"Target affordance: {predicate['target_affordance']}\n"
+        f"Ordinary evidence mechanism: {predicate['ordinary_mechanism']}\n"
+        f"Control affordance: {predicate['control_affordance']}\n"
+        f"Relation type: {predicate['relation_type']}\n"
+        f"Numeric ratings allowed: {'yes' if spec['ratings_allowed'] else 'no'}\n"
+        f"Wording relationship: {spec['overlap_mode']}\n"
+        f"Number of near-miss decoys: {spec['decoy_count']}\n"
+        f"Document register: {spec['register']}\n"
+    )
+    if spec.get("repair_attempt"):
+        request += f"Regeneration attempt: {spec['repair_attempt']}\n"
+        request += REPAIR_PREAMBLE
+        for variant in spec.get("repair_failed_variants", ()):
+            request += REPAIR_NOTES[variant]
+    return request
+
+
 def render_construction_request(spec: Mapping[str, Any]) -> str:
+    if spec.get("predicate"):
+        return render_construction_request_v5(spec)
     request = (
         f"Personal fact: {spec['claim']}\n"
         f"The person's own words: {spec['evidence_span']}\n"
@@ -512,10 +1118,17 @@ def render_construction_request(spec: Mapping[str, Any]) -> str:
 class CachedConstructor:
     """Cached `gpt-5-mini` scenario-core generator."""
 
-    def __init__(self, cache_dir: Path, *, offline: bool = False) -> None:
+    def __init__(
+        self,
+        cache_dir: Path,
+        *,
+        offline: bool = False,
+        construction_version: str = CONSTRUCTION_PROMPT_VERSION,
+    ) -> None:
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.offline = offline
+        self.construction_version = construction_version
         self.live_calls = 0
         self._lock = threading.Lock()
         self._client: Any | None = None
@@ -551,8 +1164,11 @@ class CachedConstructor:
 
     def build(self, spec: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
         input_text = render_construction_request(spec)
+        version = str(
+            spec.get("construction_version") or self.construction_version
+        )
         request = {
-            "prompt_version": CONSTRUCTION_PROMPT_VERSION,
+            "prompt_version": version,
             "model": CONSTRUCTION_MODEL,
             "input": input_text,
         }
@@ -565,7 +1181,7 @@ class CachedConstructor:
             raise RuntimeError(f"missing construction cache entry: {request_hash}")
         response = self._create(
             model=CONSTRUCTION_MODEL,
-            instructions=CONSTRUCTION_INSTRUCTIONS,
+            instructions=CONSTRUCTION_INSTRUCTIONS_BY_VERSION[version],
             input=input_text,
             text={
                 "format": {
@@ -991,6 +1607,12 @@ def scenario_rejection(
         return "ablation_leaves_cue"
     if ablated.casefold().count(str(core["winner_label"]).casefold()) != 1:
         return "ablation_breaks_winner_uniqueness"
+    # The axis, antonym-control, and mechanism-as-instruction guards only run
+    # on a scenario built from a selection predicate. A v4 replay has no
+    # predicate object and keeps its original rejection set.
+    axis_reason = predicate_rejection(core, prompt, predicate_of(claim_row))
+    if axis_reason is not None:
+        return axis_reason
     return causal_chain_leak(
         core, text, ceiling_prompt(memory_text, prompt), memory_text
     )
@@ -1118,12 +1740,23 @@ def load_fairness_repairs(
     return repairs, drops
 
 
+def base_case_id_for(row: Mapping[str, Any]) -> str:
+    return (
+        f"parmbench-v1-p{row['persona_id']}-"
+        f"{str(row['source_row_id']).split(':')[-1]}"
+    )
+
+
 def build_specs(
     claims: Sequence[Mapping[str, Any]],
     repairs_path: Path | None = FAIRNESS_REPAIRS_PATH,
+    *,
+    construction_version: str = CONSTRUCTION_PROMPT_VERSION,
 ) -> list[dict[str, Any]]:
     """Assign every construction axis from balanced, seeded pools."""
 
+    if construction_version == CONSTRUCTION_PROMPT_VERSION_V5:
+        return _build_specs_v5(claims, repairs_path)
     repairs, _ = load_fairness_repairs(repairs_path)
     axis_rng = random.Random(AXIS_SEED)
     count = len(claims)
@@ -1172,6 +1805,120 @@ def build_specs(
                 "answer_contract": contracts[index],
                 "ratings_allowed": ratings_pool[index] == "numeric",
                 "abstention_pressure": abstention_pool[index] == "pressure",
+                "decoy_count": rng.randrange(3, 6),
+                "observation_kind": rng.choice(envelope.kinds),
+                "cue_fraction": round(rng.uniform(0.05, 0.94), 4),
+                "winner_fraction": round(rng.uniform(0.04, 0.93), 4),
+                "token_target": rng.randrange(6_800, 13_000),
+                "distractor_count": rng.randrange(3, 6),
+                "seed": seed,
+            }
+        )
+    return specs
+
+
+def _build_specs_v5(
+    claims: Sequence[Mapping[str, Any]],
+    repairs_path: Path | None,
+) -> list[dict[str, Any]]:
+    """Assign axes for the selection-predicate stage.
+
+    The task surface is drawn from the predicate's own family, so compatibility
+    decides the domain and variety is applied inside it. Every other axis is
+    balanced exactly as before, across the mapped rows alone: an unmapped row
+    is not built, so spending a balanced slot on it would skew the batch.
+    """
+
+    repairs, _ = load_fairness_repairs(repairs_path)
+    axis_rng = random.Random(AXIS_SEED)
+
+    predicates: list[dict[str, Any] | None] = []
+    skips: list[str | None] = []
+    for row in claims:
+        reason = predicate_skip_reason(row)
+        skips.append(reason)
+        predicates.append(None if reason else predicate_of(row))
+
+    mapped = [index for index, reason in enumerate(skips) if reason is None]
+    count = len(mapped)
+    envelopes = balanced_assignment(ENVELOPE_NAMES, count, axis_rng)
+    overlaps = balanced_assignment(OVERLAP_MODES, count, axis_rng)
+    contracts = balanced_assignment(ANSWER_CONTRACTS, count, axis_rng)
+    ratings_pool = balanced_assignment(
+        ("none",) * 5 + ("numeric",), count, axis_rng
+    )
+    abstention_pool = balanced_assignment(
+        ("plain",) * 3 + ("pressure",), count, axis_rng
+    )
+
+    # Surfaces are balanced inside each family, in a fixed family order, so the
+    # assignment stays deterministic however the supply rows are ordered.
+    by_family: dict[str, list[int]] = defaultdict(list)
+    for slot, index in enumerate(mapped):
+        predicate = predicates[index] or {}
+        by_family[str(predicate.get("task_family", ""))].append(slot)
+    surfaces: list[str] = [""] * count
+    for family in sorted(by_family):
+        slots = by_family[family]
+        assigned = balanced_assignment(
+            task_surfaces_for(family), len(slots), axis_rng
+        )
+        for slot, surface in zip(slots, assigned):
+            surfaces[slot] = surface
+
+    specs: list[dict[str, Any]] = []
+    slot_of = {index: slot for slot, index in enumerate(mapped)}
+    for index, row in enumerate(claims):
+        base_case_id = base_case_id_for(row)
+        if skips[index] is not None:
+            specs.append(
+                {
+                    "base_case_id": base_case_id,
+                    "claim_row": row,
+                    "claim": row["draft"]["claim"],
+                    "construction_version": CONSTRUCTION_PROMPT_VERSION_V5,
+                    "skip_reason": skips[index],
+                }
+            )
+            continue
+        slot = slot_of[index]
+        predicate = predicates[index] or {}
+        repair = repairs.get(base_case_id)
+        repair_attempt = repair["attempt"] if repair else 0
+        repair_failed_variants = repair["failed_variants"] if repair else ()
+        seed_key = (
+            f"{base_case_id}#repair{repair_attempt}"
+            if repair_attempt
+            else base_case_id
+        )
+        seed = int(sha256_text(seed_key)[:16], 16)
+        rng = random.Random(seed)
+        envelope = next(e for e in ENVELOPES if e.name == envelopes[slot])
+        resolved_family, family_known = resolve_task_family(
+            str(predicate.get("task_family", ""))
+        )
+        specs.append(
+            {
+                "base_case_id": base_case_id,
+                "construction_version": CONSTRUCTION_PROMPT_VERSION_V5,
+                "skip_reason": None,
+                "repair_attempt": repair_attempt,
+                "repair_failed_variants": repair_failed_variants,
+                "claim_row": row,
+                "claim": row["draft"]["claim"],
+                "evidence_span": row["draft"]["evidence_span"],
+                "predicate": predicate,
+                "task_family": str(predicate.get("task_family", "")),
+                "resolved_task_family": resolved_family,
+                "task_family_registered": family_known,
+                "domain": surfaces[slot],
+                "envelope": envelope.name,
+                "register": envelope.register,
+                "mechanism": str(predicate.get("ordinary_mechanism", "")),
+                "overlap_mode": overlaps[slot],
+                "answer_contract": contracts[slot],
+                "ratings_allowed": ratings_pool[slot] == "numeric",
+                "abstention_pressure": abstention_pool[slot] == "pressure",
                 "decoy_count": rng.randrange(3, 6),
                 "observation_kind": rng.choice(envelope.kinds),
                 "cue_fraction": round(rng.uniform(0.05, 0.94), 4),
@@ -1282,6 +2029,104 @@ def gate_scenario(
     return audit_scenario(scenario, judge=judge)
 
 
+def case_sensitive_terms(row: Mapping[str, Any]) -> list[str]:
+    """Private phrases the answer need not expose, taken from the supply row.
+
+    The builder used to write an empty list into every case, so acceptance
+    item 12 had no coverage anywhere in the batch even though the upstream
+    gates label sensitive facts. The mapper's predicate carries the terms it
+    derived from the fact; the memory-quality gate's provenance is the
+    fallback for a row built before the mapper existed.
+    """
+
+    terms = predicate_sensitive_terms(predicate_of(row))
+    if terms:
+        return list(dict.fromkeys(terms))
+    for key in ("memory_quality_provenance", "memory_quality"):
+        source = row.get(key)
+        if isinstance(source, Mapping):
+            terms = [
+                str(term).strip()
+                for term in source.get("sensitive_terms", ())
+                if str(term).strip()
+            ]
+            if terms:
+                return list(dict.fromkeys(terms))
+    return []
+
+
+def build_case_rows(
+    *,
+    spec: Mapping[str, Any],
+    row: Mapping[str, Any],
+    core: Mapping[str, Any],
+    prompt: str,
+    corpus_id: str,
+    content_path: str,
+    gold_source: Mapping[str, Any],
+    distractors: Sequence[Mapping[str, Any]],
+    provenance: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    """The positive, cue-ablated, and memory-included cases for one scenario."""
+
+    cue = str(core["cue_clause"]).strip()
+    neutral = str(core["neutral_clause"]).strip()
+    memory_text = str(core["memory_text"]).strip()
+    winner = str(core["winner_label"])
+    target = str(core["target_label"])
+    sensitive_terms = case_sensitive_terms(row)
+    rows: list[dict[str, Any]] = []
+    for variant in ("positive", "cue-ablated", "memory-included"):
+        cue_present = variant != "cue-ablated"
+        case_prompt = (
+            ceiling_prompt(memory_text, prompt)
+            if variant == "memory-included"
+            else prompt
+        )
+        rows.append(
+            {
+                "case_id": f"{spec['base_case_id']}-{variant}",
+                "base_case_id": spec["base_case_id"],
+                "corpus_id": corpus_id,
+                "variant": variant,
+                "prompt": case_prompt,
+                "observation": {
+                    "kind": spec["observation_kind"],
+                    "content_path": content_path,
+                    "replacements": (
+                        [] if cue_present else [{"old": cue, "new": neutral}]
+                    ),
+                },
+                "cue": {
+                    "present": cue_present,
+                    "type": "affordance_clause",
+                    "text": cue,
+                },
+                "memory": {
+                    "corpus_id": corpus_id,
+                    "text": memory_text,
+                    "gold_source_ids": [row["gold_source_id"]],
+                    "sensitive_terms": list(sensitive_terms),
+                    "sources": [json.loads(json.dumps(dict(gold_source)))],
+                },
+                "decisions": {
+                    "answer_type": "natural_language_choice",
+                    "output_only": {"choice": winner},
+                    "memory_conditioned": {
+                        "choice": winner if variant == "cue-ablated" else target
+                    },
+                },
+                "distractors": {
+                    "sources": json.loads(
+                        json.dumps([dict(item) for item in distractors])
+                    )
+                },
+                "provenance": dict(provenance),
+            }
+        )
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=0)
@@ -1302,6 +2147,16 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--construction-version",
+        choices=list(CONSTRUCTION_PROMPT_VERSIONS),
+        default=DEFAULT_CONSTRUCTION_VERSION,
+        help=(
+            "construction prompt version; v5 builds from the supply row's "
+            "selection predicate and skips unmapped rows, v4 replays the "
+            "earlier unconstrained-domain caches"
+        ),
+    )
+    parser.add_argument(
         "--supply",
         default=str(SUPPLY_PATH),
         help=(
@@ -1314,6 +2169,7 @@ def main() -> int:
 
     load_env(ROOT / ".env")
     encoding = tiktoken.get_encoding(TOKENIZER)
+    construction_version = str(args.construction_version)
     output_root = Path(args.output_dir)
     context_root = output_root / "contexts"
 
@@ -1329,9 +2185,45 @@ def main() -> int:
         if args.fairness_repairs.strip().lower() == "none"
         else Path(args.fairness_repairs)
     )
-    specs = build_specs(claims, repairs_path)
+    specs = build_specs(
+        claims, repairs_path, construction_version=args.construction_version
+    )
+    # Assembly deletes the output directory's contexts before it writes, so a
+    # supply that cannot produce a single scenario has to stop here rather
+    # than empty a dataset directory on the way to a zero-scenario build.
+    if specs and not any(not spec.get("skip_reason") for spec in specs):
+        print(
+            json.dumps(
+                {
+                    "error": "no buildable rows",
+                    "construction_version": construction_version,
+                    "supply": str(args.supply),
+                    "rows": len(specs),
+                    "reasons": dict(
+                        sorted(
+                            Counter(
+                                str(spec["skip_reason"]) for spec in specs
+                            ).items()
+                        )
+                    ),
+                    "hint": (
+                        "map the supply with the selection-predicate stage, "
+                        "or pass --construction-version "
+                        f"{CONSTRUCTION_PROMPT_VERSION} to replay an "
+                        "unmapped batch"
+                    ),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 1
     _, fairness_drops = load_fairness_repairs(repairs_path)
-    constructor = CachedConstructor(CONSTRUCTION_CACHE, offline=args.offline)
+    constructor = CachedConstructor(
+        CONSTRUCTION_CACHE,
+        offline=args.offline,
+        construction_version=args.construction_version,
+    )
     validity_judge = make_decision_validity_judge(args)
 
     def warm(spec: Mapping[str, Any]) -> None:
@@ -1348,6 +2240,7 @@ def main() -> int:
                     spec
                     for spec in specs
                     if spec["base_case_id"] not in fairness_drops
+                    and not spec.get("skip_reason")
                 ],
             )
         )
@@ -1369,6 +2262,14 @@ def main() -> int:
                 {
                     "base_case_id": spec["base_case_id"],
                     "reason": fairness_drops[spec["base_case_id"]],
+                }
+            )
+            continue
+        if spec.get("skip_reason"):
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": str(spec["skip_reason"]),
                 }
             )
             continue
@@ -1502,6 +2403,7 @@ def main() -> int:
             core=core,
             prompt=prompt,
             capability=capability,
+            sensitive_terms=case_sensitive_terms(row),
         )
         if validity is not None and not validity.accept:
             dropped.append(
@@ -1548,13 +2450,14 @@ def main() -> int:
         memory_text = str(core["memory_text"]).strip()
         winner = str(core["winner_label"])
         target = str(core["target_label"])
+        predicate = spec.get("predicate") or {}
         provenance = {
             "approved": True,
             "abstention_pressure": spec["abstention_pressure"],
             "builder_version": BUILDER_VERSION,
             "capability": capability,
             "construction_model": CONSTRUCTION_MODEL,
-            "construction_prompt_version": CONSTRUCTION_PROMPT_VERSION,
+            "construction_prompt_version": construction_version,
             "construction_request_hash": request_hash,
             "domain": spec["domain"],
             "envelope_style": spec["envelope"],
@@ -1584,53 +2487,35 @@ def main() -> int:
                 "claim_draft_hash": row["draft_hash"],
             },
         }
-
-        for variant in ("positive", "cue-ablated", "memory-included"):
-            cue_present = variant != "cue-ablated"
-            case_prompt = (
-                ceiling_prompt(memory_text, prompt)
-                if variant == "memory-included"
-                else prompt
-            )
-            cases.append(
+        if predicate:
+            provenance.update(
                 {
-                    "case_id": f"{spec['base_case_id']}-{variant}",
-                    "base_case_id": spec["base_case_id"],
-                    "corpus_id": corpus_id,
-                    "variant": variant,
-                    "prompt": case_prompt,
-                    "observation": {
-                        "kind": spec["observation_kind"],
-                        "content_path": content_path,
-                        "replacements": (
-                            []
-                            if cue_present
-                            else [{"old": cue, "new": neutral}]
-                        ),
-                    },
-                    "cue": {
-                        "present": cue_present,
-                        "type": "affordance_clause",
-                        "text": cue,
-                    },
-                    "memory": {
-                        "corpus_id": corpus_id,
-                        "text": memory_text,
-                        "gold_source_ids": [row["gold_source_id"]],
-                        "sensitive_terms": [],
-                        "sources": [json.loads(json.dumps(gold_source))],
-                    },
-                    "decisions": {
-                        "answer_type": "natural_language_choice",
-                        "output_only": {"choice": winner},
-                        "memory_conditioned": {
-                            "choice": winner if variant == "cue-ablated" else target
-                        },
-                    },
-                    "distractors": {"sources": json.loads(json.dumps(distractors))},
-                    "provenance": dict(provenance),
+                    "selection_predicate": predicate.get(
+                        "selection_predicate", ""
+                    ),
+                    "task_family": spec.get("task_family", ""),
+                    "resolved_task_family": spec.get("resolved_task_family", ""),
+                    "task_family_registered": spec.get(
+                        "task_family_registered", False
+                    ),
+                    "relation_type": predicate.get("relation_type", ""),
+                    "sensitive": bool(predicate.get("sensitive", False)),
                 }
             )
+
+        cases.extend(
+            build_case_rows(
+                spec=spec,
+                row=row,
+                core=core,
+                prompt=prompt,
+                corpus_id=corpus_id,
+                content_path=content_path,
+                gold_source=gold_source,
+                distractors=distractors,
+                provenance=provenance,
+            )
+        )
 
         construction_records.append(
             {
@@ -1646,8 +2531,17 @@ def main() -> int:
                 "abstention_pressure": spec["abstention_pressure"],
                 "neutral_clause_repaired": neutral_repaired,
                 "fairness_repair_attempt": spec["repair_attempt"],
+                "selection_predicate": (
+                    dict(predicate) if predicate else None
+                ),
+                "sensitive_terms": case_sensitive_terms(row),
                 "axes": {
                     "domain": spec["domain"],
+                    "task_family": spec.get("task_family", ""),
+                    "resolved_task_family": spec.get("resolved_task_family", ""),
+                    "task_family_registered": spec.get(
+                        "task_family_registered", False
+                    ),
                     "envelope_style": spec["envelope"],
                     "observation_kind": spec["observation_kind"],
                     "ordinary_evidence_mechanism": spec["mechanism"],
@@ -1667,7 +2561,7 @@ def main() -> int:
                 "model_calls": {
                     "claim_draft_hash": row["draft_hash"],
                     "construction_request_hash": request_hash,
-                    "construction_prompt_version": CONSTRUCTION_PROMPT_VERSION,
+                    "construction_prompt_version": construction_version,
                     "construction_model": CONSTRUCTION_MODEL,
                 },
                 "choices": {"output_only": winner, "memory_conditioned": target},
@@ -1714,8 +2608,27 @@ def main() -> int:
             sorted(Counter(item["reason"].split(":")[0] for item in dropped).items())
         ),
         "live_construction_calls": constructor.live_calls,
+        "construction_prompt_version": construction_version,
         "capability": dict(
             sorted(Counter(r["capability"] for r in construction_records).items())
+        ),
+        "task_family": dict(
+            sorted(
+                Counter(
+                    record["axes"].get("task_family", "")
+                    for record in construction_records
+                ).items()
+            )
+        ),
+        "relation_type": dict(
+            sorted(
+                Counter(
+                    (record.get("selection_predicate") or {}).get(
+                        "relation_type", ""
+                    )
+                    for record in construction_records
+                ).items()
+            )
         ),
         "decision_validity_gate": args.decision_validity_gate,
         "decision_validity_rejections": dict(

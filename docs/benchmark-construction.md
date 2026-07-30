@@ -164,6 +164,25 @@ is applied to envelopes, names, ordering, and surface form after the causal
 structure is valid, and the construction-signature checks still run on the
 finished set.
 
+The stage is implemented in `parm_bench.selection_predicate` under rubric
+`parmbench_selection_predicate_v1`, cached the same way as the relevance
+gates in `data/selection-predicate-caches/parmbench-v1`, and it runs as stage
+5 of `scripts/draft_parmbench_v1_claims.py` behind
+`--selection-predicate-gate`. It reads the memory-quality category,
+durability, and sensitivity labels and passes the sensitivity labels through
+untouched, so `sensitive_terms` reaches the builder from the source rather
+than being reset. `TASK_FAMILY_REGISTRY` holds the routing list above, one
+entry per family, naming the relation types that may reach it. Three
+deterministic post-checks run on every mapping the model returns: a task
+family the registry does not allow for the declared relation type is
+rejected as `incompatible_task_family_routing`, a non-empty
+`material_assumptions` list is rejected as `material_assumption_required`,
+and a predicate that shares no content word with the fact or its span while
+naming no target affordance is rejected as
+`unanchored_selection_predicate`. An abstention is recorded as
+`no_selection_predicate` and counted separately from failures. A passing
+supply row carries the builder's interface object under `predicate`.
+
 Three user-approved anchor scenarios define the quality bar and are frozen
 with their verified raw spans in
 `data/parmbench-v1-supply/selection_predicate_anchors.json`: a dessert menu

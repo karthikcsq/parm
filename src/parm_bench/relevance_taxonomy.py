@@ -52,6 +52,27 @@ DECISION_VALIDITY_REASONS = (
     CONTROL_DOES_NOT_REMOVE_ADVANTAGE,
 )
 
+# Selection-predicate failures: the accepted fact reached the mapper and no
+# usable decision rule came back. `no_selection_predicate` is the abstention
+# label the supply pipeline records, and abstaining is a correct outcome, not
+# a defect in the fact.
+NO_SELECTION_PREDICATE = "no_selection_predicate"
+INCOMPATIBLE_TASK_FAMILY_ROUTING = "incompatible_task_family_routing"
+MATERIAL_ASSUMPTION_REQUIRED = "material_assumption_required"
+UNANCHORED_SELECTION_PREDICATE = "unanchored_selection_predicate"
+
+SELECTION_PREDICATE_REASONS = (
+    NO_SELECTION_PREDICATE,
+    INCOMPATIBLE_TASK_FAMILY_ROUTING,
+    MATERIAL_ASSUMPTION_REQUIRED,
+    UNANCHORED_SELECTION_PREDICATE,
+    TOPIC_OVERLAP_WITHOUT_DECISION_RELEVANCE,
+)
+
 ALL_RELEVANCE_REASONS = tuple(
-    dict.fromkeys(MEMORY_QUALITY_REASONS + DECISION_VALIDITY_REASONS)
+    dict.fromkeys(
+        MEMORY_QUALITY_REASONS
+        + DECISION_VALIDITY_REASONS
+        + SELECTION_PREDICATE_REASONS
+    )
 )

@@ -9,16 +9,25 @@ Phase A of the construction contract. For every candidate source row in
 2. verifies the span deterministically against the persona's normalized
    records and the tracked history file;
 3. runs `parm_bench.evidence_gate.grade_claim` on the claim and the snippet
-   turns, keeping only explicit or inferable grades; and
+   turns, keeping only explicit or inferable grades;
 4. runs `parm_bench.memory_quality.grade_memory_quality` on the survivors,
-   keeping only facts worth retaining as memory.
+   keeping only facts worth retaining as memory; and
+5. runs `parm_bench.selection_predicate.map_selection_predicate` on what is
+   left, keeping only facts that imply a concrete selection rule in a
+   compatible task family.
 
-Stages 3 and 4 ask different questions. Stage 3 asks whether the user said
+Stages 3, 4, and 5 ask different questions. Stage 3 asks whether the user said
 it; stage 4 asks whether the fact decides anything later. The v1 relevance
 audit found the second question unenforced, so a wording request or a resolved
 roadside breakdown could reach construction with a clean support grade. The
 memory-quality stage runs only for rubrics drafted after that audit, so the v1
 and v2 batches replay from their existing caches unchanged.
+
+Stage 5 asks what the fact decides. It hands construction the decision rule
+instead of asking one construction call to invent the task, the affordance,
+and the causal relationship together, which is the premise the v3 pilot
+failed on. A fact with no direct selection implication abstains here, and an
+abstention is a correct outcome rather than a defect in the fact.
 
 The upstream `preference` label is passed to the drafter only as a hint of
 where to look. The drafter is told it is unverified, must not copy its
@@ -50,7 +59,9 @@ anything past v1:
   gate, and the memory-quality gate when it runs, with the gold record
   resolved and the retention verdict carried in `memory_quality` and
   `memory_quality_provenance` (category, durability, reasons,
-  sensitive_terms); and
+  sensitive_terms). A row that also cleared the selection-predicate stage
+  carries the full verdict in `selection_predicate` and the builder's
+  interface object in `predicate`; and
 - `supply_summary.json` - counts by outcome and rejection reason.
 """
 
@@ -87,6 +98,17 @@ from parm_bench.memory_quality import (
     grade_memory_quality,
     passes_memory_quality,
 )
+from parm_bench.selection_predicate import (
+    SELECTION_PREDICATE_MODEL,
+    SELECTION_PREDICATE_RUBRIC,
+    CachedOpenAISelectionPredicateJudge,
+    SelectionPredicateCacheMissError,
+    SelectionPredicateCachePolicy,
+    SelectionPredicateResult,
+    map_selection_predicate,
+    passes_selection_predicate,
+)
+from parm_bench.relevance_taxonomy import NO_SELECTION_PREDICATE
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -98,6 +120,9 @@ SUPPLY_ROOT = ROOT / "data" / "parmbench-v1-supply"
 DRAFT_CACHE = ROOT / "data" / "construction-caches" / "parmbench-v1" / "claim-drafts"
 GATE_CACHE = ROOT / "data" / "evidence-gate-caches" / "parmbench-v1"
 MEMORY_QUALITY_CACHE = ROOT / "data" / "memory-quality-caches" / "parmbench-v1"
+SELECTION_PREDICATE_CACHE = (
+    ROOT / "data" / "selection-predicate-caches" / "parmbench-v1"
+)
 
 DRAFT_MODEL = "gpt-5-mini"
 DRAFT_PROMPT_VERSION = "parmbench_claim_draft_v1"
@@ -541,6 +566,43 @@ def memory_quality_enabled(rubric: str, requested: bool | None) -> bool:
     return rubric not in PRE_MEMORY_QUALITY_RUBRICS
 
 
+def selection_predicate_enabled(
+    requested: bool | None,
+    *,
+    memory_quality_gate: bool,
+) -> bool:
+    """Whether the selection-predicate stage runs.
+
+    The stage reads the memory-quality category, durability, and sensitivity
+    labels, so it defaults on exactly when that gate runs and off otherwise.
+    `requested` is the tri-state from the command line.
+    """
+
+    if requested is not None:
+        return requested
+    return memory_quality_gate
+
+
+def selection_predicate_rejection_reason(
+    result: SelectionPredicateResult,
+) -> str:
+    """The single reason string recorded for a failed mapping.
+
+    An abstention is reported under its own name. Nothing is wrong with the
+    fact: it simply implies no selection rule.
+    """
+
+    if result.rejection_reasons:
+        return f"selection_predicate_{result.rejection_reasons[0]}"
+    return NO_SELECTION_PREDICATE
+
+
+def predicate_row(result: SelectionPredicateResult) -> dict[str, Any]:
+    """The `predicate` object the builder reads off a passing supply row."""
+
+    return result.predicate_fields()
+
+
 def memory_quality_rejection_reason(result: MemoryQualityResult) -> str:
     """The single reason string recorded for a failed retention verdict."""
 
@@ -583,6 +645,25 @@ def main() -> int:
         help="skip the memory-quality stage even for a new rubric",
     )
     parser.add_argument(
+        "--selection-predicate-gate",
+        dest="selection_predicate_gate",
+        action="store_true",
+        default=None,
+        help=(
+            "map every retained fact to the selection rule it implies with "
+            f"the {SELECTION_PREDICATE_RUBRIC} rubric and keep only facts "
+            "that yield a predicate in a compatible task family; on by "
+            "default whenever the memory-quality gate runs, since the mapper "
+            "reads that gate's category, durability, and sensitivity labels"
+        ),
+    )
+    parser.add_argument(
+        "--no-selection-predicate-gate",
+        dest="selection_predicate_gate",
+        action="store_false",
+        help="skip the selection-predicate stage even when it would run",
+    )
+    parser.add_argument(
         "--skip-base-case-ids",
         default="",
         help=(
@@ -622,6 +703,16 @@ def main() -> int:
     )
     if run_memory_quality:
         MEMORY_QUALITY_CACHE.mkdir(parents=True, exist_ok=True)
+    run_selection_predicate = selection_predicate_enabled(
+        args.selection_predicate_gate, memory_quality_gate=run_memory_quality
+    )
+    if run_selection_predicate and not run_memory_quality:
+        parser.error(
+            "--selection-predicate-gate needs the memory-quality gate: the "
+            "mapper reads its category, durability, and sensitivity labels"
+        )
+    if run_selection_predicate:
+        SELECTION_PREDICATE_CACHE.mkdir(parents=True, exist_ok=True)
 
     candidates = [
         json.loads(line)
@@ -670,6 +761,17 @@ def main() -> int:
             client=drafter.client,
         )
         if run_memory_quality
+        else None
+    )
+    predicate_judge = (
+        CachedOpenAISelectionPredicateJudge(
+            SELECTION_PREDICATE_CACHE,
+            SelectionPredicateCachePolicy.FROZEN
+            if args.offline
+            else SelectionPredicateCachePolicy.POPULATE,
+            client=drafter.client,
+        )
+        if run_selection_predicate
         else None
     )
 
@@ -786,6 +888,31 @@ def main() -> int:
                 out["reason"] = memory_quality_rejection_reason(memory)
                 return out
 
+            if predicate_judge is not None:
+                try:
+                    predicate = map_selection_predicate(
+                        claim,
+                        span,
+                        snippet,
+                        memory_category=memory.category,
+                        durability=memory.durability,
+                        sensitive=memory.sensitive,
+                        sensitive_terms=memory.sensitive_terms,
+                        judge=predicate_judge,
+                    )
+                except SelectionPredicateCacheMissError:
+                    out["outcome"] = "pending"
+                    out["reason"] = "selection_predicate_not_cached"
+                    return out
+                out["selection_predicate"] = predicate.to_dict()
+                if not passes_selection_predicate(predicate):
+                    out["outcome"] = "rejected"
+                    out["reason"] = selection_predicate_rejection_reason(
+                        predicate
+                    )
+                    return out
+                out["predicate"] = predicate_row(predicate)
+
         out["outcome"] = "passed"
         out["reason"] = f"gate_{result.grade}"
         return out
@@ -829,6 +956,13 @@ def main() -> int:
         "memory_quality_model": (
             MEMORY_QUALITY_MODEL if run_memory_quality else None
         ),
+        "selection_predicate_gate": run_selection_predicate,
+        "selection_predicate_rubric": (
+            SELECTION_PREDICATE_RUBRIC if run_selection_predicate else None
+        ),
+        "selection_predicate_model": (
+            SELECTION_PREDICATE_MODEL if run_selection_predicate else None
+        ),
     }
     if run_memory_quality:
         summary["by_memory_category"] = dict(
@@ -847,6 +981,24 @@ def main() -> int:
         )
         summary["sensitive_passing_rows"] = sum(
             1 for row in passed if row["memory_quality"]["sensitive"]
+        )
+    if run_selection_predicate:
+        summary["by_task_family"] = dict(
+            sorted(
+                Counter(
+                    row["predicate"]["task_family"] for row in passed
+                ).items()
+            )
+        )
+        summary["by_relation_type"] = dict(
+            sorted(
+                Counter(
+                    row["predicate"]["relation_type"] for row in passed
+                ).items()
+            )
+        )
+        summary["selection_predicate_abstentions"] = sum(
+            1 for row in drafted if row["reason"] == NO_SELECTION_PREDICATE
         )
     atomic_write_json(SUPPLY_ROOT / f"supply_summary{suffix}.json", summary)
     print(json.dumps(summary, indent=2, sort_keys=True))

@@ -116,6 +116,62 @@ The failure taxonomy shared by the gates lives in
 follows the intended A/A/B pattern; the relevance gates are what make the
 pattern worth following.
 
+## Selection-predicate stage
+
+The v3 pilot showed that gates alone cannot rescue a bad construction
+premise: asking one model call to invent the task, the affordance, and the
+causal relationship around a fact makes valid scenarios needlessly rare.
+Construction therefore starts from the decision rule the fact directly
+implies, and only then generates a familiar task around it:
+
+```text
+raw user history -> supported durable fact -> concrete selection predicate
+-> compatible task family -> ordinary winner A + compatible target B
+-> cue-ablated control
+```
+
+Before any scenario is constructed, a versioned mapper produces
+evaluator-only fields. The names below are the schema contract between the
+mapper and the builder:
+
+| field | meaning |
+| --- | --- |
+| `selection_predicate` | a concise condition that follows directly from the raw fact |
+| `task_family` | a bounded family in which that condition naturally affects a choice |
+| `target_affordance` | the visible, checkable property of B that satisfies the predicate |
+| `ordinary_mechanism` | the visible reason A wins for a person without this memory |
+| `control_affordance` | a neutral replacement that removes the predicate match without creating a new personalized match |
+| `relation_type` | direct_constraint, compatibility, active_project_relevance, schedule_fit, accessibility_need, stable_preference, or relationship_obligation |
+| `material_assumptions` | must be empty; a non-empty list rejects the mapping |
+
+The predicate must express an action-relevant implication, never a topic
+restatement. "The user owns an NES" maps to "prefer vintage items usable
+with an NES", not to "the user likes retro games". A supported durable fact
+with no direct selection implication is a correct abstention, not a mapping
+failure.
+
+Task families are routed by compatibility, from a small auditable registry:
+food preferences or exclusions to menu, dessert, grocery, or catering
+selection; active research or work topics to books, talks, courses,
+archives, or reading groups; owned devices or items to compatible games,
+accessories, parts, repair, or vintage finds; hobbies to events, supplies,
+clubs, or workshops; concrete schedules to appointment, event, delivery, or
+travel slots; accessibility needs to rooms, routes, seating, transport, or
+delivery; stable relationships or obligations to gifts, visits,
+communications, or travel, only when the relationship itself is directly
+supported. Global domain balancing is subordinate to compatibility: variety
+is applied to envelopes, names, ordering, and surface form after the causal
+structure is valid, and the construction-signature checks still run on the
+finished set.
+
+Three user-approved anchor scenarios define the quality bar and are frozen
+with their verified raw spans in
+`data/parmbench-v1-supply/selection_predicate_anchors.json`: a dessert menu
+against a stated fresh-fruit habit, a reading-group book against an active
+theology-and-pluralism writing project, and a vintage-store find against an
+owned NES. A generator version that cannot produce these three examples is
+not fit to generate anything else.
+
 ## Capability coverage
 
 Keep the benchmark broad enough to compare retrieval methods without making

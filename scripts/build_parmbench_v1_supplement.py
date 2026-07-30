@@ -67,7 +67,10 @@ CONTEXT_ROOT = builder.CONTEXT_ROOT
 SUPPLEMENT_SUFFIX = "-s2"
 SUPPLEMENT_ROUND = 2
 BUILDER_VERSION = "parmbench_v1_builder_v1_supplement_v2"
-CONSTRUCTION_PROMPT_VERSION = "parmbench_construction_v2"
+# The supplement's request carries the decision lever, so it is a different
+# prompt under the same schema. Tracking the builder's version keeps the causal
+# chain bump in step while leaving the round-two caches keyed under v2 alone.
+CONSTRUCTION_PROMPT_VERSION = f"{builder.CONSTRUCTION_PROMPT_VERSION}_supplement"
 AXIS_SEED = 20260729
 
 CONSTRUCTION_INSTRUCTIONS = (
@@ -328,6 +331,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--offline", action="store_true")
+    builder.add_decision_validity_arguments(parser)
     args = parser.parse_args()
 
     builder.load_env(ROOT / ".env")
@@ -384,6 +388,7 @@ def main() -> int:
     constructor = SupplementConstructor(
         builder.CONSTRUCTION_CACHE, offline=args.offline
     )
+    validity_judge = builder.make_decision_validity_judge(args)
 
     def warm(spec: Mapping[str, Any]) -> None:
         try:
@@ -432,6 +437,20 @@ def main() -> int:
             )
             continue
         core = builder.normalise_core(raw_core)
+        chain_reason = builder.causal_chain_rejection(core)
+        if chain_reason is not None:
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": chain_reason,
+                    "assumptions_required": [
+                        str(item)
+                        for item in core.get("assumptions_required", ())
+                        if str(item).strip()
+                    ],
+                }
+            )
+            continue
         neutral_repaired = False
         if not (
             builder.NEUTRAL_LENGTH_BAND[0]
@@ -485,6 +504,33 @@ def main() -> int:
 
         cue = str(core["cue_clause"]).strip()
         neutral = str(core["neutral_clause"]).strip()
+        capability = builder.capability_for(
+            spec["claim"],
+            row["draft"]["fact_kind"],
+            bool(row["draft"].get("relational_hop")),
+            spec["overlap_mode"],
+            memory_category=str(row["draft"].get("memory_category", "")),
+            cue_text=cue,
+            evidence_span=str(row["draft"]["evidence_span"]),
+        )
+        validity = builder.gate_scenario(
+            validity_judge,
+            spec=spec,
+            row=row,
+            core=core,
+            prompt=prompt,
+            capability=capability,
+        )
+        if validity is not None and not validity.accept:
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": "decision_validity_rejected",
+                    "decision_validity": validity.to_dict(),
+                }
+            )
+            continue
+
         content_path = f"contexts/{spec['base_case_id']}.md"
         (DATASET_ROOT / content_path).write_text(text, encoding="utf-8", newline="\n")
 
@@ -517,12 +563,6 @@ def main() -> int:
             (DATASET_ROOT / content_path).unlink(missing_ok=True)
             continue
 
-        capability = builder.capability_for(
-            spec["claim"],
-            row["draft"]["fact_kind"],
-            bool(row["draft"].get("relational_hop")),
-            spec["overlap_mode"],
-        )
         memory_text = str(core["memory_text"]).strip()
         winner = str(core["winner_label"])
         target = str(core["target_label"])
@@ -655,6 +695,10 @@ def main() -> int:
                 "choices": {"output_only": winner, "memory_conditioned": target},
                 "memory_text": memory_text,
                 "control_replacement": {"old": cue, "new": neutral},
+                "causal_chain": builder.causal_chain_record(core),
+                "decision_validity": (
+                    validity.to_dict() if validity is not None else None
+                ),
             }
         )
 
@@ -708,6 +752,18 @@ def main() -> int:
             sorted(Counter(item["reason"].split(":")[0] for item in dropped).items())
         ),
         "live_construction_calls": constructor.live_calls,
+        "decision_validity_gate": args.decision_validity_gate,
+        "decision_validity_rejections": dict(
+            sorted(
+                Counter(
+                    requirement
+                    for item in dropped
+                    for requirement in item.get("decision_validity", {}).get(
+                        "unmet_requirements", ()
+                    )
+                ).items()
+            )
+        ),
         "supplement_capability": dict(
             sorted(Counter(r["capability"] for r in construction_records).items())
         ),

@@ -65,6 +65,17 @@ from parmbench_v1_envelopes import (  # noqa: E402
     sentences,
 )
 
+from parm_bench.decision_validity import (  # noqa: E402
+    CAPABILITIES,
+    CachedOpenAIDecisionValidityJudge,
+    DecisionValidityCachePolicy,
+    DecisionValidityResult,
+    ONE_HOP_RELATION,
+    DIRECT_RELATION,
+    audit_scenario,
+    build_scenario,
+    capability_for_fact,
+)
 from parm_bench.service_tier import service_tier_kwargs  # noqa: E402
 
 
@@ -77,10 +88,15 @@ RECORDS_PATH = ROOT / "data" / "personamem-v2-train-v1" / "records.jsonl"
 DATASET_ROOT = ROOT / "data" / "benchmark_parmbench_v1"
 CONTEXT_ROOT = DATASET_ROOT / "contexts"
 CONSTRUCTION_CACHE = ROOT / "data" / "construction-caches" / "parmbench-v1"
+DECISION_VALIDITY_CACHE = (
+    ROOT / "data" / "decision-validity-caches" / "parmbench-v1"
+)
 SOURCE_ROOT_RELATIVE = "../personamem-v2-train-v1/source"
 
 BUILDER_VERSION = "parmbench_v1_builder_v1"
-CONSTRUCTION_PROMPT_VERSION = "parmbench_construction_v1"
+# v3 adds the evaluator-only causal chain to the construction response. Old
+# caches are keyed by the previous versions and stay untouched.
+CONSTRUCTION_PROMPT_VERSION = "parmbench_construction_v3"
 CONSTRUCTION_MODEL = "gpt-5-mini"
 AXIS_SEED = 20260728
 
@@ -130,23 +146,6 @@ ANSWER_CONTRACTS = (
     "State exactly one {item} from the list below and no other text.",
 )
 
-EXCLUSION_PATTERN = re.compile(
-    r"\b(avoids?|avoiding|skips?|skipping|dislikes?|disliking|never|"
-    r"does not|doesn't|do not|don't|will not|won't|no longer|stopped|"
-    r"steers? clear|refuses?|declines?|cannot|can't|unable|"
-    r"gave up|stays? away|keeps? away|without)\b",
-    re.IGNORECASE,
-)
-
-CAPABILITIES = (
-    "direct_lexical_fact",
-    "paraphrased_semantic_fact",
-    "schedule_commitment",
-    "relationship_named_entity",
-    "negative_preference_exclusion",
-    "one_hop_relational",
-)
-
 CONSTRUCTION_INSTRUCTIONS = """\
 You build the semantic core of one scenario for a personal-memory benchmark.
 
@@ -187,6 +186,27 @@ Return these fields.
   or the affordance and falls short in a way the text states plainly.
 - memory_text: one short sentence stating the personal fact plainly, starting
   with "The user". Keep it faithful to the person's own words and add nothing.
+
+Then state the causal chain behind the scenario. These five fields are read by
+the builder alone. They are never shown to any system under test, so write them
+plainly and do not soften them.
+
+- why_ordinary_wins: why a reader with no personal information picks the winner
+  on the stated ordinary mechanism.
+- why_cue_neutral_without_memory: why that same reader treats cue_clause as an
+  ordinary detail worth no extra weight.
+- why_memory_plus_cue_prefers_b: why the personal fact together with the
+  affordance makes the target the better pick for this person, and why the
+  winner becomes unsuitable or clearly worse for them.
+- assumptions_required: every possession, permission, relationship, location,
+  medical conclusion, future plan, or unstated preference your justification
+  needs that the person never stated. One short phrase each. Report them all,
+  including the ones that feel obvious. Leave the list empty only when the
+  justification genuinely needs nothing beyond the personal fact, so choose an
+  affordance that follows from the fact alone.
+- why_control_removes_advantage: why swapping cue_clause for neutral_clause
+  leaves the target with no remaining advantage for this person anywhere in its
+  entry, including sentences you wrote outside the cue.
 
 Wording relationship setting:
 - share_wording: cue_clause may reuse some of the same content words the person
@@ -244,6 +264,14 @@ CONSTRUCTION_SCHEMA = {
         "cue_clause": {"type": "string"},
         "neutral_clause": {"type": "string"},
         "memory_text": {"type": "string"},
+        "why_ordinary_wins": {"type": "string"},
+        "why_cue_neutral_without_memory": {"type": "string"},
+        "why_memory_plus_cue_prefers_b": {"type": "string"},
+        "assumptions_required": {
+            "type": "array",
+            "items": {"type": "string"},
+        },
+        "why_control_removes_advantage": {"type": "string"},
         "decoys": {
             "type": "array",
             "items": {
@@ -267,10 +295,25 @@ CONSTRUCTION_SCHEMA = {
         "cue_clause",
         "neutral_clause",
         "memory_text",
+        "why_ordinary_wins",
+        "why_cue_neutral_without_memory",
+        "why_memory_plus_cue_prefers_b",
+        "assumptions_required",
+        "why_control_removes_advantage",
         "decoys",
     ],
     "additionalProperties": False,
 }
+
+# The causal chain is construction provenance. It explains the scenario to the
+# builder and to the decision-validity gate, and it must not reach a model
+# under test through the prompt, the observation, or the injected memory.
+CAUSAL_CHAIN_FIELDS = (
+    "why_ordinary_wins",
+    "why_cue_neutral_without_memory",
+    "why_memory_plus_cue_prefers_b",
+    "why_control_removes_advantage",
+)
 
 _STOPWORDS = frozenset(
     """a about after all also an and any are as at be been but by can did do
@@ -797,6 +840,84 @@ def assemble_observation(
     return text, metrics
 
 
+_WHITESPACE = re.compile(r"\s+")
+
+
+def flatten(text: str) -> str:
+    return _WHITESPACE.sub(" ", str(text)).strip().casefold()
+
+
+def causal_chain_texts(core: Mapping[str, Any]) -> tuple[str, ...]:
+    """Every sentence of the causal chain, including declared assumptions."""
+
+    values = [str(core.get(field, "")).strip() for field in CAUSAL_CHAIN_FIELDS]
+    values.extend(
+        str(item).strip() for item in core.get("assumptions_required", ())
+    )
+    return tuple(value for value in values if value)
+
+
+def causal_chain_record(core: Mapping[str, Any]) -> dict[str, Any]:
+    """The causal chain as it is persisted, in construction records alone."""
+
+    record: dict[str, Any] = {
+        field: str(core.get(field, "")).strip() for field in CAUSAL_CHAIN_FIELDS
+    }
+    record["assumptions_required"] = [
+        str(item).strip()
+        for item in core.get("assumptions_required", ())
+        if str(item).strip()
+    ]
+    return record
+
+
+def causal_chain_rejection(core: Mapping[str, Any]) -> str | None:
+    """Reasons a scenario core is dropped before the gate is called.
+
+    A construction model that has to write down what its justification assumes
+    usually knows when it is inventing something. Taking it at its word costs
+    one scenario and saves a judge call.
+    """
+
+    if "assumptions_required" not in core:
+        return "missing_causal_chain"
+    for field in CAUSAL_CHAIN_FIELDS:
+        if not str(core.get(field, "")).strip():
+            return "missing_causal_chain"
+    if any(str(item).strip() for item in core["assumptions_required"]):
+        return "construction_declares_required_assumptions"
+    return None
+
+
+# Short fragments recur in ordinary prose, so only a substantial run of the
+# chain counts as a leak.
+MIN_CHAIN_LEAK_LENGTH = 24
+
+
+def causal_chain_leak(
+    core: Mapping[str, Any],
+    text: str,
+    prompt: str,
+    memory_text: str,
+) -> str | None:
+    """Reject a scenario whose causal chain reached model-visible text."""
+
+    flat_text = flatten(text)
+    flat_prompt = flatten(prompt)
+    flat_memory = flatten(memory_text)
+    for value in causal_chain_texts(core):
+        needle = flatten(value)
+        if len(needle) < MIN_CHAIN_LEAK_LENGTH:
+            continue
+        if needle in flat_text:
+            return "causal_chain_leaks_into_observation"
+        if needle in flat_memory:
+            return "causal_chain_leaks_into_memory_text"
+        if needle in flat_prompt:
+            return "causal_chain_leaks_into_prompt"
+    return None
+
+
 def scenario_rejection(
     text: str,
     core: Mapping[str, Any],
@@ -861,7 +982,9 @@ def scenario_rejection(
         return "ablation_leaves_cue"
     if ablated.casefold().count(str(core["winner_label"]).casefold()) != 1:
         return "ablation_breaks_winner_uniqueness"
-    return None
+    return causal_chain_leak(
+        core, text, ceiling_prompt(memory_text, prompt), memory_text
+    )
 
 
 # --------------------------------------------------------------------------
@@ -874,23 +997,28 @@ def capability_for(
     fact_kind: str,
     relational_hop: bool,
     overlap_mode: str,
+    *,
+    memory_category: str = "",
+    cue_text: str = "",
+    evidence_span: str = "",
 ) -> str:
-    # A stated limitation works the same way a stated dislike does: the memory
-    # earns its keep by ruling an option out rather than by promoting one.
-    if fact_kind == "constraint" or EXCLUSION_PATTERN.search(claim):
-        return "negative_preference_exclusion"
-    if fact_kind in ("schedule", "commitment"):
-        return "schedule_commitment"
-    if fact_kind in ("relationship", "named_entity"):
-        return (
-            "one_hop_relational" if relational_hop else "relationship_named_entity"
-        )
-    if relational_hop and overlap_mode == "paraphrase_only":
-        return "one_hop_relational"
-    return (
-        "direct_lexical_fact"
-        if overlap_mode == "share_wording"
-        else "paraphrased_semantic_fact"
+    """Label a scenario from its accepted fact and its causal relation.
+
+    The supply row's `fact_kind` is the older vocabulary; the memory-quality
+    gate's category wins when the row carries one. Labelling itself lives in
+    `parm_bench.decision_validity`, so the gate that checks the label and the
+    builder that assigns it cannot drift apart.
+    """
+
+    return capability_for_fact(
+        claim=claim,
+        memory_category=memory_category or fact_kind,
+        causal_relation=(
+            ONE_HOP_RELATION if relational_hop else DIRECT_RELATION
+        ),
+        evidence_span=evidence_span,
+        cue_text=cue_text,
+        overlap_mode=None if cue_text and evidence_span else overlap_mode,
     )
 
 
@@ -1040,16 +1168,122 @@ def build_specs(claims: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     return specs
 
 
+_TURN_SPLIT = re.compile(r"^(User|Assistant):\s*", re.MULTILINE)
+
+
+def source_turns(record_text: str) -> tuple[dict[str, str], ...]:
+    """Split a stored source record back into role-tagged turns.
+
+    The decision-validity auditor has to tell the person's own words from the
+    assistant's, so it is given the record as turns rather than as one blob.
+    """
+
+    parts = _TURN_SPLIT.split(str(record_text).strip())
+    if len(parts) < 3:
+        return ({"role": "source record", "content": str(record_text).strip()},)
+    turns: list[dict[str, str]] = []
+    for role, content in zip(parts[1::2], parts[2::2]):
+        body = content.strip()
+        if body:
+            turns.append({"role": role.casefold(), "content": body})
+    return tuple(turns)
+
+
+class OfflineJudgeClient:
+    """Stand-in client that refuses a live call during an offline build."""
+
+    class _Responses:
+        @staticmethod
+        def create(**kwargs: Any) -> Any:
+            raise RuntimeError(
+                "offline build cannot make decision validity calls"
+            )
+
+    responses = _Responses()
+
+
+def add_decision_validity_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--decision-validity-gate",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="audit every constructed scenario before it is kept",
+    )
+    parser.add_argument(
+        "--decision-validity-cache",
+        default=str(DECISION_VALIDITY_CACHE),
+        help="cache directory for decision-validity verdicts",
+    )
+    parser.add_argument(
+        "--decision-validity-cache-policy",
+        choices=[policy.value for policy in DecisionValidityCachePolicy],
+        default=DecisionValidityCachePolicy.POPULATE.value,
+        help="populate the verdict cache, or replay it and fail on a miss",
+    )
+
+
+def make_decision_validity_judge(
+    args: argparse.Namespace,
+) -> CachedOpenAIDecisionValidityJudge | None:
+    if not args.decision_validity_gate:
+        return None
+    # An offline build replays, so a gap in the cache should name the missing
+    # entry rather than fail at the first live call.
+    policy = (
+        DecisionValidityCachePolicy.FROZEN
+        if args.offline
+        else args.decision_validity_cache_policy
+    )
+    return CachedOpenAIDecisionValidityJudge(
+        Path(args.decision_validity_cache),
+        policy,
+        client=OfflineJudgeClient() if args.offline else None,
+    )
+
+
+def gate_scenario(
+    judge: CachedOpenAIDecisionValidityJudge | None,
+    *,
+    spec: Mapping[str, Any],
+    row: Mapping[str, Any],
+    core: Mapping[str, Any],
+    prompt: str,
+    capability: str,
+    sensitive_terms: Sequence[str] = (),
+) -> DecisionValidityResult | None:
+    if judge is None:
+        return None
+    scenario = build_scenario(
+        claim=str(spec["claim"]),
+        evidence_span=str(row["draft"]["evidence_span"]),
+        task_prompt=prompt,
+        core=core,
+        ordinary_mechanism=str(spec["mechanism"]),
+        capability_label=capability,
+        evidence_turns=source_turns(row.get("gold_record_text", "")),
+        sensitive_terms=sensitive_terms,
+    )
+    return audit_scenario(scenario, judge=judge)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--max-scenarios", type=int, default=0)
+    parser.add_argument(
+        "--output-dir",
+        default=str(DATASET_ROOT),
+        help="dataset directory to write; point a pilot away from the frozen batch",
+    )
+    add_decision_validity_arguments(parser)
     args = parser.parse_args()
 
     load_env(ROOT / ".env")
     encoding = tiktoken.get_encoding(TOKENIZER)
+    output_root = Path(args.output_dir)
+    context_root = output_root / "contexts"
 
     claims = load_jsonl(SUPPLY_PATH)
     if args.limit:
@@ -1061,6 +1295,7 @@ def main() -> int:
     specs = build_specs(claims)
     _, fairness_drops = load_fairness_repairs()
     constructor = CachedConstructor(CONSTRUCTION_CACHE, offline=args.offline)
+    validity_judge = make_decision_validity_judge(args)
 
     def warm(spec: Mapping[str, Any]) -> None:
         try:
@@ -1080,8 +1315,8 @@ def main() -> int:
             )
         )
 
-    CONTEXT_ROOT.mkdir(parents=True, exist_ok=True)
-    for stale in CONTEXT_ROOT.glob("*.md"):
+    context_root.mkdir(parents=True, exist_ok=True)
+    for stale in context_root.glob("*.md"):
         stale.unlink()
 
     cases: list[dict[str, Any]] = []
@@ -1112,6 +1347,20 @@ def main() -> int:
             )
             continue
         core = normalise_core(raw_core)
+        chain_reason = causal_chain_rejection(core)
+        if chain_reason is not None:
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": chain_reason,
+                    "assumptions_required": [
+                        str(item)
+                        for item in core.get("assumptions_required", ())
+                        if str(item).strip()
+                    ],
+                }
+            )
+            continue
         neutral_repaired = False
         if not (
             NEUTRAL_LENGTH_BAND[0]
@@ -1163,8 +1412,37 @@ def main() -> int:
 
         cue = str(core["cue_clause"]).strip()
         neutral = str(core["neutral_clause"]).strip()
+        capability = capability_for(
+            spec["claim"],
+            row["draft"]["fact_kind"],
+            bool(row["draft"].get("relational_hop")),
+            spec["overlap_mode"],
+            memory_category=str(row["draft"].get("memory_category", "")),
+            cue_text=cue,
+            evidence_span=str(row["draft"]["evidence_span"]),
+        )
+        # The gate runs once the scenario is otherwise shippable, so a judge
+        # call is never spent on a core the deterministic checks would drop.
+        validity = gate_scenario(
+            validity_judge,
+            spec=spec,
+            row=row,
+            core=core,
+            prompt=prompt,
+            capability=capability,
+        )
+        if validity is not None and not validity.accept:
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": "decision_validity_rejected",
+                    "decision_validity": validity.to_dict(),
+                }
+            )
+            continue
+
         content_path = f"contexts/{spec['base_case_id']}.md"
-        (DATASET_ROOT / content_path).write_text(text, encoding="utf-8", newline="\n")
+        (output_root / content_path).write_text(text, encoding="utf-8", newline="\n")
 
         corpus_id = row["corpus_id"]
         persona_id = row["persona_id"]
@@ -1192,15 +1470,9 @@ def main() -> int:
             dropped.append(
                 {"base_case_id": spec["base_case_id"], "reason": "too_few_distractors"}
             )
-            (DATASET_ROOT / content_path).unlink(missing_ok=True)
+            (output_root / content_path).unlink(missing_ok=True)
             continue
 
-        capability = capability_for(
-            spec["claim"],
-            row["draft"]["fact_kind"],
-            bool(row["draft"].get("relational_hop")),
-            spec["overlap_mode"],
-        )
         memory_text = str(core["memory_text"]).strip()
         winner = str(core["winner_label"])
         target = str(core["target_label"])
@@ -1329,12 +1601,16 @@ def main() -> int:
                 "choices": {"output_only": winner, "memory_conditioned": target},
                 "memory_text": memory_text,
                 "control_replacement": {"old": cue, "new": neutral},
+                "causal_chain": causal_chain_record(core),
+                "decision_validity": (
+                    validity.to_dict() if validity is not None else None
+                ),
             }
         )
-        write_jsonl(DATASET_ROOT / "construction_records.jsonl", construction_records)
+        write_jsonl(output_root / "construction_records.jsonl", construction_records)
 
-    write_jsonl(DATASET_ROOT / "cases.jsonl", cases)
-    write_jsonl(DATASET_ROOT / "construction_records.jsonl", construction_records)
+    write_jsonl(output_root / "cases.jsonl", cases)
+    write_jsonl(output_root / "construction_records.jsonl", construction_records)
     manifest = {
         "schema_version": 1,
         "validation_profile": "parmbench_v1",
@@ -1342,15 +1618,15 @@ def main() -> int:
         "construction_records": {"path": "construction_records.jsonl"},
         "corpora": [corpora[key] for key in sorted(corpora)],
     }
-    (DATASET_ROOT / "dataset_manifest.json").write_text(
+    (output_root / "dataset_manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
         encoding="utf-8",
         newline="\n",
     )
     if dropped:
-        write_jsonl(DATASET_ROOT / "dropped_scenarios.jsonl", dropped)
-    elif (DATASET_ROOT / "dropped_scenarios.jsonl").exists():
-        (DATASET_ROOT / "dropped_scenarios.jsonl").unlink()
+        write_jsonl(output_root / "dropped_scenarios.jsonl", dropped)
+    elif (output_root / "dropped_scenarios.jsonl").exists():
+        (output_root / "dropped_scenarios.jsonl").unlink()
 
     summary = {
         "scenarios": len(construction_records),
@@ -1368,6 +1644,18 @@ def main() -> int:
         "live_construction_calls": constructor.live_calls,
         "capability": dict(
             sorted(Counter(r["capability"] for r in construction_records).items())
+        ),
+        "decision_validity_gate": args.decision_validity_gate,
+        "decision_validity_rejections": dict(
+            sorted(
+                Counter(
+                    requirement
+                    for item in dropped
+                    for requirement in item.get("decision_validity", {}).get(
+                        "unmet_requirements", ()
+                    )
+                ).items()
+            )
         ),
     }
     print(json.dumps(summary, indent=2, sort_keys=True))

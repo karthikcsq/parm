@@ -4,11 +4,17 @@ import random
 import unittest
 
 from scripts.build_parmbench_v1_benchmark import (
+    CAUSAL_CHAIN_FIELDS,
+    CONSTRUCTION_PROMPT_VERSION,
+    CONSTRUCTION_SCHEMA,
     capability_for,
+    causal_chain_record,
+    causal_chain_rejection,
     normalise_core,
     prompt_claim_overlap,
     render_construction_request,
     scenario_rejection,
+    source_turns,
 )
 from scripts.draft_parmbench_v1_claims import span_rejection
 from scripts.parmbench_v1_envelopes import (
@@ -24,6 +30,28 @@ from scripts.parmbench_v1_envelopes import (
     ROLE_NOUNS,
     balanced_assignment,
 )
+
+
+def _chain(**overrides: object) -> dict:
+    chain = {
+        "why_ordinary_wins": (
+            "The morning slot is the only one that fits the stated diary."
+        ),
+        "why_cue_neutral_without_memory": (
+            "A step-free entrance reads as a routine building detail."
+        ),
+        "why_memory_plus_cue_prefers_b": (
+            "Somebody walking with a wheeled frame cannot use the stairs the "
+            "other rooms are reached by."
+        ),
+        "assumptions_required": [],
+        "why_control_removes_advantage": (
+            "With the stair sentence in place the room offers nothing the "
+            "other rooms do not."
+        ),
+    }
+    chain.update(overrides)
+    return chain
 
 
 def _core(**overrides: object) -> dict:
@@ -217,6 +245,111 @@ class RepairRequestTests(unittest.TestCase):
         self.assertNotIn("already picked the", rendered)
 
 
+class CausalChainTests(unittest.TestCase):
+    def _document(self, core: dict) -> str:
+        entries = [
+            f"{core['winner_label']}: {core['winner_body']}",
+            f"{core['target_label']}: {core['target_body']} {core['cue_clause']}",
+        ]
+        entries.extend(
+            f"{decoy['label']}: {decoy['body']}" for decoy in core["decoys"]
+        )
+        return "log extract\n\n" + "\n\n".join(entries) + "\n"
+
+    def _claim_row(self) -> dict:
+        return {
+            "draft": {
+                "evidence_span": "I use a wheeled frame when I go out.",
+                "claim": "The user walks with a wheeled frame outdoors.",
+            }
+        }
+
+    def test_the_schema_requires_every_causal_chain_field(self) -> None:
+        for field in CAUSAL_CHAIN_FIELDS + ("assumptions_required",):
+            self.assertIn(field, CONSTRUCTION_SCHEMA["properties"])
+            self.assertIn(field, CONSTRUCTION_SCHEMA["required"])
+
+    def test_the_prompt_version_is_bumped_for_the_causal_chain(self) -> None:
+        self.assertEqual(CONSTRUCTION_PROMPT_VERSION, "parmbench_construction_v3")
+
+    def test_a_complete_chain_without_assumptions_is_accepted(self) -> None:
+        self.assertIsNone(causal_chain_rejection(_core(**_chain())))
+
+    def test_a_declared_assumption_rejects_the_core(self) -> None:
+        core = _core(
+            **_chain(
+                assumptions_required=[
+                    "that the user attends this session in person"
+                ]
+            )
+        )
+        self.assertEqual(
+            causal_chain_rejection(core),
+            "construction_declares_required_assumptions",
+        )
+
+    def test_a_missing_chain_field_rejects_the_core(self) -> None:
+        core = _core(**_chain(why_ordinary_wins="  "))
+        self.assertEqual(causal_chain_rejection(core), "missing_causal_chain")
+
+    def test_a_core_without_a_chain_at_all_rejects(self) -> None:
+        self.assertEqual(causal_chain_rejection(_core()), "missing_causal_chain")
+
+    def test_the_chain_is_recorded_with_its_assumptions(self) -> None:
+        record = causal_chain_record(_core(**_chain(assumptions_required=["a", " "])))
+        self.assertEqual(record["assumptions_required"], ["a"])
+        for field in CAUSAL_CHAIN_FIELDS:
+            self.assertTrue(record[field])
+
+    def test_a_chain_sentence_in_the_observation_is_rejected(self) -> None:
+        chain = _chain()
+        core = normalise_core(_core(**chain))
+        text = self._document(core) + chain["why_ordinary_wins"] + "\n"
+        prompt = "Pick a slot. Name exactly one slot from the material below."
+        self.assertEqual(
+            scenario_rejection(text, core, prompt, self._claim_row()),
+            "causal_chain_leaks_into_observation",
+        )
+
+    def test_a_chain_sentence_in_the_prompt_is_rejected(self) -> None:
+        chain = _chain()
+        core = normalise_core(_core(**chain))
+        prompt = (
+            "Pick a slot. Name exactly one slot from the material below. "
+            + str(chain["why_control_removes_advantage"])
+        )
+        self.assertEqual(
+            scenario_rejection(
+                self._document(core), core, prompt, self._claim_row()
+            ),
+            "causal_chain_leaks_into_prompt",
+        )
+
+    def test_a_scenario_that_keeps_the_chain_private_is_accepted(self) -> None:
+        core = normalise_core(_core(**_chain()))
+        prompt = "Pick a slot. Name exactly one slot from the material below."
+        self.assertIsNone(
+            scenario_rejection(self._document(core), core, prompt, self._claim_row())
+        )
+
+
+class SourceTurnTests(unittest.TestCase):
+    def test_a_stored_record_splits_back_into_roles(self) -> None:
+        turns = source_turns(
+            "User: Could you polish this?\n\nAssistant: Here is a tidier "
+            "version.\n\nUser: Add a line about the console."
+        )
+        self.assertEqual(
+            [turn["role"] for turn in turns], ["user", "assistant", "user"]
+        )
+        self.assertEqual(turns[2]["content"], "Add a line about the console.")
+
+    def test_an_untagged_record_is_kept_whole(self) -> None:
+        turns = source_turns("a plain note with no role prefixes")
+        self.assertEqual(len(turns), 1)
+        self.assertEqual(turns[0]["role"], "source record")
+
+
 class CapabilityTests(unittest.TestCase):
     def test_an_avoidance_claim_is_an_exclusion(self) -> None:
         self.assertEqual(
@@ -234,6 +367,31 @@ class CapabilityTests(unittest.TestCase):
         self.assertEqual(
             capability_for("The user's sister runs a shop in Leeds.", "relationship", True, "paraphrase_only"),
             "one_hop_relational",
+        )
+
+    def test_a_recovery_constraint_is_no_longer_an_exclusion(self) -> None:
+        # The audit's knee-surgery case: an accessibility need rules nothing
+        # out, so the old constraint shortcut mislabelled it.
+        self.assertNotEqual(
+            capability_for(
+                "The user was recovering from minor knee surgery.",
+                "constraint",
+                True,
+                "paraphrase_only",
+            ),
+            "negative_preference_exclusion",
+        )
+
+    def test_a_memory_category_overrides_the_older_fact_kind(self) -> None:
+        self.assertEqual(
+            capability_for(
+                "The user keeps a standing Thursday shift at the depot.",
+                "taste",
+                False,
+                "share_wording",
+                memory_category="concrete_schedule",
+            ),
+            "schedule_commitment",
         )
 
     def test_wording_relationship_splits_plain_facts(self) -> None:

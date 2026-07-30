@@ -598,13 +598,24 @@ def main() -> int:
             "the same thing as its previous one is skipped"
         ),
     )
+    parser.add_argument(
+        "--output-suffix",
+        default="",
+        help=(
+            "override the rubric-derived output filename suffix (e.g. "
+            "_pilot); required for pilot runs so a rerun cannot overwrite "
+            "the frozen gated_claims files"
+        ),
+    )
     args = parser.parse_args()
 
     load_env(ROOT / ".env")
     SUPPLY_ROOT.mkdir(parents=True, exist_ok=True)
     GATE_CACHE.mkdir(parents=True, exist_ok=True)
 
-    suffix = "" if args.rubric == DRAFT_PROMPT_VERSION else "_v2"
+    suffix = args.output_suffix or (
+        "" if args.rubric == DRAFT_PROMPT_VERSION else "_v2"
+    )
     requires_lever = bool(RUBRICS[args.rubric]["requires_lever"])
     run_memory_quality = memory_quality_enabled(
         args.rubric, args.memory_quality_gate

@@ -270,7 +270,7 @@ class CausalChainTests(unittest.TestCase):
             self.assertIn(field, CONSTRUCTION_SCHEMA["required"])
 
     def test_the_prompt_version_is_bumped_for_the_causal_chain(self) -> None:
-        self.assertEqual(CONSTRUCTION_PROMPT_VERSION, "parmbench_construction_v3")
+        self.assertEqual(CONSTRUCTION_PROMPT_VERSION, "parmbench_construction_v4")
 
     def test_a_complete_chain_without_assumptions_is_accepted(self) -> None:
         self.assertIsNone(causal_chain_rejection(_core(**_chain())))

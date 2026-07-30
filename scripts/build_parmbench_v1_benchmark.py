@@ -94,9 +94,12 @@ DECISION_VALIDITY_CACHE = (
 SOURCE_ROOT_RELATIVE = "../personamem-v2-train-v1/source"
 
 BUILDER_VERSION = "parmbench_v1_builder_v1"
-# v3 adds the evaluator-only causal chain to the construction response. Old
+# v3 added the evaluator-only causal chain to the construction response. v4
+# restricts assumptions_required to MATERIAL assumptions: the first pilot
+# showed a model told to list every obvious assumption lists one for all 17
+# fresh cores, so the hard reject on a non-empty list starved the batch. Old
 # caches are keyed by the previous versions and stay untouched.
-CONSTRUCTION_PROMPT_VERSION = "parmbench_construction_v3"
+CONSTRUCTION_PROMPT_VERSION = "parmbench_construction_v4"
 CONSTRUCTION_MODEL = "gpt-5-mini"
 AXIS_SEED = 20260728
 
@@ -198,12 +201,16 @@ plainly and do not soften them.
 - why_memory_plus_cue_prefers_b: why the personal fact together with the
   affordance makes the target the better pick for this person, and why the
   winner becomes unsuitable or clearly worse for them.
-- assumptions_required: every possession, permission, relationship, location,
-  medical conclusion, future plan, or unstated preference your justification
-  needs that the person never stated. One short phrase each. Report them all,
-  including the ones that feel obvious. Leave the list empty only when the
-  justification genuinely needs nothing beyond the personal fact, so choose an
-  affordance that follows from the fact alone.
+- assumptions_required: every MATERIAL assumption your justification needs
+  that the person never stated: a possession, permission, relationship,
+  location, medical conclusion, future plan, or unstated preference that is
+  not already part of the personal fact. One short phrase each. Do not list
+  restatements of the fact itself (if the fact is that they own a console,
+  "they still own the console" is not an assumption), background facts true
+  of nearly anyone, or ordinary implications of the stated fact. Design the
+  scenario so this list is genuinely empty: a scenario that needs even one
+  material assumption will be rejected, so choose an affordance that follows
+  from the fact alone.
 - why_control_removes_advantage: why swapping cue_clause for neutral_clause
   leaves the target with no remaining advantage for this person anywhere in its
   entry, including sentences you wrote outside the cue.
@@ -1071,7 +1078,9 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     ]
 
 
-def load_fairness_repairs() -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
+def load_fairness_repairs(
+    path: Path | None = FAIRNESS_REPAIRS_PATH,
+) -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
     """Read the tracked repair and drop decisions from the fairness run.
 
     `repairs` maps a scenario to its attempt number and the variants that
@@ -1081,9 +1090,11 @@ def load_fairness_repairs() -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
     reproduces the repaired batch exactly.
     """
 
-    if not FAIRNESS_REPAIRS_PATH.exists():
+    # None means repairs are disabled (a pilot with no fairness history);
+    # the default carries the tracked v1 file for frozen-batch replays.
+    if path is None or not path.exists():
         return {}, {}
-    payload = json.loads(FAIRNESS_REPAIRS_PATH.read_text(encoding="utf-8"))
+    payload = json.loads(path.read_text(encoding="utf-8"))
     repairs = {
         str(key): {
             "attempt": int(value["attempt"]),
@@ -1105,10 +1116,13 @@ def load_fairness_repairs() -> tuple[dict[str, dict[str, Any]], dict[str, str]]:
     return repairs, drops
 
 
-def build_specs(claims: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def build_specs(
+    claims: Sequence[Mapping[str, Any]],
+    repairs_path: Path | None = FAIRNESS_REPAIRS_PATH,
+) -> list[dict[str, Any]]:
     """Assign every construction axis from balanced, seeded pools."""
 
-    repairs, _ = load_fairness_repairs()
+    repairs, _ = load_fairness_repairs(repairs_path)
     axis_rng = random.Random(AXIS_SEED)
     count = len(claims)
     domains = balanced_assignment(DOMAINS, count, axis_rng)
@@ -1277,6 +1291,22 @@ def main() -> int:
         default=str(DATASET_ROOT),
         help="dataset directory to write; point a pilot away from the frozen batch",
     )
+    parser.add_argument(
+        "--fairness-repairs",
+        default=str(FAIRNESS_REPAIRS_PATH),
+        help=(
+            "repair and drop decisions file from a fairness run; pass "
+            "'none' for a pilot with no prior fairness history"
+        ),
+    )
+    parser.add_argument(
+        "--supply",
+        default=str(SUPPLY_PATH),
+        help=(
+            "gated-claims JSONL to build from; point a pilot at its own "
+            "supply file instead of the frozen gated_claims.jsonl"
+        ),
+    )
     add_decision_validity_arguments(parser)
     args = parser.parse_args()
 
@@ -1285,15 +1315,20 @@ def main() -> int:
     output_root = Path(args.output_dir)
     context_root = output_root / "contexts"
 
-    claims = load_jsonl(SUPPLY_PATH)
+    claims = load_jsonl(Path(args.supply))
     if args.limit:
         claims = claims[: args.limit]
     records_by_corpus: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in load_jsonl(RECORDS_PATH):
         records_by_corpus[record["corpus_id"]].append(record)
 
-    specs = build_specs(claims)
-    _, fairness_drops = load_fairness_repairs()
+    repairs_path = (
+        None
+        if args.fairness_repairs.strip().lower() == "none"
+        else Path(args.fairness_repairs)
+    )
+    specs = build_specs(claims, repairs_path)
+    _, fairness_drops = load_fairness_repairs(repairs_path)
     constructor = CachedConstructor(CONSTRUCTION_CACHE, offline=args.offline)
     validity_judge = make_decision_validity_judge(args)
 

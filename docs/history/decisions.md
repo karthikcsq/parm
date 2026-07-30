@@ -5,6 +5,27 @@ entries appear first. Current behavior is documented in
 [Architecture](../architecture.md) and the
 [Evaluation Contract](../benchmark-evaluation.md).
 
+## 2026-07-30
+
+### Relevance is enforced by three gates, not one
+
+**Why:** An independent audit of 29 frozen-batch scenarios against raw
+sources found only 5 defensible at a paper-review bar. The failures were not
+source-support failures: they were anecdotes and wording requests promoted to
+memories, and real facts wrapped in invented permissions, possessions, and
+hollow affordances. The fairness sweep cannot catch this because a contrived
+scenario can still produce the intended A/A/B pattern.
+
+**What:** Split relevance into source support (`evidence_gate`), memory
+quality (`memory_quality`, pre-construction), and decision validity
+(`decision_validity`, post-construction with an evaluator-only causal chain
+from the construction model). A bounded 60-row pilot removed every upstream
+failure mode from its survivors; the residual fixture-level gaps (decoy
+telegraphing, prompt-instruction confounds, ablated-preference redirection)
+are recorded in the audit doc as the next round's work list. The frozen
+157-scenario batch is unchanged and its realism defects stay documented
+rather than patched.
+
 ## 2026-07-29 (later)
 
 ### The calibration batch refroze at 157 scenarios after the v2 supplement

@@ -80,6 +80,42 @@ Every accepted scenario records the exact source span that supports the fact.
 An expected final answer is not a success when the retrieved evidence does not
 support that fact.
 
+## Relevance gates
+
+Source support is one of three separate judgments, and the v1 relevance
+audit (`data/parmbench-v1-supply/relevance-audit-v1.md`) showed it is the
+weakest gate on its own: a claim can be perfectly supported and still be an
+anecdote no ordinary task turns on, or a well-built scenario can wrap a real
+fact in an invented permission. Construction therefore runs three versioned
+gates, each cached and each recording its rejection reasons in provenance:
+
+1. **Source support** (`evidence_gate`, rubric
+   `personamem_source_support_v2`): did the user say it?
+2. **Memory quality** (`memory_quality`, rubric
+   `parmbench_memory_quality_v1`, pre-construction): is the fact durable or
+   currently operative — a preference, constraint, exclusion, active
+   commitment, stable relationship, owned item, accessibility need, or
+   concrete schedule? Editing requests, questions, and in-session states are
+   rejected deterministically before any model call. The gate also labels
+   sensitive facts so `memory.sensitive_terms` is populated at the source.
+3. **Decision validity** (`decision_validity`, rubric
+   `parmbench_decision_validity_v1`, post-construction): does this exact
+   task, cue, and choice change follow from the fact without invented
+   assumptions? The auditor sees the fixture roles — it audits dataset
+   quality and never touches benchmark answer scoring. The construction
+   model must also return an evaluator-only causal chain (why A wins, why
+   the cue is neutral without memory, why memory plus cue prefers B, what
+   assumptions are required, why the control removes the advantage), and any
+   material assumption rejects the core before the gate is called.
+   Deterministic backstops reject lexical residue of the claim in the
+   target's name or ablated body and relational capability labels whose
+   answer is named after the memory's own words.
+
+The failure taxonomy shared by the gates lives in
+`parm_bench.relevance_taxonomy`. Fairness (steps 6-7 below) proves a model
+follows the intended A/A/B pattern; the relevance gates are what make the
+pattern worth following.
+
 ## Capability coverage
 
 Keep the benchmark broad enough to compare retrieval methods without making

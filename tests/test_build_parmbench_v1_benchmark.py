@@ -966,15 +966,67 @@ class PredicateGuardTests(unittest.TestCase):
             "decoy_annotates_personalisation_axis",
         )
 
-    def test_the_axis_guard_names_the_repeated_words(self) -> None:
+    def test_the_axis_guard_names_the_denied_words(self) -> None:
         row = _predicate_row()
         core = _predicate_core()
-        core["decoys"][1]["body"] = "Fits the diary but the entrance is narrow."
+        core["decoys"][1]["body"] = (
+            "Fits the diary but has no entrance off the lane."
+        )
         self.assertIn(
             "entrance",
             decoy_annotates_axis(
                 normalise_core(core), row["predicate"], self.prompt
             ),
+        )
+
+    def test_a_decoy_lacking_the_axis_property_is_rejected(self) -> None:
+        row = _predicate_row()
+        core = _predicate_core()
+        core["decoys"][2]["body"] = (
+            "Runs at the right hour but lacks a step-free entrance."
+        )
+        self.assertIn(
+            "entrance",
+            decoy_annotates_axis(
+                normalise_core(core), row["predicate"], self.prompt
+            ),
+        )
+
+    def test_a_positive_near_miss_decoy_is_accepted(self) -> None:
+        """A decoy may share the affordance's words while asserting them.
+
+        The anchors ask for decoys that nearly satisfy the affordance, so a
+        room advertised with its own step-free entrance is the wanted shape:
+        it competes on the axis's own ground without telling a reader that
+        the axis exists.
+        """
+
+        row = _predicate_row()
+        core = _predicate_core()
+        core["decoys"][0]["body"] = (
+            "A step-free entrance opens onto the lane, though another group "
+            "already holds that hour."
+        )
+        self.assertEqual(
+            decoy_annotates_axis(
+                normalise_core(core), row["predicate"], self.prompt
+            ),
+            (),
+        )
+
+    def test_a_decoy_denying_something_off_axis_is_accepted(self) -> None:
+        """A limitation that names no axis word is not an axis annotation."""
+
+        row = _predicate_row()
+        core = _predicate_core()
+        core["decoys"][1]["body"] = (
+            "Fits the diary, but no catering is included with the booking."
+        )
+        self.assertEqual(
+            decoy_annotates_axis(
+                normalise_core(core), row["predicate"], self.prompt
+            ),
+            (),
         )
 
     def test_a_decoy_on_ordinary_grounds_is_accepted(self) -> None:

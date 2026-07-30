@@ -844,6 +844,13 @@ def stems(text: str) -> set[str]:
     return {_stem(word) for word in content_words(text)}
 
 
+_NEGATION_PATTERN = re.compile(
+    r"\b(no|not|never|without|nor|lack|lacks|lacking|cannot|unable|"
+    r"neither|excludes?|excluding|unavailable)\b|n't",
+    re.IGNORECASE,
+)
+
+
 def axis_guard_words(
     core: Mapping[str, Any],
     predicate: Mapping[str, Any],
@@ -880,12 +887,24 @@ def decoy_annotates_axis(
     predicate: Mapping[str, Any],
     prompt: str,
 ) -> tuple[str, ...]:
-    """Axis words a decoy repeats, names, or denies.
+    """Axis words a decoy denies rather than merely shares.
 
     Gap 2 of the v3 relevance audit: a decoy that says it has no press access
     for reviewers puts the personalisation axis in front of a reader who was
-    given no personal information at all. Decoys compete on ordinary grounds,
-    so any distinctive axis word inside one is a rejection.
+    given no personal information at all. What does that damage is the
+    annotation - stating the lack, negating the affordance, naming the
+    personalisation dimension as a shortfall - not the vocabulary itself.
+    A decoy is allowed to work in the axis's domain and may even come close
+    to satisfying the affordance; `selection_predicate_anchors.json` asks for
+    decoys that nearly satisfy the ordinary mechanism or the affordance, so
+    near-miss vocabulary is wanted rather than tolerated.
+
+    The first shape of this guard rejected on bare lexical overlap and cost
+    the v5 pilot every scenario it had: 31 of 48 mapped rows dropped here, and
+    replaying those cores from the construction cache put 22 of the 31 on
+    decoys with no negation anywhere near the shared word ("a bulk pack of
+    heavy-duty sleeves" against an archival-sleeve predicate). So an axis word
+    counts only when a negation or lack marker sits in the same decoy.
     """
 
     guard = axis_guard_words(core, predicate, prompt)
@@ -894,15 +913,10 @@ def decoy_annotates_axis(
     hits: set[str] = set()
     for decoy in core.get("decoys", ()):
         text = f"{decoy.get('label', '')} {decoy.get('body', '')}"
+        if not _NEGATION_PATTERN.search(text):
+            continue
         hits |= stems(text) & guard
     return tuple(sorted(hits))
-
-
-_NEGATION_PATTERN = re.compile(
-    r"\b(no|not|never|without|nor|lack|lacks|lacking|cannot|unable|"
-    r"neither|excludes?|excluding|unavailable)\b|n't",
-    re.IGNORECASE,
-)
 
 
 def control_negates_cue(core: Mapping[str, Any]) -> tuple[str, ...]:

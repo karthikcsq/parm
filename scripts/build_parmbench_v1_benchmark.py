@@ -74,7 +74,9 @@ from parm_bench.decision_validity import (  # noqa: E402
     DIRECT_RELATION,
     audit_scenario,
     build_scenario,
+    capability_conflicts_with_lexical_target,
     capability_for_fact,
+    control_residual_advantage,
 )
 from parm_bench.service_tier import service_tier_kwargs  # noqa: E402
 
@@ -1456,6 +1458,41 @@ def main() -> int:
             cue_text=cue,
             evidence_span=str(row["draft"]["evidence_span"]),
         )
+        # Deterministic relevance backstops run before the judge: the v3
+        # pilot showed the judge misses lexical residue in option names and
+        # bodies, and a hard check costs no call.
+        residual = control_residual_advantage(
+            build_scenario(
+                claim=str(spec["claim"]),
+                evidence_span=str(row["draft"]["evidence_span"]),
+                task_prompt=prompt,
+                core=core,
+                ordinary_mechanism=str(spec["mechanism"]),
+                capability_label=capability,
+            )
+        )
+        if residual:
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": "control_residual_claim_overlap",
+                    "residual_words": list(residual),
+                }
+            )
+            continue
+        if capability_conflicts_with_lexical_target(
+            capability,
+            str(spec["claim"]),
+            str(row["draft"]["evidence_span"]),
+            str(core["target_label"]),
+        ):
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": "capability_conflicts_with_lexical_target",
+                }
+            )
+            continue
         # The gate runs once the scenario is otherwise shippable, so a judge
         # call is never spent on a core the deterministic checks would drop.
         validity = gate_scenario(

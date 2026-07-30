@@ -695,6 +695,53 @@ def wording_relation(evidence_span: str, cue_text: str) -> str:
     return SHARE_WORDING if span_words & cue_words else PARAPHRASE_ONLY
 
 
+def control_residual_advantage(scenario: DecisionScenario) -> tuple[str, ...]:
+    """Distinctive claim words that survive cue ablation in the target.
+
+    The rubric tells the judge to read the full option bodies after the cue
+    swap, but the v3 pilot showed it reliably reads only the cue sentence: an
+    option literally named after the claim's key word passed `control_valid`
+    on every pilot scenario. This is the deterministic backstop for the
+    lexical subset of that failure. After ablation, no distinctive content
+    word of the claim or evidence span may remain in the target's label or
+    body. A word that also appears in the winner's label or body is not
+    distinctive: it cannot carry a personalized advantage the winner lacks.
+    Semantic residue without shared wording stays the judge's job.
+    """
+
+    claim_words = _content_words(scenario.claim) | _content_words(
+        scenario.evidence_span
+    )
+    winner_words = _content_words(scenario.option_a_label) | _content_words(
+        scenario.option_a_body
+    )
+    ablated_target = "{} {}".format(
+        scenario.option_b_label, _ablate(scenario.option_b_body, scenario)
+    )
+    residual = (
+        _content_words(ablated_target) & claim_words
+    ) - winner_words
+    return tuple(sorted(residual))
+
+
+def capability_conflicts_with_lexical_target(
+    capability: str, claim: str, evidence_span: str, target_label: str
+) -> bool:
+    """A relational capability with the memory's word in the answer's name.
+
+    `one_hop_relational` asserts that a system must traverse a relation the
+    cue does not state. When the target's own label contains a distinctive
+    content word of the claim, the hop collapses to string matching and the
+    label is wrong (pilot example: a "multilingual" claim answered by a
+    "Multilingual Data Pack").
+    """
+
+    if capability != "one_hop_relational":
+        return False
+    claim_words = _content_words(claim) | _content_words(evidence_span)
+    return bool(_content_words(target_label) & claim_words)
+
+
 # --------------------------------------------------------------------------
 # internals
 # --------------------------------------------------------------------------

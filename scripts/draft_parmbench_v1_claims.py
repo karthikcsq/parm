@@ -7,9 +7,18 @@ Phase A of the construction contract. For every candidate source row in
    claim from the raw user-authored text of the row's conversation snippet,
    returning the exact verbatim user span that entails it;
 2. verifies the span deterministically against the persona's normalized
-   records and the tracked history file; and
+   records and the tracked history file;
 3. runs `parm_bench.evidence_gate.grade_claim` on the claim and the snippet
-   turns, keeping only explicit or inferable grades.
+   turns, keeping only explicit or inferable grades; and
+4. runs `parm_bench.memory_quality.grade_memory_quality` on the survivors,
+   keeping only facts worth retaining as memory.
+
+Stages 3 and 4 ask different questions. Stage 3 asks whether the user said
+it; stage 4 asks whether the fact decides anything later. The v1 relevance
+audit found the second question unenforced, so a wording request or a resolved
+roadside breakdown could reach construction with a clean support grade. The
+memory-quality stage runs only for rubrics drafted after that audit, so the v1
+and v2 batches replay from their existing caches unchanged.
 
 The upstream `preference` label is passed to the drafter only as a hint of
 where to look. The drafter is told it is unverified, must not copy its
@@ -37,8 +46,11 @@ Outputs land in `data/parmbench-v1-supply/`, suffixed by rubric version for
 anything past v1:
 
 - `claim_drafts.jsonl` - one row per candidate, drafter verdict and checks;
-- `gated_claims.jsonl` - the rows that passed both the span checks and the
-  evidence gate, with the gold record resolved; and
+- `gated_claims.jsonl` - the rows that passed the span checks, the evidence
+  gate, and the memory-quality gate when it runs, with the gold record
+  resolved and the retention verdict carried in `memory_quality` and
+  `memory_quality_provenance` (category, durability, reasons,
+  sensitive_terms); and
 - `supply_summary.json` - counts by outcome and rejection reason.
 """
 
@@ -64,6 +76,17 @@ from parm_bench.evidence_gate import (
     EvidenceGateCachePolicy,
     grade_claim,
 )
+from parm_bench.memory_quality import (
+    MEMORY_QUALITY_MODEL,
+    MEMORY_QUALITY_RUBRIC,
+    PASSING_DURABILITY,
+    CachedOpenAIMemoryQualityJudge,
+    MemoryQualityCacheMissError,
+    MemoryQualityCachePolicy,
+    MemoryQualityResult,
+    grade_memory_quality,
+    passes_memory_quality,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -74,10 +97,18 @@ HISTORY_ROOT = SOURCE_ROOT / "source"
 SUPPLY_ROOT = ROOT / "data" / "parmbench-v1-supply"
 DRAFT_CACHE = ROOT / "data" / "construction-caches" / "parmbench-v1" / "claim-drafts"
 GATE_CACHE = ROOT / "data" / "evidence-gate-caches" / "parmbench-v1"
+MEMORY_QUALITY_CACHE = ROOT / "data" / "memory-quality-caches" / "parmbench-v1"
 
 DRAFT_MODEL = "gpt-5-mini"
 DRAFT_PROMPT_VERSION = "parmbench_claim_draft_v1"
 DRAFT_PROMPT_VERSION_V2 = "parmbench_claim_draft_v2"
+
+# Rubrics whose batches were drafted and frozen before the memory-quality gate
+# existed. Their replays must reproduce the old outcomes, so the gate stays off
+# unless it is asked for by name.
+PRE_MEMORY_QUALITY_RUBRICS = frozenset(
+    {DRAFT_PROMPT_VERSION, DRAFT_PROMPT_VERSION_V2}
+)
 
 MIN_SPAN_CHARS = 30
 MAX_SPAN_CHARS = 320
@@ -497,6 +528,29 @@ def same_fact_as(first: str, second: str) -> bool:
     return len(left & right) / len(left | right) >= MAX_REDRAFT_CLAIM_JACCARD
 
 
+def memory_quality_enabled(rubric: str, requested: bool | None) -> bool:
+    """Whether the memory-quality stage runs for this rubric.
+
+    `requested` is the tri-state from the command line: None leaves the
+    decision to the rubric, so a new rubric gets the gate and the two frozen
+    rubrics replay without it.
+    """
+
+    if requested is not None:
+        return requested
+    return rubric not in PRE_MEMORY_QUALITY_RUBRICS
+
+
+def memory_quality_rejection_reason(result: MemoryQualityResult) -> str:
+    """The single reason string recorded for a failed retention verdict."""
+
+    if result.rejection_reasons:
+        return f"memory_quality_{result.rejection_reasons[0]}"
+    if result.durability not in PASSING_DURABILITY:
+        return f"memory_quality_{result.durability}"
+    return "memory_quality_not_worth_retaining"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=0)
@@ -507,6 +561,26 @@ def main() -> int:
         default=DRAFT_PROMPT_VERSION,
         choices=sorted(RUBRICS),
         help="drafting rubric version; anything past v1 writes suffixed files",
+    )
+    parser.add_argument(
+        "--memory-quality-gate",
+        dest="memory_quality_gate",
+        action="store_true",
+        default=None,
+        help=(
+            "grade every evidence-gated claim on memory quality with the "
+            "parmbench_memory_quality_v1 rubric and keep only durable or "
+            "currently operative facts; on by default for any rubric newer "
+            f"than {DRAFT_PROMPT_VERSION_V2}, off by default for "
+            f"{DRAFT_PROMPT_VERSION} and {DRAFT_PROMPT_VERSION_V2} so their "
+            "frozen batches replay unchanged"
+        ),
+    )
+    parser.add_argument(
+        "--no-memory-quality-gate",
+        dest="memory_quality_gate",
+        action="store_false",
+        help="skip the memory-quality stage even for a new rubric",
     )
     parser.add_argument(
         "--skip-base-case-ids",
@@ -532,6 +606,11 @@ def main() -> int:
 
     suffix = "" if args.rubric == DRAFT_PROMPT_VERSION else "_v2"
     requires_lever = bool(RUBRICS[args.rubric]["requires_lever"])
+    run_memory_quality = memory_quality_enabled(
+        args.rubric, args.memory_quality_gate
+    )
+    if run_memory_quality:
+        MEMORY_QUALITY_CACHE.mkdir(parents=True, exist_ok=True)
 
     candidates = [
         json.loads(line)
@@ -570,6 +649,17 @@ def main() -> int:
         if args.offline
         else EvidenceGateCachePolicy.POPULATE,
         client=drafter.client,
+    )
+    memory_judge = (
+        CachedOpenAIMemoryQualityJudge(
+            MEMORY_QUALITY_CACHE,
+            MemoryQualityCachePolicy.FROZEN
+            if args.offline
+            else MemoryQualityCachePolicy.POPULATE,
+            client=drafter.client,
+        )
+        if run_memory_quality
+        else None
     )
 
     def history_text(relative_path: str) -> str:
@@ -663,6 +753,28 @@ def main() -> int:
             if result.hard_rejections:
                 out["reason"] = f"gate_{result.hard_rejections[0]}"
             return out
+
+        if memory_judge is not None:
+            try:
+                memory = grade_memory_quality(
+                    claim, span, snippet, judge=memory_judge
+                )
+            except MemoryQualityCacheMissError:
+                out["outcome"] = "pending"
+                out["reason"] = "memory_quality_not_cached"
+                return out
+            out["memory_quality"] = memory.to_dict()
+            out["memory_quality_provenance"] = {
+                "category": memory.category,
+                "durability": memory.durability,
+                "reasons": list(memory.rejection_reasons),
+                "sensitive_terms": list(memory.sensitive_terms),
+            }
+            if not passes_memory_quality(memory):
+                out["outcome"] = "rejected"
+                out["reason"] = memory_quality_rejection_reason(memory)
+                return out
+
         out["outcome"] = "passed"
         out["reason"] = f"gate_{result.grade}"
         return out
@@ -699,7 +811,32 @@ def main() -> int:
         "draft_prompt_version": args.rubric,
         "draft_model": DRAFT_MODEL,
         "live_draft_calls": drafter.live_calls,
+        "memory_quality_gate": run_memory_quality,
+        "memory_quality_rubric": (
+            MEMORY_QUALITY_RUBRIC if run_memory_quality else None
+        ),
+        "memory_quality_model": (
+            MEMORY_QUALITY_MODEL if run_memory_quality else None
+        ),
     }
+    if run_memory_quality:
+        summary["by_memory_category"] = dict(
+            sorted(
+                Counter(
+                    row["memory_quality"]["category"] for row in passed
+                ).items()
+            )
+        )
+        summary["by_memory_durability"] = dict(
+            sorted(
+                Counter(
+                    row["memory_quality"]["durability"] for row in passed
+                ).items()
+            )
+        )
+        summary["sensitive_passing_rows"] = sum(
+            1 for row in passed if row["memory_quality"]["sensitive"]
+        )
     atomic_write_json(SUPPLY_ROOT / f"supply_summary{suffix}.json", summary)
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0

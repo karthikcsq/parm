@@ -1,6 +1,7 @@
 import unittest
 
 from parm_bench.decision_validity import (
+    GENERIC_RESIDUAL_STEMS,
     DecisionScenario,
     build_scenario,
     capability_conflicts_with_lexical_target,
@@ -98,6 +99,44 @@ class ControlResidualAdvantageTests(unittest.TestCase):
         self.assertNotIn(
             "research", control_residual_advantage(winner_shared)
         )
+
+    def test_a_generic_stem_alone_is_not_residual_advantage(self) -> None:
+        # The v5 pilot dropped seven scenarios whose entire residue was one
+        # ordinary English word shared between a claim about somebody's week
+        # and a listing sentence about opening hours.
+        scenario = _scenario(
+            claim="The user meets a study group in the neighbourhood.",
+            evidence_span="I meet a study group most weeks near home.",
+            target_body=(
+                "The room is booked by the session and sits in a quiet "
+                "area of the neighborhood."
+            ),
+        )
+        self.assertEqual(control_residual_advantage(scenario), ())
+
+    def test_a_distinctive_stem_beside_a_generic_one_still_rejects(
+        self,
+    ) -> None:
+        scenario = _scenario(
+            claim=(
+                "The user documents traditional weaving in the "
+                "neighbourhood."
+            ),
+            evidence_span=(
+                "I spend my weeks documenting traditional weaving nearby."
+            ),
+            target_body=(
+                "Its weaving room is booked by the session and sits in a "
+                "quiet area of the neighborhood."
+            ),
+        )
+        self.assertEqual(control_residual_advantage(scenario), ("weav",))
+
+    def test_the_generic_floor_is_a_frozen_set_of_stems(self) -> None:
+        for stem in ("meet", "session", "schedul", "area", "liv"):
+            self.assertIn(stem, GENERIC_RESIDUAL_STEMS)
+        self.assertNotIn("multilingual", GENERIC_RESIDUAL_STEMS)
+        self.assertNotIn("research", GENERIC_RESIDUAL_STEMS)
 
 
 class CapabilityConflictTests(unittest.TestCase):

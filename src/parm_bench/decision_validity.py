@@ -105,6 +105,47 @@ DIRECT_RELATION = "direct"
 ONE_HOP_RELATION = "one_hop"
 CAUSAL_RELATIONS = (DIRECT_RELATION, ONE_HOP_RELATION)
 
+# The mapper's relation vocabulary, documented in the selection-predicate
+# table of `docs/benchmark-construction.md`. Spelled out here rather than
+# imported: the mapper is a separate versioned module, and this one consumes
+# the documented contract the same way the builder does.
+DIRECT_CONSTRAINT = "direct_constraint"
+COMPATIBILITY = "compatibility"
+ACTIVE_PROJECT_RELEVANCE = "active_project_relevance"
+SCHEDULE_FIT = "schedule_fit"
+ACCESSIBILITY_NEED_RELATION = "accessibility_need"
+STABLE_PREFERENCE = "stable_preference"
+RELATIONSHIP_OBLIGATION = "relationship_obligation"
+
+PREDICATE_RELATION_TYPES = (
+    DIRECT_CONSTRAINT,
+    COMPATIBILITY,
+    ACTIVE_PROJECT_RELEVANCE,
+    SCHEDULE_FIT,
+    ACCESSIBILITY_NEED_RELATION,
+    STABLE_PREFERENCE,
+    RELATIONSHIP_OBLIGATION,
+)
+
+# The anchors and the older drafting vocabulary name some relations
+# differently; the mapper translates the same way.
+_RELATION_ALIASES = {
+    "owned_item_compatibility": COMPATIBILITY,
+    "owned_item": COMPATIBILITY,
+    "possession_compatibility": COMPATIBILITY,
+    "device_compatibility": COMPATIBILITY,
+    "constraint": DIRECT_CONSTRAINT,
+    "exclusion": DIRECT_CONSTRAINT,
+    "active_project": ACTIVE_PROJECT_RELEVANCE,
+    "active_commitment": ACTIVE_PROJECT_RELEVANCE,
+    "schedule": SCHEDULE_FIT,
+    "concrete_schedule": SCHEDULE_FIT,
+    "accessibility": ACCESSIBILITY_NEED_RELATION,
+    "preference": STABLE_PREFERENCE,
+    "stable_relationship": RELATIONSHIP_OBLIGATION,
+    "relationship": RELATIONSHIP_OBLIGATION,
+}
+
 SHARE_WORDING = "share_wording"
 PARAPHRASE_ONLY = "paraphrase_only"
 
@@ -664,6 +705,73 @@ def capability_for_fact(
     )
 
 
+def capability_for_predicate(
+    *,
+    relation_type: str,
+    claim: str,
+    evidence_span: str = "",
+    cue_text: str = "",
+    target_label: str = "",
+) -> str:
+    """Label a scenario from the selection predicate that built it.
+
+    `capability_for_fact` reads the fact's memory-quality category and a
+    boolean relational-hop flag the claim drafter set. Under the
+    selection-predicate stage the mapper has already written down how the
+    fact reaches the choice, so the relation type decides the label and the
+    wording only splits the two lexical labels apart. Each branch below
+    states what the label asserts:
+
+    - `compatibility` asserts a traversal from an owned or constrained thing
+      to a property of the option, which is a hop unless the option's own
+      name or cue hands the claim's word over, in which case the traversal
+      collapses to string matching.
+    - `active_project_relevance` and the two preference relations assert only
+      that the cue restates the fact, so they split on wording.
+    - `schedule_fit` asserts recall of a time.
+    - `accessibility_need` asserts a step from a stated need to a property
+      that meets it.
+    - `relationship_obligation` asserts a named counterparty, so it needs a
+      name in the fact.
+    """
+
+    relation = normalise_relation_type(relation_type)
+    wording = wording_relation(evidence_span, cue_text)
+    lexical = (
+        "direct_lexical_fact"
+        if wording == SHARE_WORDING
+        else "paraphrased_semantic_fact"
+    )
+
+    if relation == COMPATIBILITY:
+        claim_words = _content_words(claim) | _content_words(evidence_span)
+        shared = (
+            _content_words(target_label) | _content_words(cue_text)
+        ) & claim_words
+        return "direct_lexical_fact" if shared else "one_hop_relational"
+    if relation == ACTIVE_PROJECT_RELEVANCE:
+        return lexical
+    if relation in (STABLE_PREFERENCE, DIRECT_CONSTRAINT):
+        return lexical
+    if relation == SCHEDULE_FIT:
+        return "schedule_commitment"
+    if relation == ACCESSIBILITY_NEED_RELATION:
+        return "one_hop_relational"
+    if relation == RELATIONSHIP_OBLIGATION:
+        return (
+            "relationship_named_entity"
+            if named_entities(claim)
+            else "paraphrased_semantic_fact"
+        )
+    return lexical
+
+
+def normalise_relation_type(relation_type: str) -> str:
+    value = str(relation_type or "").strip().casefold()
+    value = _RELATION_ALIASES.get(value, value)
+    return value if value in PREDICATE_RELATION_TYPES else ""
+
+
 def normalise_memory_category(category: str) -> str:
     value = str(category or "").strip().casefold()
     value = _CATEGORY_ALIASES.get(value, value)
@@ -695,6 +803,43 @@ def wording_relation(evidence_span: str, cue_text: str) -> str:
     return SHARE_WORDING if span_words & cue_words else PARAPHRASE_ONLY
 
 
+# Stems that cannot carry a personalised advantage on their own. The residual
+# check below has no distinctiveness floor of its own: any content word shared
+# between the claim and the ablated target counts, however ordinary. The v5
+# pilot measured the cost. Twelve of its scenarios were dropped for control
+# residue and seven of those twelve had nothing in the residue but one generic
+# stem - "meet", "other", "long", "even", "session", "schedul", "area"/"liv",
+# "neighborhood" - shared between a claim about a person's week and a listing
+# sentence about opening hours. Words like these appear in the claim because
+# claims are written in English, not because the option retains an advantage.
+# Distinctive residue still rejects: the set is subtracted, not the check.
+GENERIC_RESIDUAL_STEMS = frozenset(
+    {
+        "area",
+        "day",
+        "even",
+        "home",
+        "liv",
+        "long",
+        "look",
+        "meet",
+        "need",
+        "neighborhood",
+        "other",
+        "place",
+        "plan",
+        "schedul",
+        "session",
+        "thing",
+        "time",
+        "visit",
+        "want",
+        "week",
+        "work",
+    }
+)
+
+
 def control_residual_advantage(scenario: DecisionScenario) -> tuple[str, ...]:
     """Distinctive claim words that survive cue ablation in the target.
 
@@ -706,7 +851,8 @@ def control_residual_advantage(scenario: DecisionScenario) -> tuple[str, ...]:
     word of the claim or evidence span may remain in the target's label or
     body. A word that also appears in the winner's label or body is not
     distinctive: it cannot carry a personalized advantage the winner lacks.
-    Semantic residue without shared wording stays the judge's job.
+    Neither is a word from `GENERIC_RESIDUAL_STEMS`. Semantic residue without
+    shared wording stays the judge's job.
     """
 
     claim_words = _content_words(scenario.claim) | _content_words(
@@ -719,8 +865,10 @@ def control_residual_advantage(scenario: DecisionScenario) -> tuple[str, ...]:
         scenario.option_b_label, _ablate(scenario.option_b_body, scenario)
     )
     residual = (
-        _content_words(ablated_target) & claim_words
-    ) - winner_words
+        (_content_words(ablated_target) & claim_words)
+        - winner_words
+        - GENERIC_RESIDUAL_STEMS
+    )
     return tuple(sorted(residual))
 
 

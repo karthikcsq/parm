@@ -6,15 +6,24 @@ import unittest
 from pathlib import Path
 
 from parm_bench.decision_validity import (
+    CAPABILITIES,
+    PREDICATE_RELATION_TYPES,
     build_scenario,
     capability_conflicts_with_lexical_target,
+    capability_for_predicate,
     control_residual_advantage,
 )
 from scripts.build_parmbench_v1_benchmark import (
     CAUSAL_CHAIN_FIELDS,
+    CONSTRUCTION_INSTRUCTIONS_BY_VERSION,
+    CONSTRUCTION_INSTRUCTIONS_V5,
     CONSTRUCTION_PROMPT_VERSION,
     CONSTRUCTION_PROMPT_VERSION_V5,
+    CONSTRUCTION_PROMPT_VERSION_V6,
+    CONSTRUCTION_PROMPT_VERSIONS,
     CONSTRUCTION_SCHEMA,
+    CONSTRUCTION_SCHEMA_BY_VERSION,
+    DEFAULT_CONSTRUCTION_VERSION,
     DOMAINS,
     NEUTRAL_LENGTH_BAND,
     NO_PREDICATE_REASON,
@@ -27,6 +36,7 @@ from scripts.build_parmbench_v1_benchmark import (
     causal_chain_record,
     causal_chain_rejection,
     control_negates_cue,
+    core_declines,
     decoy_annotates_axis,
     neutral_length_ratio,
     normalise_core,
@@ -1274,6 +1284,458 @@ class SensitiveTermTests(unittest.TestCase):
         row["predicate"]["sensitive_terms"] = ["family health history"]
         row["memory_quality_provenance"] = {"sensitive_terms": ["stale term"]}
         self.assertEqual(case_sensitive_terms(row), ["family health history"])
+
+
+# The ten v5 pilot scenarios whose declared capability label the
+# decision-validity judge rejected, replayed here with the inputs the label was
+# read from. `suggested` is the label the judge named; `deterministic` is the
+# label `capability_for_predicate` gives. The pilot directory these were taken
+# from is rebuilt, so the rows are frozen here rather than read back from it.
+PILOT_V5_CAPABILITY_DISAGREEMENTS: tuple[dict[str, str], ...] = (
+    {
+        "base_case_id": 'parmbench-v1-p11-516',
+        "relation_type": 'active_project_relevance',
+        "claim": (
+            'The user is up past midnight reading testimonies from a '
+            'case that feels achingly familiar.'
+        ),
+        "evidence_span": (
+            "It's past midnight again, and I find myself still reading "
+            'through testimonies from a case that feels achingly '
+            'familiar.'
+        ),
+        "cue_text": (
+            'Many items are tagged as witness statements or official '
+            'court filings and include the case name or a closely '
+            'related subject tag.'
+        ),
+        "target_label": 'Court Records Bundle',
+        "suggested": 'paraphrased_semantic_fact',
+        "deterministic": 'direct_lexical_fact',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p16-127',
+        "relation_type": 'compatibility',
+        "claim": 'The user fractured their left wrist in their 20s.',
+        "evidence_span": (
+            "leave my left wrist sore for the rest of the day. It's not "
+            "constant, but if I'm using a twisting motion for too long, "
+            'it starts to ache. I suspect part of it is just me getting '
+            'older, though I did fracture that wrist back in my 20s '
+            'from a cycling accident.'
+        ),
+        "cue_text": (
+            'It features a gear-assisted ratcheting mechanism that '
+            'reduces wrist-twisting by letting you turn screws '
+            'continuously without having to flip the driver.'
+        ),
+        "target_label": 'Gear-Assisted Driver Set',
+        "suggested": 'one_hop_relational',
+        "deterministic": 'direct_lexical_fact',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p92-502',
+        "relation_type": 'active_project_relevance',
+        "claim": (
+            'The user is conducting research at Columbia University '
+            'examining how multilingual online spaces frame and spread '
+            'contested information.'
+        ),
+        "evidence_span": (
+            "In my current research at Columbia University, I'm "
+            'examining how multilingual online spaces frame and spread '
+            'contested information.'
+        ),
+        "cue_text": (
+            'The abstract and methods explicitly report multilingual '
+            'datasets and cross-lingual procedures for detecting rumor '
+            'propagation.'
+        ),
+        "target_label": 'Propagation Methods Report',
+        "suggested": 'direct_lexical_fact',
+        "deterministic": 'direct_lexical_fact',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p140-533',
+        "relation_type": 'stable_preference',
+        "claim": (
+            'The user cares whether holiday displays feel harmonious '
+            'and inviting.'
+        ),
+        "evidence_span": (
+            'certain holiday displays feel harmonious and inviting '
+            'while others seem overdone'
+        ),
+        "cue_text": (
+            'The listing includes coordinated color swatch images and '
+            'close-up photos that show natural fibers and notes '
+            'indicating premium or natural materials.'
+        ),
+        "target_label": 'Curated Palette Co',
+        "suggested": 'one_hop_relational',
+        "deterministic": 'paraphrased_semantic_fact',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p164-411',
+        "relation_type": 'accessibility_need',
+        "claim": (
+            'The user experiences brief finger sluggishness after '
+            'particularly intense rehearsal days.'
+        ),
+        "evidence_span": (
+            'After particularly intense rehearsal days, I notice that '
+            'my fingers seem just a touch slower to respond-as though '
+            'the notes are a fraction behind the thought.'
+        ),
+        "cue_text": (
+            'It explicitly offers same-day rescheduling and notes an '
+            'available two-hour buffer after scheduled events.'
+        ),
+        "target_label": 'Afternoon Collection Slot',
+        "suggested": 'one_hop_relational',
+        "deterministic": 'one_hop_relational',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p191-186',
+        "relation_type": 'active_project_relevance',
+        "claim": 'The user is a teacher.',
+        "evidence_span": (
+            'The sentiment was so warm it cut through the winter chill, '
+            'reminding me why I teach.'
+        ),
+        "cue_text": (
+            "The product description explicitly lists the set as 'for "
+            "classroom and educational use' and presents the contents "
+            'as a multi-pack for groups.'
+        ),
+        "target_label": 'Compact Group Set',
+        "suggested": 'one_hop_relational',
+        "deterministic": 'paraphrased_semantic_fact',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p192-21',
+        "relation_type": 'schedule_fit',
+        "claim": (
+            'The user prefers scheduling outings when the moon is '
+            'fuller.'
+        ),
+        "evidence_span": (
+            "Let's plan another outing soon, perhaps when the moon is "
+            'fuller. It will make for easier walking and longer '
+            'sightings.'
+        ),
+        "cue_text": (
+            'The event listing notes the scheduled date coincides with '
+            'a fuller moon phase (full or near-full).'
+        ),
+        "target_label": 'Lakeside Night Workshop',
+        "suggested": 'paraphrased_semantic_fact',
+        "deterministic": 'schedule_commitment',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p272-532',
+        "relation_type": 'schedule_fit',
+        "claim": (
+            'The user wakes up before the rest of the street comes '
+            'alive.'
+        ),
+        "evidence_span": (
+            'These days, I find myself waking up before the rest of the '
+            'street comes alive.'
+        ),
+        "cue_text": (
+            'It is scheduled to start at 6:15 AM, before the street '
+            'typically comes alive.'
+        ),
+        "target_label": 'Conference Room B',
+        "suggested": 'one_hop_relational',
+        "deterministic": 'schedule_commitment',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p316-111',
+        "relation_type": 'relationship_obligation',
+        "claim": (
+            'The user has an old friend whose health is rapidly '
+            'declining.'
+        ),
+        "evidence_span": (
+            "Lately I've been feeling weighed down after hearing that "
+            "an old friend's health is rapidly declining."
+        ),
+        "cue_text": (
+            'This package can be delivered directly to hospitals and '
+            'care facilities, comes in bedside-friendly single '
+            'servings, and includes an optional short video message for '
+            'remote visits.'
+        ),
+        "target_label": 'Compact Note & Video',
+        "suggested": 'one_hop_relational',
+        "deterministic": 'paraphrased_semantic_fact',
+    },
+    {
+        "base_case_id": 'parmbench-v1-p348-189',
+        "relation_type": 'accessibility_need',
+        "claim": 'The user wears glasses.',
+        "evidence_span": (
+            'I had to adjust my glasses a couple of times to read the '
+            'finer details on the archival photos you displayed'
+        ),
+        "cue_text": (
+            'Several seats in this room are listed within the first '
+            'three rows, placing them very close to the stage.'
+        ),
+        "target_label": 'Intimate Gallery',
+        "suggested": 'one_hop_relational',
+        "deterministic": 'one_hop_relational',
+    },
+)
+
+
+class PredicateCapabilityTests(unittest.TestCase):
+    """The v6 label is a function of the predicate, not of the fact's category.
+
+    The design target for this mapping was agreement with the judge on at
+    least eight of the ten pilot rows below. It reaches three, and the
+    remaining seven cannot be recovered by any function of the predicate: the
+    judge answers `one_hop_relational` whenever it sees an inference step of
+    any size, and that reading is not a property of the relation type. Its two
+    `schedule_fit` rows are the proof. Both facts state a habitual time with
+    no calendar date - "the moon is fuller" and "before the street comes
+    alive" - and the judge called one `paraphrased_semantic_fact` and the
+    other `one_hop_relational`. Fitting a deterministic rule to a target that
+    splits identical structures two ways is fitting noise, so the mapping
+    below follows the relation type and the measured agreement is recorded
+    rather than engineered.
+    """
+
+    def _label(self, row: dict) -> str:
+        return capability_for_predicate(
+            relation_type=row["relation_type"],
+            claim=row["claim"],
+            evidence_span=row["evidence_span"],
+            cue_text=row["cue_text"],
+            target_label=row["target_label"],
+        )
+
+    def test_every_pilot_row_gets_its_recorded_label(self) -> None:
+        for row in PILOT_V5_CAPABILITY_DISAGREEMENTS:
+            with self.subTest(row["base_case_id"]):
+                self.assertEqual(self._label(row), row["deterministic"])
+
+    def test_agreement_with_the_judge_does_not_regress(self) -> None:
+        agreed = [
+            row["base_case_id"]
+            for row in PILOT_V5_CAPABILITY_DISAGREEMENTS
+            if self._label(row) == row["suggested"]
+        ]
+        self.assertGreaterEqual(len(agreed), 3, agreed)
+
+    def test_every_label_is_a_declared_capability(self) -> None:
+        for row in PILOT_V5_CAPABILITY_DISAGREEMENTS:
+            self.assertIn(self._label(row), CAPABILITIES)
+
+    def test_every_relation_type_maps_to_a_capability(self) -> None:
+        for relation in PREDICATE_RELATION_TYPES:
+            label = capability_for_predicate(
+                relation_type=relation,
+                claim="The user rehearses with the Aldgate quartet.",
+                evidence_span="I rehearse with the Aldgate quartet.",
+                cue_text="It keeps a room free for small ensembles.",
+                target_label="Rear Studio",
+            )
+            self.assertIn(label, CAPABILITIES)
+
+    def test_a_compatibility_hop_survives_a_disjoint_label(self) -> None:
+        self.assertEqual(
+            capability_for_predicate(
+                relation_type="compatibility",
+                claim="The user owns an old NES console.",
+                evidence_span="I pulled the old NES out of the closet.",
+                cue_text="The tray takes 72-pin cartridges from that era.",
+                target_label="Corner Shelf Lot",
+            ),
+            "one_hop_relational",
+        )
+
+    def test_a_compatibility_hop_collapses_on_a_shared_word(self) -> None:
+        # `capability_conflicts_with_lexical_target` drops a one_hop label
+        # whose target is named after the claim, so the mapping must not
+        # assign one in the first place.
+        self.assertEqual(
+            capability_for_predicate(
+                relation_type="compatibility",
+                claim="The user owns an old NES console.",
+                evidence_span="I pulled the old NES out of the closet.",
+                cue_text="The tray takes cartridges from that era.",
+                target_label="Console Spares Crate",
+            ),
+            "direct_lexical_fact",
+        )
+
+    def test_a_relationship_without_a_name_is_not_a_named_entity(self) -> None:
+        self.assertEqual(
+            capability_for_predicate(
+                relation_type="relationship_obligation",
+                claim="The user has an old friend who is unwell.",
+                evidence_span="An old friend of mine is unwell.",
+                cue_text="It posts to residential care addresses.",
+                target_label="Quiet Parcel Service",
+            ),
+            "paraphrased_semantic_fact",
+        )
+
+    def test_a_relationship_with_a_name_is_a_named_entity(self) -> None:
+        self.assertEqual(
+            capability_for_predicate(
+                relation_type="relationship_obligation",
+                claim="The user's sister Priya runs a shop in Leeds.",
+                evidence_span="My sister Priya runs a shop in Leeds.",
+                cue_text="It posts to trade addresses overnight.",
+                target_label="Quiet Parcel Service",
+            ),
+            "relationship_named_entity",
+        )
+
+    def test_a_relation_alias_is_normalised(self) -> None:
+        self.assertEqual(
+            capability_for_predicate(
+                relation_type="owned_item_compatibility",
+                claim="The user owns an old NES console.",
+                evidence_span="I pulled the old NES out of the closet.",
+                cue_text="The tray takes 72-pin cartridges from that era.",
+                target_label="Corner Shelf Lot",
+            ),
+            "one_hop_relational",
+        )
+
+    def test_an_unknown_relation_falls_back_to_the_wording_split(self) -> None:
+        self.assertEqual(
+            capability_for_predicate(
+                relation_type="invented_relation",
+                claim="The user plays the cello.",
+                evidence_span="I play the cello most evenings.",
+                cue_text="The room keeps a cello stand by the door.",
+                target_label="Rear Studio",
+            ),
+            "direct_lexical_fact",
+        )
+
+    def test_a_v6_row_is_labelled_from_its_predicate(self) -> None:
+        # The fact's category alone would call this a schedule commitment.
+        self.assertEqual(
+            capability_for(
+                "The user keeps a standing Thursday shift at the depot.",
+                "taste",
+                False,
+                "share_wording",
+                memory_category="concrete_schedule",
+                relation_type="accessibility_need",
+            ),
+            "one_hop_relational",
+        )
+
+    def test_without_a_relation_type_the_fact_path_is_unchanged(self) -> None:
+        self.assertEqual(
+            capability_for(
+                "The user keeps a standing Thursday shift at the depot.",
+                "taste",
+                False,
+                "share_wording",
+                memory_category="concrete_schedule",
+            ),
+            "schedule_commitment",
+        )
+
+
+class ConstructionVersionV6Tests(unittest.TestCase):
+    def test_v6_is_the_default_and_v5_is_still_selectable(self) -> None:
+        self.assertEqual(
+            DEFAULT_CONSTRUCTION_VERSION, CONSTRUCTION_PROMPT_VERSION_V6
+        )
+        self.assertIn(
+            CONSTRUCTION_PROMPT_VERSION_V5, CONSTRUCTION_PROMPT_VERSIONS
+        )
+        self.assertIn(
+            CONSTRUCTION_PROMPT_VERSION, CONSTRUCTION_PROMPT_VERSIONS
+        )
+
+    def test_v5_keeps_its_own_instructions_and_schema(self) -> None:
+        self.assertEqual(
+            CONSTRUCTION_INSTRUCTIONS_BY_VERSION[
+                CONSTRUCTION_PROMPT_VERSION_V5
+            ],
+            CONSTRUCTION_INSTRUCTIONS_V5,
+        )
+        self.assertNotIn(
+            "unbuildable",
+            CONSTRUCTION_SCHEMA_BY_VERSION[CONSTRUCTION_PROMPT_VERSION_V5][
+                "properties"
+            ],
+        )
+
+    def test_only_v6_carries_the_declination_field(self) -> None:
+        schema = CONSTRUCTION_SCHEMA_BY_VERSION[CONSTRUCTION_PROMPT_VERSION_V6]
+        self.assertIn("unbuildable", schema["properties"])
+        self.assertIn("unbuildable", schema["required"])
+        for field in CONSTRUCTION_SCHEMA["required"]:
+            self.assertIn(field, schema["required"])
+
+    def test_the_v6_prompt_answers_the_three_measured_failures(self) -> None:
+        text = CONSTRUCTION_INSTRUCTIONS_BY_VERSION[
+            CONSTRUCTION_PROMPT_VERSION_V6
+        ]
+        self.assertIn("would a stranger", text.casefold())
+        self.assertIn("discount", text)
+        self.assertIn("concrete, checkable details", text)
+        self.assertIn("unbuildable", text)
+
+    def test_a_declined_core_is_detected(self) -> None:
+        self.assertTrue(core_declines({"unbuildable": True}))
+        self.assertFalse(core_declines({"unbuildable": False}))
+        self.assertFalse(core_declines({}))
+
+    def test_v6_specs_come_from_the_predicate_stage(self) -> None:
+        rows = [
+            {
+                "persona_id": index,
+                "source_row_id": f"train_text:{index}",
+                "draft": {
+                    "claim": f"The user does thing {index}.",
+                    "evidence_span": f"I do thing {index} most weeks.",
+                },
+                "predicate": _predicate_row()["predicate"],
+            }
+            for index in range(4)
+        ]
+        specs = build_specs(
+            rows, None, construction_version=CONSTRUCTION_PROMPT_VERSION_V6
+        )
+        surfaces = set(task_surfaces_for("room_route_or_seating_selection"))
+        for spec in specs:
+            self.assertIsNone(spec["skip_reason"])
+            self.assertEqual(
+                spec["construction_version"], CONSTRUCTION_PROMPT_VERSION_V6
+            )
+            self.assertIn(spec["domain"], surfaces)
+
+    def test_an_unmapped_row_is_still_skipped_under_v6(self) -> None:
+        rows = [
+            {
+                "persona_id": 1,
+                "source_row_id": "train_text:1",
+                "draft": {
+                    "claim": "The user does thing 1.",
+                    "evidence_span": "I do thing 1 most weeks.",
+                },
+            }
+        ]
+        specs = build_specs(
+            rows, None, construction_version=CONSTRUCTION_PROMPT_VERSION_V6
+        )
+        self.assertEqual(specs[0]["skip_reason"], NO_PREDICATE_REASON)
+        self.assertEqual(
+            specs[0]["construction_version"], CONSTRUCTION_PROMPT_VERSION_V6
+        )
 
 
 if __name__ == "__main__":

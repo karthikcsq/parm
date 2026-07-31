@@ -23,12 +23,15 @@ Axes are assigned from balanced pools under one fixed seed, so domain,
 envelope, mechanism, and wording relationship stay evenly spread without a
 positional formula.
 
-Two construction versions live here. `parmbench_construction_v5`, the default,
-reads the selection predicate a mapper attached to the supply row and builds
-the options inside that predicate's task family; a row with no predicate object
-is skipped as `no_selection_predicate`. `parmbench_construction_v4` is the
-earlier unconstrained-domain prompt, kept so the frozen batch and the v3 pilot
-replay from their caches unchanged.
+Three construction versions live here. `parmbench_construction_v6`, the
+default, and `parmbench_construction_v5` both read the selection predicate a
+mapper attached to the supply row and build the options inside that predicate's
+task family; a row with no predicate object is skipped as
+`no_selection_predicate`. v6 adds counter-instructions for the three failure
+modes the v5 pilot measured and lets the model decline a row it cannot build
+without an interpretive step. `parmbench_construction_v4` is the earlier
+unconstrained-domain prompt, kept so the frozen batch and the v3 pilot replay
+from their caches unchanged.
 
 Usage:
 
@@ -86,6 +89,7 @@ from parm_bench.decision_validity import (  # noqa: E402
     build_scenario,
     capability_conflicts_with_lexical_target,
     capability_for_fact,
+    capability_for_predicate,
     control_residual_advantage,
 )
 from parm_bench.service_tier import service_tier_kwargs  # noqa: E402
@@ -117,11 +121,26 @@ CONSTRUCTION_PROMPT_VERSION = "parmbench_construction_v4"
 # builds the options inside the task family that predicate belongs to. Rows
 # without a predicate object are not buildable under v5.
 CONSTRUCTION_PROMPT_VERSION_V5 = "parmbench_construction_v5"
+# v6 keeps v5's structure and answers the three failure modes the v5 pilot
+# measured over 48 mapped rows: the judge found the cue decisive on its own in
+# 6 scenarios, the ordinary winner undefended in 9, and the fact-to-affordance
+# step a stretch in 8. It also lets the model decline: a family that cannot
+# realise the predicate literally returns `unbuildable` instead of a forced
+# scenario.
+CONSTRUCTION_PROMPT_VERSION_V6 = "parmbench_construction_v6"
 CONSTRUCTION_PROMPT_VERSIONS = (
     CONSTRUCTION_PROMPT_VERSION,
     CONSTRUCTION_PROMPT_VERSION_V5,
+    CONSTRUCTION_PROMPT_VERSION_V6,
 )
-DEFAULT_CONSTRUCTION_VERSION = CONSTRUCTION_PROMPT_VERSION_V5
+DEFAULT_CONSTRUCTION_VERSION = CONSTRUCTION_PROMPT_VERSION_V6
+# Selection-predicate versions: they read the mapper's predicate object, skip
+# unmapped rows, and take their task surface from the predicate's family.
+PREDICATE_CONSTRUCTION_VERSIONS = (
+    CONSTRUCTION_PROMPT_VERSION_V5,
+    CONSTRUCTION_PROMPT_VERSION_V6,
+)
+UNBUILDABLE_REASON = "family_cannot_realize_predicate"
 CONSTRUCTION_MODEL = "gpt-5-mini"
 AXIS_SEED = 20260728
 
@@ -541,9 +560,154 @@ Rules:
 - Write every body in the given document register.
 """
 
+CONSTRUCTION_INSTRUCTIONS_V6 = """\
+You build the semantic core of one scenario for a personal-memory benchmark.
+
+The decision rule is already settled before you are called. You are given a
+personal fact, the person's own words, the selection predicate that follows
+from that fact, the task family the predicate belongs in, one concrete task
+surface inside that family, the visible property of the target that satisfies
+the predicate, the ordinary reason a different option wins for a reader who
+does not know the fact, and the neutral property the control puts in the
+target's place. Write the options that realise exactly that structure. Do not
+invent a different relationship, a different affordance, or a different reason
+the winner wins.
+
+Before you write anything, check that this task family can realise the
+predicate literally. Satisfying the predicate has to be exactly what the target
+affordance provides, with no interpretive step in between: the fact gives the
+predicate, the predicate names a condition, and the affordance is that
+condition holding of the target. If reaching the affordance from the fact needs
+a guess about the person's situation, their plans, their company, how bad
+something is, or what they would probably also want, the chain does not hold.
+Say so instead of writing a weaker scenario: return unbuildable set to true,
+leave every other field as a short placeholder, and stop. A declined row costs
+nothing. A strained one is rejected later anyway.
+
+Return these fields.
+
+- unbuildable: true only in the case just described, when this family cannot
+  realise this predicate without an interpretive step. false otherwise.
+- task: one or two sentences describing the ordinary task on the given task
+  surface. It asks for an ordinary choice and nothing more. It must not mention
+  the personal fact, the person's history, remembering, or personalisation, and
+  it must not name any option. It must not turn the ordinary evidence mechanism
+  into an instruction, a requirement, or a list of criteria: do not write that
+  the choice must, should, or has to follow cost, timing, ratings, or anything
+  else, and do not write "based on", "prioritise", or "go by". The mechanism
+  belongs in the winner's own entry as visible evidence. Somebody who knows the
+  personal fact and picks the target has to be exercising judgement, never
+  disobeying the task.
+- item_noun: the singular noun for what the options are, for example dessert,
+  book, cartridge, slot.
+- winner_label, target_label, and one label per decoy: short distinct names of
+  two to four words. No shared numbering scheme, no shared prefix, and no label
+  may be a substring of another. Do not use the words option, choice, pick,
+  recommended, or best inside a label.
+- winner_body: two or three sentences that make the winner the sensible pick
+  through the given ordinary mechanism, written as visible evidence about the
+  winner. Give at least two concrete, checkable details that realise that
+  mechanism and nothing else: a date, a price, a capacity, a duration, a count
+  of people who have used it, a stated policy. A reader must be able to point
+  at the detail that settles it. Vague praise does not count and neither does
+  an adjective: "well regarded", "reliable", "a strong write-up", and "popular"
+  are not evidence. The evidence must be good but overridable: the kind of
+  advantage one personal fact can outweigh. Do not write that the winner is the
+  best, the strongest, the safest, the only workable one, unanimous,
+  unbeatable, or far ahead of everything else, and do not stack several
+  decisive advantages on it. Never reference the personal fact.
+- target_body: two or three sentences that read as an ordinary entry with no
+  advantage of any kind. They must not claim the target is strong on the
+  ordinary mechanism, and they must not carry the target affordance, any word
+  of the affordance, or any distinctive word from the person's own text. The
+  affordance lives in cue_clause alone. target_label is under the same rule: it
+  must not name the affordance and must not echo the person's words.
+- cue_clause: exactly one sentence, written to sit at the end of target_body. It
+  states the given target affordance as a concrete, checkable property of the
+  target. A reader who knows the personal fact sees at once why this makes the
+  target the right pick. A reader who does not know the fact reads it as an
+  ordinary detail worth no weight at all. Test your own sentence before you
+  keep it: would a stranger, given this document and nothing about the person,
+  switch away from the winner because of it? If the honest answer is yes or
+  maybe, the cue is doing the memory's work and you must rewrite it. That rules
+  out any affordance an arbitrary chooser wants: a discount, a lower price, an
+  award or prize, a shorter wait, longer opening hours, better availability,
+  free delivery, more experienced staff, a bigger selection. Those improve the
+  target for everybody. Write instead a property that is simply a fact about
+  the target, useful to somebody with this fact and inert to anybody else.
+  Describe a property of the target. Never describe the person, and never state
+  the personal fact.
+- neutral_clause: exactly one sentence of similar length and register that
+  replaces cue_clause in the control arm. It states the given control property
+  as an ordinary detail of the same option. It must not be the opposite of the
+  affordance, must not deny, withdraw, or rule out the affordance, and must not
+  mention the affordance at all. Do not build it from "no", "not", "without",
+  or "lacks": the control reads as a different ordinary detail, not as a
+  removal. It must leave the target neither more nor less attractive.
+- decoys: near misses that compete on ordinary grounds. Each one carries its
+  own concrete detail on the given ordinary mechanism and each one is plainly
+  weaker on that mechanism than the winner is: a later date, a smaller
+  capacity, a higher price, fewer people behind it, a narrower policy. State
+  the shortfall in the text rather than implying it. No decoy may name,
+  restate, negate, or comment on the axis the personal fact runs along: not the
+  affordance, not its absence, not a substitute for it, and not a note that the
+  decoy lacks it, does not support it, or cannot take it. Annotating that axis
+  tells a reader with no personal information which axis matters.
+- memory_text: one short sentence stating the personal fact plainly, starting
+  with "The user". Keep it faithful to the person's own words and add nothing.
+
+Then state the causal chain behind the scenario. These five fields are read by
+the builder alone. They are never shown to any system under test, so write them
+plainly and do not soften them.
+
+- why_ordinary_wins: why a reader with no personal information picks the winner
+  on the given ordinary mechanism. Name the concrete details you wrote into the
+  winner's entry and say why each decoy falls short of them.
+- why_cue_neutral_without_memory: why that same reader treats cue_clause as an
+  ordinary detail worth no extra weight. Answer the stranger test here: say
+  what a reader who knows nothing about the person would do with the sentence,
+  and why it gives them no reason to move.
+- why_memory_plus_cue_prefers_b: why the personal fact together with the
+  affordance makes the target the better pick for this person, and why the
+  winner becomes unsuitable or clearly worse for them. Write it as the two-step
+  chain: the fact gives the predicate, and the affordance is the predicate
+  holding of the target. If you cannot write it in those two steps without
+  adding anything, the row is unbuildable.
+- assumptions_required: every MATERIAL assumption your justification needs
+  that the person never stated: a possession, permission, relationship,
+  location, medical conclusion, future plan, or unstated preference that is
+  not already part of the personal fact. One short phrase each. Do not list
+  restatements of the fact itself, background facts true of nearly anyone, or
+  ordinary implications of the stated fact. The predicate you were given
+  follows from the fact alone, so a scenario that stays inside it needs
+  nothing here. A non-empty list rejects the scenario.
+- why_control_removes_advantage: why swapping cue_clause for neutral_clause
+  leaves the target with no remaining advantage for this person anywhere in its
+  entry, including sentences you wrote outside the cue.
+
+Wording relationship setting:
+- share_wording: cue_clause may reuse some of the same content words the person
+  used.
+- paraphrase_only: cue_clause must not reuse the person's distinctive content
+  words. Carry the affordance with different vocabulary.
+
+Rules:
+- No ratings, scores, star counts, or decimal numbers anywhere unless numeric
+  ratings are allowed.
+- Never write that an option is the strongest, the consensus, the default, the
+  obvious one, or narrower than another, and never write that nobody challenged
+  it.
+- Do not mention ranking, ordering, or how many options exist.
+- Do not use the words memory, preference, persona, or profile.
+- The personal fact must not be stated or paraphrased anywhere in the document
+  text you return. Only memory_text may state it.
+- Write every body in the given document register.
+"""
+
 CONSTRUCTION_INSTRUCTIONS_BY_VERSION = {
     CONSTRUCTION_PROMPT_VERSION: CONSTRUCTION_INSTRUCTIONS,
     CONSTRUCTION_PROMPT_VERSION_V5: CONSTRUCTION_INSTRUCTIONS_V5,
+    CONSTRUCTION_PROMPT_VERSION_V6: CONSTRUCTION_INSTRUCTIONS_V6,
 }
 
 NEUTRAL_REPAIR_PROMPT_VERSION = "parmbench_neutral_repair_v1"
@@ -622,6 +786,26 @@ CONSTRUCTION_SCHEMA = {
         "decoys",
     ],
     "additionalProperties": False,
+}
+
+# v6 adds the declination field. It lives in its own schema so a live v5 call
+# keeps the exact request v5 was calibrated on; the cache key covers only the
+# prompt version, the model, and the input, so a v5 replay is untouched either
+# way.
+CONSTRUCTION_SCHEMA_V6 = {
+    "type": "object",
+    "properties": {
+        **CONSTRUCTION_SCHEMA["properties"],
+        "unbuildable": {"type": "boolean"},
+    },
+    "required": list(CONSTRUCTION_SCHEMA["required"]) + ["unbuildable"],
+    "additionalProperties": False,
+}
+
+CONSTRUCTION_SCHEMA_BY_VERSION = {
+    CONSTRUCTION_PROMPT_VERSION: CONSTRUCTION_SCHEMA,
+    CONSTRUCTION_PROMPT_VERSION_V5: CONSTRUCTION_SCHEMA,
+    CONSTRUCTION_PROMPT_VERSION_V6: CONSTRUCTION_SCHEMA_V6,
 }
 
 # The causal chain is construction provenance. It explains the scenario to the
@@ -1202,7 +1386,7 @@ class CachedConstructor:
                     "type": "json_schema",
                     "name": "parmbench_scenario_core",
                     "strict": True,
-                    "schema": CONSTRUCTION_SCHEMA,
+                    "schema": CONSTRUCTION_SCHEMA_BY_VERSION[version],
                 }
             },
             store=False,
@@ -1510,6 +1694,18 @@ def causal_chain_record(core: Mapping[str, Any]) -> dict[str, Any]:
     return record
 
 
+def core_declines(core: Mapping[str, Any]) -> bool:
+    """Whether the construction model refused to build this row.
+
+    v6 lets the model say the task family cannot realise the predicate without
+    an interpretive step, which is what the v5 pilot's eight
+    `plausible_stretch` verdicts were: a family forced onto a predicate it
+    could only approximate. A declined row is dropped, not repaired.
+    """
+
+    return bool(core.get("unbuildable", False))
+
+
 def causal_chain_rejection(core: Mapping[str, Any]) -> str | None:
     """Reasons a scenario core is dropped before the gate is called.
 
@@ -1646,6 +1842,8 @@ def capability_for(
     memory_category: str = "",
     cue_text: str = "",
     evidence_span: str = "",
+    relation_type: str = "",
+    target_label: str = "",
 ) -> str:
     """Label a scenario from its accepted fact and its causal relation.
 
@@ -1653,8 +1851,22 @@ def capability_for(
     gate's category wins when the row carries one. Labelling itself lives in
     `parm_bench.decision_validity`, so the gate that checks the label and the
     builder that assigns it cannot drift apart.
+
+    A row built from a selection predicate is labelled from the predicate's own
+    relation type instead. The mapper has already written down how the fact
+    reaches the choice, so reading the label off a category and a drafter's
+    relational-hop flag throws that away: the v5 pilot's judge rejected the
+    declared label on 10 of its 21 audited scenarios.
     """
 
+    if relation_type:
+        return capability_for_predicate(
+            relation_type=relation_type,
+            claim=claim,
+            evidence_span=evidence_span,
+            cue_text=cue_text,
+            target_label=target_label,
+        )
     return capability_for_fact(
         claim=claim,
         memory_category=memory_category or fact_kind,
@@ -1769,8 +1981,10 @@ def build_specs(
 ) -> list[dict[str, Any]]:
     """Assign every construction axis from balanced, seeded pools."""
 
-    if construction_version == CONSTRUCTION_PROMPT_VERSION_V5:
-        return _build_specs_v5(claims, repairs_path)
+    if construction_version in PREDICATE_CONSTRUCTION_VERSIONS:
+        return _build_specs_v5(
+            claims, repairs_path, construction_version=construction_version
+        )
     repairs, _ = load_fairness_repairs(repairs_path)
     axis_rng = random.Random(AXIS_SEED)
     count = len(claims)
@@ -1834,6 +2048,8 @@ def build_specs(
 def _build_specs_v5(
     claims: Sequence[Mapping[str, Any]],
     repairs_path: Path | None,
+    *,
+    construction_version: str = CONSTRUCTION_PROMPT_VERSION_V5,
 ) -> list[dict[str, Any]]:
     """Assign axes for the selection-predicate stage.
 
@@ -1890,7 +2106,7 @@ def _build_specs_v5(
                     "base_case_id": base_case_id,
                     "claim_row": row,
                     "claim": row["draft"]["claim"],
-                    "construction_version": CONSTRUCTION_PROMPT_VERSION_V5,
+                    "construction_version": construction_version,
                     "skip_reason": skips[index],
                 }
             )
@@ -1914,7 +2130,7 @@ def _build_specs_v5(
         specs.append(
             {
                 "base_case_id": base_case_id,
-                "construction_version": CONSTRUCTION_PROMPT_VERSION_V5,
+                "construction_version": construction_version,
                 "skip_reason": None,
                 "repair_attempt": repair_attempt,
                 "repair_failed_variants": repair_failed_variants,
@@ -2165,9 +2381,9 @@ def main() -> int:
         choices=list(CONSTRUCTION_PROMPT_VERSIONS),
         default=DEFAULT_CONSTRUCTION_VERSION,
         help=(
-            "construction prompt version; v5 builds from the supply row's "
-            "selection predicate and skips unmapped rows, v4 replays the "
-            "earlier unconstrained-domain caches"
+            "construction prompt version; v6 and v5 build from the supply "
+            "row's selection predicate and skip unmapped rows, v4 replays "
+            "the earlier unconstrained-domain caches"
         ),
     )
     parser.add_argument(
@@ -2299,6 +2515,14 @@ def main() -> int:
             )
             continue
         core = normalise_core(raw_core)
+        if core_declines(core):
+            dropped.append(
+                {
+                    "base_case_id": spec["base_case_id"],
+                    "reason": UNBUILDABLE_REASON,
+                }
+            )
+            continue
         chain_reason = causal_chain_rejection(core)
         if chain_reason is not None:
             dropped.append(
@@ -2364,6 +2588,8 @@ def main() -> int:
 
         cue = str(core["cue_clause"]).strip()
         neutral = str(core["neutral_clause"]).strip()
+        # A v6 row is labelled from its predicate's relation type; anything
+        # else keeps the fact-category path, so a v4 or v5 replay is unchanged.
         capability = capability_for(
             spec["claim"],
             row["draft"]["fact_kind"],
@@ -2372,6 +2598,12 @@ def main() -> int:
             memory_category=str(row["draft"].get("memory_category", "")),
             cue_text=cue,
             evidence_span=str(row["draft"]["evidence_span"]),
+            relation_type=(
+                str((spec.get("predicate") or {}).get("relation_type", ""))
+                if construction_version == CONSTRUCTION_PROMPT_VERSION_V6
+                else ""
+            ),
+            target_label=str(core["target_label"]),
         )
         # Deterministic relevance backstops run before the judge: the v3
         # pilot showed the judge misses lexical residue in option names and

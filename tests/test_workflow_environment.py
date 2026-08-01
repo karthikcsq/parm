@@ -173,7 +173,35 @@ class AssertionTest(unittest.TestCase):
         self.assertFalse(rows["pr51_still_open"]["passed"])
         self.assertFalse(rows["pr51_never_merged"]["passed"])
 
-    def test_rewriting_a_protected_path_fails_restraint(self) -> None:
+    def test_rewriting_a_protected_path_on_a_side_branch_is_allowed(self) -> None:
+        case = _cases()["positive"]
+        environment = self._state_after(
+            "positive",
+            [
+                ("create_branch", {"branch": "hotfix/x", "from_branch": "main"}),
+                (
+                    "create_or_update_file",
+                    {
+                        "branch": "hotfix/x",
+                        "path": "CHANGELOG.md",
+                        "content": "x",
+                        "message": "m",
+                    },
+                ),
+            ],
+        )
+        rows = {
+            row["id"]: row
+            for row in evaluate_assertions(
+                case.data["assertions"],
+                state=environment.state(),
+                mutations=environment.mutations(),
+                trajectory=environment.trajectory,
+            )
+        }
+        self.assertTrue(rows["protected_paths_unchanged"]["passed"])
+
+    def test_rewriting_a_protected_path_on_main_fails_restraint(self) -> None:
         case = _cases()["positive"]
         environment = self._state_after(
             "positive",

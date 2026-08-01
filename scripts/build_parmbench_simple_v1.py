@@ -69,6 +69,7 @@ from parm_bench.service_tier import service_tier_kwargs  # noqa: E402
 
 
 SIMPLE_PROMPT_VERSION = "parmbench_construction_simple_v1"
+SIMPLE_PROMPT_VERSION_V2 = "parmbench_construction_simple_v2"
 SIMPLE_BUILDER_VERSION = "parmbench_simple_builder_v1"
 SIMPLE_CACHE = ROOT / "data" / "construction-caches" / "parmbench-simple-v1"
 DEFAULT_OUTPUT = ROOT / "data" / "benchmark_parmbench_pilot_simple_v1"
@@ -166,6 +167,40 @@ Rules:
 - Plain prose, no scores or star ratings unless a price or count is the
   winner's stated advantage.
 """
+
+# v2 answers the failure classes the first calibration round measured
+# (`data/benchmark_parmbench_pilot_simple_v1/pilot-adjudication.jsonl`): axis
+# leakage through labels and pre-cue bodies, memory sentences that drop the
+# operative half of the span or inflate its frequency, requests that do the
+# cue's work, and third-person task phrasing.
+SIMPLE_INSTRUCTIONS_V2 = SIMPLE_INSTRUCTIONS + """
+Counter-instructions from the first calibration round, each naming a way an
+otherwise sound scenario was rejected:
+
+- The option set must not encode the fact's axis. The winner must not carry
+  the opposite of the fact's property, the target's label and pre-cue
+  sentences must not carry any part of the property or its era, genre, or
+  cost class, and the choice must not reduce to "matches the fact" against
+  "does not". Test it by ablation: once the cue is swapped for the neutral
+  sentence, a reader who knows the fact must find no option identifiably
+  better for them than the winner.
+- memory_text carries the decision-relevant part of the person's words. If
+  the span states a consequence, such as a wrist that gets sore with
+  twisting, the sentence states that consequence, not just the event behind
+  it. Never strengthen frequency: one instance or a hedged suggestion does
+  not become "often", "regularly", or "prefers"; decline instead.
+- The request must not do the cue's work. If the request as stated already
+  names the goal the cue serves, or reveals the fact, pick a different
+  request.
+- Write the task in the person's own first-person voice, as a message they
+  would actually send.
+"""
+
+SIMPLE_INSTRUCTIONS_BY_VERSION = {
+    SIMPLE_PROMPT_VERSION: SIMPLE_INSTRUCTIONS,
+    SIMPLE_PROMPT_VERSION_V2: SIMPLE_INSTRUCTIONS_V2,
+}
+DEFAULT_SIMPLE_VERSION = SIMPLE_PROMPT_VERSION_V2
 
 SIMPLE_SCHEMA = {
     "type": "object",
@@ -335,10 +370,18 @@ def core_shape_rejection(core: Mapping[str, Any]) -> str | None:
 class SimpleCachedGenerator:
     """Cached one-call scenario generator for the simple path."""
 
-    def __init__(self, cache_dir: Path, *, offline: bool = False) -> None:
+    def __init__(
+        self,
+        cache_dir: Path,
+        *,
+        offline: bool = False,
+        prompt_version: str = DEFAULT_SIMPLE_VERSION,
+    ) -> None:
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.offline = offline
+        self.prompt_version = prompt_version
+        self.instructions = SIMPLE_INSTRUCTIONS_BY_VERSION[prompt_version]
         self.live_calls = 0
         self._lock = threading.Lock()
         self._client: Any | None = None
@@ -378,7 +421,7 @@ class SimpleCachedGenerator:
             row, request_hint=request_hint, variation=variation
         )
         request = {
-            "prompt_version": SIMPLE_PROMPT_VERSION,
+            "prompt_version": self.prompt_version,
             "model": CONSTRUCTION_MODEL,
             "input": input_text,
         }
@@ -391,7 +434,7 @@ class SimpleCachedGenerator:
             raise RuntimeError(f"missing generation cache entry: {request_hash}")
         response = self._create(
             model=CONSTRUCTION_MODEL,
-            instructions=SIMPLE_INSTRUCTIONS,
+            instructions=self.instructions,
             input=input_text,
             text={
                 "format": {
@@ -480,11 +523,19 @@ def resolve_selection(
     return jobs
 
 
-def jobs_from_supply(paths: Sequence[Path]) -> list[dict[str, Any]]:
-    """One build job per distinct supported fact across the supply files."""
+def jobs_from_supply(
+    paths: Sequence[Path],
+    *,
+    already_selected: set[tuple[Any, str]] | None = None,
+) -> list[dict[str, Any]]:
+    """One build job per distinct supported fact across the supply files.
+
+    Facts already covered by an explicit selection are skipped, so a combined
+    build keeps the selection's hints and variations for those rows.
+    """
 
     jobs: list[dict[str, Any]] = []
-    seen: set[tuple[Any, str]] = set()
+    seen: set[tuple[Any, str]] = set(already_selected or ())
     for path in paths:
         for row in load_jsonl(path):
             key = (row.get("persona_id"), str(row.get("source_row_id")))
@@ -501,6 +552,240 @@ def build_prompt(core: Mapping[str, Any], rng: random.Random) -> str:
         f"{str(core['task']).strip()} "
         + contract.format(item=str(core["item_noun"]).strip())
     )
+
+
+# Per-scenario rotation of the envelope filler vocabulary. The envelope
+# pools are small enough that identical six-word runs of pure noise recur
+# across a 29-scenario batch, which the batch signature checks reject. Each
+# scenario draws its own mapping over these bureaucratic phrases, so the
+# same rendered noise sentence diverges between scenarios while the
+# protected entries stay byte-identical. Alternates stay administrative on
+# purpose: no word here may create a match with any personal fact.
+NOISE_SYNONYMS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("holiday closure", ("seasonal closure", "festival break", "annual shutdown")),
+    ("second reading", ("follow-up reading", "repeat pass", "second scan")),
+    ("quarterly close", ("quarter-end wrap", "period close", "term close")),
+    ("later check", ("follow-on check", "subsequent check", "next check")),
+    ("printed totals", ("typed totals", "posted totals", "tabulated totals")),
+    ("register reopening", ("ledger reopening", "register restart", "rolls reopening")),
+    ("amended schedule", ("revised timetable", "updated rota", "adjusted calendar")),
+    ("weekly ledger", ("weekly register", "week book", "weekly tally")),
+    ("courier window", ("dispatch window", "pickup window", "collection slot")),
+    ("morning post", ("early post", "first delivery", "morning mail")),
+    ("postal strike", ("mail stoppage", "postal delay", "carrier stoppage")),
+    ("final count", ("closing count", "last tally", "end count")),
+    ("routing sheet", ("routing card", "transfer sheet", "dispatch sheet")),
+    ("handover pack", ("handover file", "transition pack", "briefing pack")),
+    ("shared tracker", ("joint tracker", "common tracker", "team tracker")),
+    ("intake folder", ("arrivals folder", "admissions folder", "receiving folder")),
+    ("outgoing tray", ("dispatch tray", "outbound tray", "sending tray")),
+    ("duplicate form", ("copied form", "second form", "carbon form")),
+    ("shared inbox", ("joint inbox", "group inbox", "common inbox")),
+    ("returns sheet", ("returns card", "restock sheet", "returns list")),
+    ("carbon copy", ("file copy", "flimsy copy", "desk copy")),
+    ("wall planner", ("wall chart", "year planner", "pinned planner")),
+    ("paper diary", ("desk diary", "bound diary", "day book")),
+    ("circulation list", ("distribution list", "routing list", "readers list")),
+    ("correspondence log", ("letters log", "mail log", "message log")),
+    ("reconciliation tab", ("balancing tab", "matching tab", "settlement tab")),
+    ("district summary", ("area summary", "zone summary", "regional digest")),
+    ("standing agenda", ("fixed agenda", "recurring agenda", "regular agenda")),
+    ("standing order", ("fixed order", "recurring order", "open order")),
+    ("standing brief", ("fixed brief", "recurring brief", "open brief")),
+    ("temporary code", ("interim code", "provisional code", "stopgap code")),
+    ("revised heading", ("updated heading", "reworked heading", "amended heading")),
+    ("interim heading", ("provisional heading", "working heading", "draft heading")),
+    ("second folder", ("spare folder", "backup folder", "extra folder")),
+    ("second courier", ("relief courier", "backup courier", "spare courier")),
+    ("archive sweep", ("archive pass", "records sweep", "storage sweep")),
+    ("regional audit", ("area audit", "zone audit", "district audit")),
+    ("counter handover", ("desk handover", "counter changeover", "till handover")),
+    ("quiet spell", ("slow spell", "lull period", "quiet stretch")),
+    ("weekly close", ("week close", "weekly wrap", "week-end close")),
+)
+
+
+def diversify_noise(
+    text: str,
+    protected: Sequence[str],
+    rng: random.Random,
+) -> str:
+    """Rotate filler vocabulary without touching any protected span."""
+
+    sentinels: dict[str, str] = {}
+    for index, span in enumerate(
+        sorted({span for span in protected if str(span).strip()}, key=len, reverse=True)
+    ):
+        token = f"\x00PROT{index}\x00"
+        if span in text:
+            text = text.replace(span, token)
+            sentinels[token] = span
+    for phrase, alternates in NOISE_SYNONYMS:
+        choice = rng.choice((phrase, *alternates))
+        if choice != phrase:
+            text = re.sub(rf"\b{re.escape(phrase)}\b", choice, text)
+    for token, span in sentinels.items():
+        text = text.replace(token, span)
+    return text
+
+
+def protected_spans(core: Mapping[str, Any]) -> list[str]:
+    spans = [
+        str(core["winner_label"]),
+        str(core["winner_body"]),
+        str(core["target_label"]),
+        str(core["target_body"]),
+        str(core["cue_clause"]),
+        str(core["neutral_clause"]),
+    ]
+    for decoy in core.get("decoys", []):
+        spans.append(str(decoy.get("label", "")))
+        spans.append(str(decoy.get("body", "")))
+    return spans
+
+
+def assemble_scenario(
+    core: Mapping[str, Any],
+    prompt: str,
+    stripped_row: Mapping[str, Any],
+    seed: int,
+    *,
+    encoding: Any,
+    attempt_offset: int = 0,
+) -> tuple[str, dict[str, Any], str, int, str | None]:
+    """Assemble one observation, retrying the seeded draw on rejection.
+
+    The cue may land anywhere from the front third to the very end, and the
+    winner anywhere at all, so cue position varies and the answer roles
+    rotate across a batch instead of the winner always coming first.
+    """
+
+    text = ""
+    metrics: dict[str, Any] = {}
+    envelope_name = ""
+    reason: str | None = "not_attempted"
+    attempt = attempt_offset
+    for attempt in range(attempt_offset, attempt_offset + 6):
+        rng = random.Random(seed + attempt * 7919)
+        envelope = rng.choice(ENVELOPES)
+        envelope_name = envelope.name
+        cue_fraction = rng.uniform(0.35, 0.95)
+        winner_fraction = rng.uniform(0.05, 0.95)
+        token_target = rng.randrange(6_800, 11_500)
+        text, metrics = assemble_observation(
+            envelope,
+            core,
+            rng=rng,
+            encoding=encoding,
+            cue_fraction=cue_fraction,
+            winner_fraction=winner_fraction,
+            token_target=token_target,
+        )
+        text = diversify_noise(text, protected_spans(core), rng)
+        reason = scenario_rejection(text, core, prompt, stripped_row)
+        if reason is None:
+            break
+    return text, metrics, envelope_name, attempt, reason
+
+
+_SIGNATURE_WORD = re.compile(r"[a-z0-9']+")
+REBALANCE_ROUNDS = 30
+
+
+def _scenario_ngrams(text: str, size: int) -> set[str]:
+    words = _SIGNATURE_WORD.findall(text.casefold())
+    return {
+        " ".join(words[index : index + size])
+        for index in range(len(words) - size + 1)
+    }
+
+
+def rebalance_batch(
+    states: list[dict[str, Any]], *, encoding: Any
+) -> list[tuple[str, str]]:
+    """Reassemble scenarios until the batch-level signature checks pass.
+
+    `parm_bench.construction_checks` measures repetition across the finished
+    batch: shared filler phrases, a fixed cue band, and a fixed answer-role
+    order. No single scenario can see those, so offenders are redrawn with a
+    fresh assembly seed and the batch is measured again. The remaining issues
+    are returned when the round budget runs out.
+    """
+
+    from parm_bench.construction_checks import (
+        MAX_PHRASE_SCENARIO_SHARE,
+        PHRASE_NGRAM_SIZE,
+        construction_issues,
+    )
+
+    def pseudo_cases() -> list[dict[str, Any]]:
+        return [
+            {
+                "base_case_id": state["base_case_id"],
+                "variant": "positive",
+                "observation_text": state["text"],
+                "cue": {"text": str(state["core"]["cue_clause"]).strip()},
+                "decisions": {
+                    "output_only": {
+                        "choice": str(state["core"]["winner_label"])
+                    },
+                    "memory_conditioned": {
+                        "choice": str(state["core"]["target_label"])
+                    },
+                },
+            }
+            for state in states
+        ]
+
+    for round_no in range(REBALANCE_ROUNDS):
+        issues = construction_issues(pseudo_cases())
+        if not issues:
+            return []
+        marked: set[str] = set()
+        messages = " | ".join(message for _, message in issues)
+        if "-grams recur" in messages:
+            counts: dict[str, list[str]] = {}
+            for state in states:
+                for gram in _scenario_ngrams(
+                    state["text"], PHRASE_NGRAM_SIZE
+                ):
+                    counts.setdefault(gram, []).append(state["base_case_id"])
+            limit = MAX_PHRASE_SCENARIO_SHARE * len(states)
+            for gram, carriers in counts.items():
+                if len(carriers) > limit:
+                    for base_case_id in sorted(carriers)[int(limit) :]:
+                        marked.add(base_case_id)
+        if "cue position varies" in messages or (
+            "memory-conditioned choice appears" in messages
+        ):
+            round_rng = random.Random(20260731 + round_no)
+            eligible = sorted(state["base_case_id"] for state in states)
+            marked.update(
+                round_rng.sample(eligible, max(1, len(eligible) // 3))
+            )
+        for state in states:
+            if state["base_case_id"] not in marked:
+                continue
+            offset = state["attempt"] + 1
+            text, metrics, envelope_name, attempt, reason = assemble_scenario(
+                state["core"],
+                state["prompt"],
+                state["stripped_row"],
+                state["seed"],
+                encoding=encoding,
+                attempt_offset=offset,
+            )
+            if reason is None:
+                state.update(
+                    text=text,
+                    metrics=metrics,
+                    envelope_name=envelope_name,
+                    attempt=attempt,
+                )
+    return [
+        (case_id, message)
+        for case_id, message in construction_issues(pseudo_cases())
+    ]
 
 
 def review_table(records: Sequence[Mapping[str, Any]]) -> str:
@@ -559,6 +844,15 @@ def main() -> int:
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT))
+    parser.add_argument(
+        "--prompt-version",
+        choices=sorted(SIMPLE_INSTRUCTIONS_BY_VERSION),
+        default=DEFAULT_SIMPLE_VERSION,
+        help=(
+            "generation prompt version; the first calibration pilot replays "
+            f"with {SIMPLE_PROMPT_VERSION}"
+        ),
+    )
     args = parser.parse_args()
 
     load_env(ROOT / ".env")
@@ -566,16 +860,23 @@ def main() -> int:
     output_root = Path(args.output_dir)
     context_root = output_root / "contexts"
 
+    jobs: list[dict[str, Any]] = []
     if args.select:
         selection = load_selection(Path(args.select))
         jobs = resolve_selection(
             selection, ROOT / "data" / "parmbench-v1-supply"
         )
-    else:
+    if args.supply or not args.select:
+        selected_keys = {
+            (job["row"].get("persona_id"), str(job["row"].get("source_row_id")))
+            for job in jobs
+        }
         supply_paths = [
             Path(item) for item in (args.supply or [str(DEFAULT_SUPPLY)])
         ]
-        jobs = jobs_from_supply(supply_paths)
+        jobs.extend(
+            jobs_from_supply(supply_paths, already_selected=selected_keys)
+        )
     if args.limit:
         jobs = jobs[: args.limit]
 
@@ -583,7 +884,11 @@ def main() -> int:
     for record in load_jsonl(RECORDS_PATH):
         records_by_corpus[record["corpus_id"]].append(record)
 
-    generator = SimpleCachedGenerator(SIMPLE_CACHE, offline=args.offline)
+    generator = SimpleCachedGenerator(
+        SIMPLE_CACHE,
+        offline=args.offline,
+        prompt_version=args.prompt_version,
+    )
 
     def warm(job: Mapping[str, Any]) -> None:
         if supply_skip_reason(job["row"]):
@@ -610,6 +915,7 @@ def main() -> int:
     construction_records: list[dict[str, Any]] = []
     dropped: list[dict[str, Any]] = []
     corpora: dict[str, dict[str, Any]] = {}
+    states: list[dict[str, Any]] = []
 
     for job in jobs:
         row = job["row"]
@@ -654,36 +960,14 @@ def main() -> int:
         prompt = build_prompt(core, prompt_rng)
         stripped_row = strip_predicate(row)
 
-        text = ""
-        metrics: dict[str, Any] = {}
-        reason: str | None = "not_attempted"
-        envelope_name = ""
-        attempt = 0
-        for attempt in range(6):
-            rng = random.Random(seed + attempt * 7919)
-            envelope = rng.choice(ENVELOPES)
-            envelope_name = envelope.name
-            cue_fraction = rng.uniform(0.55, 0.92)
-            winner_fraction = rng.uniform(0.05, 0.45)
-            token_target = rng.randrange(6_800, 11_500)
-            text, metrics = assemble_observation(
-                envelope,
-                core,
-                rng=rng,
-                encoding=encoding,
-                cue_fraction=cue_fraction,
-                winner_fraction=winner_fraction,
-                token_target=token_target,
-            )
-            reason = scenario_rejection(text, core, prompt, stripped_row)
-            if reason is None:
-                break
+        text, metrics, envelope_name, attempt, reason = assemble_scenario(
+            core, prompt, stripped_row, seed, encoding=encoding
+        )
         if reason is not None:
             dropped.append({"base_case_id": base_case_id, "reason": reason})
             continue
 
         corpus_id = row["corpus_id"]
-        persona_id = row["persona_id"]
         distractors = choose_distractors(
             records_by_corpus.get(corpus_id, []),
             row["gold_source_id"],
@@ -697,6 +981,48 @@ def main() -> int:
                 {"base_case_id": base_case_id, "reason": "too_few_distractors"}
             )
             continue
+        states.append(
+            {
+                "base_case_id": base_case_id,
+                "job": job,
+                "row": row,
+                "core": core,
+                "prompt": prompt,
+                "stripped_row": stripped_row,
+                "seed": seed,
+                "request_hash": request_hash,
+                "distractors": distractors,
+                "text": text,
+                "metrics": metrics,
+                "envelope_name": envelope_name,
+                "attempt": attempt,
+            }
+        )
+
+    remaining = rebalance_batch(states, encoding=encoding)
+    if remaining:
+        print(
+            "warning: batch signature issues remain after rebalancing:",
+            file=sys.stderr,
+        )
+        for case_id, message in remaining:
+            print(f"  {case_id}: {message}", file=sys.stderr)
+
+    for state in states:
+        job = state["job"]
+        row = state["row"]
+        core = state["core"]
+        base_case_id = state["base_case_id"]
+        prompt = state["prompt"]
+        seed = state["seed"]
+        request_hash = state["request_hash"]
+        distractors = state["distractors"]
+        text = state["text"]
+        metrics = state["metrics"]
+        envelope_name = state["envelope_name"]
+        attempt = state["attempt"]
+        corpus_id = row["corpus_id"]
+        persona_id = row["persona_id"]
 
         content_path = f"contexts/{base_case_id}.md"
         (output_root / content_path).write_text(
@@ -720,7 +1046,7 @@ def main() -> int:
             "approved": True,
             "builder_version": SIMPLE_BUILDER_VERSION,
             "construction_model": CONSTRUCTION_MODEL,
-            "construction_prompt_version": SIMPLE_PROMPT_VERSION,
+            "construction_prompt_version": generator.prompt_version,
             "construction_request_hash": request_hash,
             "envelope_style": envelope_name,
             "evaluation_split": "calibration",
@@ -803,7 +1129,7 @@ def main() -> int:
                 "model_calls": {
                     "claim_draft_hash": row["draft_hash"],
                     "construction_request_hash": request_hash,
-                    "construction_prompt_version": SIMPLE_PROMPT_VERSION,
+                    "construction_prompt_version": generator.prompt_version,
                     "construction_model": CONSTRUCTION_MODEL,
                 },
             }
@@ -860,7 +1186,7 @@ def main() -> int:
             1 for item in dropped if item["reason"] == "declined"
         ),
         "live_generation_calls": generator.live_calls,
-        "construction_prompt_version": SIMPLE_PROMPT_VERSION,
+        "construction_prompt_version": generator.prompt_version,
     }
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0

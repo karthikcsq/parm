@@ -155,6 +155,44 @@ class CoreShapeTests(unittest.TestCase):
         self.assertEqual(reason, "memory_text_missing_user_subject")
 
 
+class NoiseDiversityTests(unittest.TestCase):
+    def test_protected_spans_survive_diversification(self) -> None:
+        from scripts.build_parmbench_simple_v1 import (
+            diversify_noise,
+            protected_spans,
+        )
+
+        core = _core(
+            winner_body="The stall sits beside the weekly ledger stand.",
+        )
+        text = (
+            "The clerk filed the note during the holiday closure within the "
+            "weekly ledger. "
+            + core["winner_body"]
+            + " Later the courier window reopened."
+        )
+        rng = random.Random(3)
+        swapped = diversify_noise(text, protected_spans(core), rng)
+        self.assertIn(core["winner_body"], swapped)
+        self.assertNotIn(
+            "holiday closure during the weekly ledger", swapped
+        )
+
+    def test_different_seeds_break_shared_ngrams(self) -> None:
+        from scripts.build_parmbench_simple_v1 import diversify_noise
+
+        text = (
+            "The aide checked the file during the holiday closure within "
+            "the weekly ledger before the courier window and the morning "
+            "post, then noted the amended schedule on the routing sheet."
+        )
+        variants = {
+            diversify_noise(text, [], random.Random(seed))
+            for seed in range(8)
+        }
+        self.assertGreater(len(variants), 4)
+
+
 class ScrubArtifactTests(unittest.TestCase):
     def test_broken_article_pairs_are_collapsed(self) -> None:
         core = _core(
@@ -215,6 +253,28 @@ class SchemaTests(unittest.TestCase):
     def test_version_names_the_simple_path(self) -> None:
         self.assertEqual(
             SIMPLE_PROMPT_VERSION, "parmbench_construction_simple_v1"
+        )
+
+    def test_every_version_has_instructions(self) -> None:
+        from scripts.build_parmbench_simple_v1 import (
+            DEFAULT_SIMPLE_VERSION,
+            SIMPLE_INSTRUCTIONS_BY_VERSION,
+            SIMPLE_PROMPT_VERSION_V2,
+        )
+
+        self.assertIn(SIMPLE_PROMPT_VERSION, SIMPLE_INSTRUCTIONS_BY_VERSION)
+        self.assertIn(SIMPLE_PROMPT_VERSION_V2, SIMPLE_INSTRUCTIONS_BY_VERSION)
+        self.assertEqual(DEFAULT_SIMPLE_VERSION, SIMPLE_PROMPT_VERSION_V2)
+
+    def test_v2_carries_the_calibration_counter_instructions(self) -> None:
+        from scripts.build_parmbench_simple_v1 import SIMPLE_INSTRUCTIONS_V2
+
+        self.assertIn("must not encode the fact's axis", SIMPLE_INSTRUCTIONS_V2)
+        self.assertIn("decision-relevant part", SIMPLE_INSTRUCTIONS_V2)
+        self.assertIn("must not do the cue's work", SIMPLE_INSTRUCTIONS_V2)
+        self.assertIn("first-person voice", SIMPLE_INSTRUCTIONS_V2)
+        self.assertTrue(
+            SIMPLE_INSTRUCTIONS_V2.startswith(SIMPLE_INSTRUCTIONS)
         )
 
 

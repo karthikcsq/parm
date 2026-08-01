@@ -1,0 +1,118 @@
+{
+  "corpus_id": "workflow-eng-lead-v1",
+  "dataset_revision": "parmbench-workflows-v1-pilot",
+  "sources": [
+    {
+      "path": "emails/analytics-dashboard-request.md",
+      "sha256": "2c8b6f313298e409d8c7e0256ad5de8d0daec85e20846fc49e269df2f4c194d8"
+    },
+    {
+      "path": "emails/customer-escalation-triage.md",
+      "sha256": "57ffa1f22eff74ea9805e2f6202be9c06817b5d0f106e1a712dabb488817cf0f"
+    },
+    {
+      "path": "emails/dpa-renewal-thread.md",
+      "sha256": "980d80dd3a583d81b710e40c74b7e9de853f7f6b4b450c4463c3e306c1fdd1b6"
+    },
+    {
+      "path": "emails/oncall-handover.md",
+      "sha256": "967ab7c7427341ae429c78e59410200676ca1ec170546215f2129e5e39f675f8"
+    },
+    {
+      "path": "emails/platform-migration-status.md",
+      "sha256": "bdc11a90794a52cfb09a72bf81a8d95693df15be37d73375d3eb503a58d1397f"
+    },
+    {
+      "path": "emails/security-questionnaire-followup.md",
+      "sha256": "e9cfb4f0731cb6efb8d1ea32a4fdeff911c59a5ad2c0eefa34f65d8c3ee6b31d"
+    },
+    {
+      "path": "emails/statsig-evaluation-thread.md",
+      "sha256": "68c70eba385a1375d5d798c62b8a43f574222cff2c58fb9fc9b84b7b1bfa9f8a"
+    },
+    {
+      "path": "emails/transcript-buffer-design.md",
+      "sha256": "23fe404ad2817f0bb439bc839b15b570acff4e085a0d60581287d2454474b357"
+    },
+    {
+      "path": "emails/v1070-release-retro.md",
+      "sha256": "aa86b2983d92b307db6c7178129262fc249fcc1ee541f01b0ba8fb1d24e86f97"
+    },
+    {
+      "path": "notes/ci-flakiness-log.md",
+      "sha256": "defc52a61c670a1ff29e1c9f433490ed3d053caacebf5e457905607d57f2cb72"
+    },
+    {
+      "path": "notes/context-window-budget.md",
+      "sha256": "48bf50b6b9141c760c0e72694e705e56facd03c0c1603e9095e693afd362ef9e"
+    },
+    {
+      "path": "notes/dependency-upgrade-policy.md",
+      "sha256": "5dddc4649d42ada22ae26569b7368d91bc57381630799d44e8f2aef37de49f2b"
+    },
+    {
+      "path": "notes/docs-structure.md",
+      "sha256": "11e7546aa158053572eacc355b2eae0490b4e17633412d65bec18c7a1b38a2f5"
+    },
+    {
+      "path": "notes/heap-profiling-session.md",
+      "sha256": "2602e3281f77369a5ead527fa7e932c4eaa8b5769e808e25fbe1d452be6bfefc"
+    },
+    {
+      "path": "notes/hotfix-conventions.md",
+      "sha256": "084688733a0aa6cb6fa0c444384ad67bc2382102555a42ab2cfb325afc120082"
+    },
+    {
+      "path": "notes/incident-2026-04-22-postmortem.md",
+      "sha256": "26e3638ed8bdbe9a540e133a073d0f78975df651351bbb58b9abab8551030279"
+    },
+    {
+      "path": "notes/issue-triage-rules.md",
+      "sha256": "15b55844aaefefb07bb4b36d034522e6431cce1fb9e35f38c6ab6c4269a3406d"
+    },
+    {
+      "path": "notes/memory-regression-triage.md",
+      "sha256": "bd2b75541d7fc732e0f1453add630033d161c52b3790b55206965105e957a6a1"
+    },
+    {
+      "path": "notes/merge-queue-evaluation.md",
+      "sha256": "e0a1277ebf7caf61d33e8eff6efcfd3d17f13bda797720e922eaec9ce813e71c"
+    },
+    {
+      "path": "notes/one-on-one-notes-mei.md",
+      "sha256": "c4e0687bf7de149c8f5c8d4cd176a33d189b4d4effacf3872b8cc18bf2bb235e"
+    },
+    {
+      "path": "notes/release-checklist.md",
+      "sha256": "645ee9f180e1d24337f27cfd6e4705a4a4908134c2e71aec182c10a18624021e"
+    },
+    {
+      "path": "notes/review-preferences.md",
+      "sha256": "46c11fcc6c47b1255511c6179ad076185e6efa5b2fc92e15dec99c47bacd0704"
+    },
+    {
+      "path": "notes/telemetry-hold-lifted-draft.md",
+      "sha256": "74e645ea1e656b5add7ef7a9d937acff9af70cbfde51cdfdcf1fab04c01558d9"
+    },
+    {
+      "path": "notes/telemetry-privacy-hold.md",
+      "sha256": "81dbcc3a66284b97a940cfd51cba87b23577b69e1963707daef7d573aa9d42c3"
+    },
+    {
+      "path": "notes/testing-expectations.md",
+      "sha256": "d6898c58d11be203bfbf83f6ca6e760fc91c3e3c5efcc84f1de06d56db941f16"
+    },
+    {
+      "path": "notes/vendor-onboarding-brief.md",
+      "sha256": "7617c017a8744c47d6edf3df47852a485e7fc2dc3882fc74659f94dbac560efd"
+    },
+    {
+      "path": "notes/weekly-planning-2026-06-01.md",
+      "sha256": "ffa26b7f5f52b2c1668f2e015b3bf92001103e46d6f3d26af144bc1968c8182f"
+    },
+    {
+      "path": "notes/windows-startup-investigation.md",
+      "sha256": "50f6e2cf3ffaf26f38b390b59c2dbfb6ffd85798c3c1cb08c1e1836ca39d2376"
+    }
+  ]
+}

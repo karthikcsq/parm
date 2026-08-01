@@ -1,0 +1,103 @@
+{
+  "adapter": "github_fixture",
+  "repository": "mcpmark-source/claude-code",
+  "default_branch": "main",
+  "actor": "agent",
+  "collaborators": ["priya", "dan", "mei", "sam"],
+  "branches": {
+    "main": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.71\n- Faster workspace indexing on cold start.\n",
+      "docs/cli-reference.md": "# CLI reference\n\n## /compact\n\nCompacts the current transcript.\n",
+      "src/session/loop.ts": "export async function runSession(): Promise<void> {\n  // session loop\n}\n",
+      "src/session/transcript.ts": "const entries: string[] = [];\n\nexport function append(entry: string): void {\n  entries.push(entry);\n}\n\nexport function all(): string[] {\n  return entries;\n}\n",
+      "src/session/context.ts": "export function estimateTokens(transcript: string[]): number {\n  return transcript.join('').length / 4;\n}\n\nexport const COMPACT_THRESHOLD = 0.85;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.71\"\n}\n"
+    },
+    "feat/compact-visibility": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.71\n- Faster workspace indexing on cold start.\n",
+      "docs/cli-reference.md": "# CLI reference\n\n## /compact\n\nCompacts the current transcript.\n",
+      "src/session/loop.ts": "import { emit } from '../telemetry/statsig-client';\n\nexport async function runSession(): Promise<void> {\n  emit('session_started');\n}\n",
+      "src/telemetry/statsig-client.ts": "export function emit(event: string): void {\n  // forwards to the Statsig collector\n}\n",
+      "src/session/transcript.ts": "const entries: string[] = [];\n\nexport function append(entry: string): void {\n  entries.push(entry);\n}\n\nexport function all(): string[] {\n  return entries;\n}\n",
+      "src/session/context.ts": "export function estimateTokens(transcript: string[]): number {\n  return transcript.join('').length / 4;\n}\n\nexport const COMPACT_THRESHOLD = 0.85;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.71\"\n}\n"
+    }
+  },
+  "issues": [
+    {
+      "number": 46,
+      "title": "JavaScript heap out of memory after long sessions",
+      "state": "open",
+      "labels": ["bug", "critical", "memory"],
+      "author": "kbrennan",
+      "body": "After roughly four hours in a large workspace the process dies with `FATAL ERROR: Reached heap limit Allocation failed`.\n\nMemory climbs steadily and never comes back down, even when the session is idle. Restarting clears it until it happens again.\n\nHeap snapshot shows the transcript buffer holding every tool result for the whole session.",
+      "comments": [
+        {
+          "author": "dan",
+          "body": "Bisected to the transcript buffer never being trimmed. We keep every tool result so the transcript view can scroll to the start."
+        }
+      ]
+    },
+    {
+      "number": 47,
+      "title": "Add shell completion for zsh",
+      "state": "open",
+      "labels": ["enhancement"],
+      "author": "tsato",
+      "body": "Bash completion works but zsh users have to tab through nothing. Would be happy to send a PR if someone points me at where the command list is generated.",
+      "comments": []
+    },
+    {
+      "number": 48,
+      "title": "Typo in README quickstart",
+      "state": "closed",
+      "labels": ["docs"],
+      "author": "mei",
+      "body": "`npm instal` in the quickstart block.",
+      "comments": []
+    },
+    {
+      "number": 49,
+      "title": "Context auto-compact never triggers on large repos",
+      "state": "open",
+      "labels": ["bug", "critical", "context"],
+      "author": "lgrant",
+      "body": "On a monorepo checkout the auto-compact banner appears several turns after the context is already full, so the session degrades before anything is compacted.\n\nOn a small repo it fires when you would expect. It looks like the trigger is reading a token estimate that does not include the tool results appended in the same turn.",
+      "comments": []
+    },
+    {
+      "number": 50,
+      "title": "Slow startup on Windows",
+      "state": "open",
+      "labels": ["bug", "windows"],
+      "author": "aruiz",
+      "body": "Cold start takes about nine seconds on Windows against roughly two on macOS. Warm start is fine.",
+      "comments": []
+    }
+  ],
+  "pull_requests": [
+    {
+      "number": 51,
+      "title": "Improve visibility into the auto-compact path (#49)",
+      "state": "open",
+      "head": "feat/compact-visibility",
+      "base": "main",
+      "author": "dan",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/telemetry/statsig-client.ts": "export function emit(event: string): void {\n  // forwards to the Statsig collector\n}\n",
+        "src/session/loop.ts": "import { emit } from '../telemetry/statsig-client';\n\nexport async function runSession(): Promise<void> {\n  emit('session_started');\n}\n"
+      },
+      "body": "## Summary\n\nAdds Statsig event logging for workflow telemetry so we can finally measure how often long sessions reach the auto-compact path, which is the number we keep guessing at in #49.\n\n## Changes\n\n- Adds `src/telemetry/statsig-client.ts` and wires it into the session loop.\n- Emits `session_compact_triggered`, `session_tokens_total`, and `tool_invoked` events on every session.\n- Adds `STATSIG_CLIENT_KEY` to the release environment.\n\n## Notes\n\nEvent payloads carry the workspace identifier and the resolved model name. Nothing is sampled yet; every session emits. Ready from my side, checks are green.",
+      "comments": [
+        {
+          "author": "mei",
+          "body": "Read through the client wrapper, no notes. The session loop change is a one-liner."
+        }
+      ]
+    }
+  ]
+}

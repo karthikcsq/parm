@@ -1,0 +1,32 @@
+{
+  "corpora": [
+    {
+      "corpus_id": "workflow-eng-lead-v1",
+      "retrieval_index": "data/retrieval-indexes/workflow-eng-lead-v1",
+      "source_id_prefixes": [
+        "notes/",
+        "emails/"
+      ],
+      "source_root": "corpora/workflow-eng-lead-v1/source"
+    }
+  ],
+  "dataset_id": "parmbench-workflows-v1",
+  "environments": [
+    {
+      "adapter": "github_fixture",
+      "upstream": {
+        "derivation": "Seeded repository shape, issue and pull-request numbering, and the final-state verification style are derived from the MCPMark task. The goal, the personal-memory corpus, the late cue, the cue-ablated patch, and every assertion are written for PARMBench.",
+        "license": "Apache-2.0",
+        "project": "MCPMark",
+        "repository": "https://github.com/eval-sys/mcpmark",
+        "revision": "cd45b7f57923b9b3985467f5139927575f83141c",
+        "revision_date": "2026-06-12",
+        "state_original_url": "https://github.com/anthropics/claude-code",
+        "state_url": "https://github.com/mcpmark-source/claude-code",
+        "task_path": "tasks/github/standard/claude-code/critical_issue_hotfix_workflow"
+      }
+    }
+  ],
+  "schema_version": 1,
+  "validation_profile": "workflows_v1"
+}

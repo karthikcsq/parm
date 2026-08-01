@@ -16,7 +16,7 @@ The two suites answer different questions:
 | Suite | Question |
 | --- | --- |
 | Deterministic PARMBench | Did the retrieval policy notice the new cue, admit the right memory, avoid the control, and produce the declared choice? |
-| Realistic end-to-end suite | Did output-triggered memory make the agent more useful, accurate, safe, and appropriately personalized in a natural task? |
+| PARMBench Workflows | Did output-triggered memory change what an agent actually did with real tools, in time to matter, without disturbing the control? |
 
 ## What the current benchmark proves
 
@@ -116,8 +116,20 @@ This layer should remain the release gate for:
 
 ### Layer 2: realistic end-to-end benchmark
 
-Build a smaller suite of natural agent tasks from full traces rather than
-catalog templates. Each scenario should contain:
+This layer now exists as PARMBench Workflows. Its contract is in the
+[evaluation contract](benchmark-evaluation.md), its design is in the
+[architecture](architecture.md), and the pilot dataset is documented in
+[data/workflows_v1](../data/workflows_v1/README.md).
+
+The implementation differs from the sketch below in one deliberate way: the
+primary scorer stayed programmatic. Realistic tasks turned out not to require
+a judge, because an agent working through tools leaves a final state that can
+be asserted exactly. The judge is still the right instrument for explanation
+quality and privacy restraint, and the rubric and protocol below remain the
+plan for adding it as a secondary layer. Nothing in the current suite depends
+on it.
+
+The remaining sketch describes what each scenario should contain:
 
 1. an ordinary user goal;
 2. one or more realistic tool calls or agent outputs;

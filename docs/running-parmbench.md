@@ -162,6 +162,73 @@ parm-bench run data\benchmark_v1 `
   --out data\benchmark-results\prompted-memory-tool-replay.jsonl
 ```
 
+## Run PARMBench Workflows
+
+The workflow suite has its own subcommands and its own dataset. It shares the
+interpreter, the `.env`, and the retrieval index format.
+
+```powershell
+parm-bench workflow validate data\workflows_v1
+parm-bench workflow inspect data\workflows_v1 `
+  --case parm-workflow-github-telemetry-hotfix-positive
+```
+
+Run one condition. Every case rebuilds its environment from the tracked
+fixture, so `--workers` is safe:
+
+```powershell
+parm-bench workflow run data\workflows_v1 `
+  --policy parm `
+  --retrieval-index data\retrieval-indexes\workflow-eng-lead-v1 `
+  --parm-admission-cache data\workflow-caches\parm-admission-v1 `
+  --trajectory-cache data\workflow-caches\trajectories-gpt5mini `
+  --model gpt-5-mini `
+  --workers 3 `
+  --out data\benchmark-results\workflows-v1\parm.jsonl
+
+parm-bench workflow score data\benchmark-results\workflows-v1\parm.jsonl `
+  --gold data\workflows_v1 `
+  --out data\benchmark-results\workflows-v1\parm.metrics.json
+```
+
+`--trajectory-cache` freezes each agent turn keyed by the whole conversation so
+far, which is what makes a multi-step comparison replayable. Add
+`--trajectory-policy frozen` to forbid new live calls; a miss is then an error.
+
+The whole ladder, one condition after another:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_workflows_v1_matrix.ps1
+& 'C:\Users\karth\anaconda3\python.exe' scripts\summarize_workflows_v1_results.py
+```
+
+PARM defaults to `--parm-retriever semantic-judge` here. The workflow corpora
+are ordinary personal histories with no link graph and no review/reflection
+filename convention, which is the same shape that motivated the semantic path
+for PersonaMem. Pass `--parm-retriever convergence` to run the deterministic
+waterfall instead.
+
+Rebuild the dataset and its index after editing the corpus:
+
+```powershell
+$env:PYTHONPATH = 'src'
+& 'C:\Users\karth\anaconda3\python.exe' scripts\build_workflows_v1_cases.py
+Remove-Item -Recurse -Force data\retrieval-indexes\workflow-eng-lead-v1
+& 'C:\Users\karth\anaconda3\python.exe' scripts\build_workflows_v1_index.py
+```
+
+Then check that no goal can reach its own gold memory:
+
+```powershell
+& 'C:\Users\karth\anaconda3\python.exe' scripts\evaluate_workflows_v1_fairness.py
+```
+
+Run this after any edit to a goal or a corpus, before spending a run. If
+prompt-only retrieval finds a gold source from the goal alone, the scenario is
+no longer testing late-cued retrieval and input RAG will win for the wrong
+reason. Two things trip it: a corpus small enough that top-five covers much of
+it, and a goal written in the memory's own vocabulary.
+
 ## Inspect retrieval in the browser
 
 ```powershell

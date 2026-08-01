@@ -26,6 +26,21 @@ PARM admitted memory at 71.43% precision and 75% recall. Read the
 tuned after the frozen expansion first pass, so it is a development result
 rather than a held-out generalization result.
 
+## Two suites
+
+Deterministic PARMBench answers whether the retrieval mechanism works. It is
+exact, cheap, and fast, and it can only score one label from one observation.
+
+[PARMBench Workflows](data/workflows_v1/README.md) answers whether that
+mechanism changes what an agent *does*. An agent gets an ordinary goal and a
+seeded tool environment, works a real trajectory, and is scored on the
+environment it leaves behind: the final state, the admitted sources, and
+whether the memory arrived in time to affect the action it governs. The
+scoring is programmatic throughout; no LLM judge decides a result.
+
+Both suites use the same triplet contract, so a scenario always carries its own
+cue-ablated control and memory-included ceiling.
+
 ## Quick start
 
 Use the Anaconda interpreter in this checkout:
@@ -70,7 +85,8 @@ are manifests, not alternate project guides.
 | Page | Purpose |
 | --- | --- |
 | [How to Run PARMBench](docs/running-parmbench.md) | Install, validate, replay, run comparisons, inspect traces, and troubleshoot |
-| [Evaluation contract](docs/benchmark-evaluation.md) | Case semantics, deterministic metrics, correctness, and failure taxonomy |
+| [Evaluation contract](docs/benchmark-evaluation.md) | Case semantics, deterministic metrics, correctness, failure taxonomy, and the workflow assertion contract |
+| [Workflows pilot dataset](data/workflows_v1/README.md) | The executable scenario, its environment fixtures, and the personal corpus behind it |
 | [How to Construct a Scenario](docs/benchmark-construction.md) | Generate a symmetric triplet, establish fixture fairness, and freeze a first pass |
 | [Rebuild the memory index](docs/rebuilding-memory-index.md) | Prepare Amara Life with GBrain and export the neutral frozen index |
 
@@ -79,6 +95,7 @@ are manifests, not alternate project guides.
 | Page | Purpose |
 | --- | --- |
 | [V5 development result](docs/results/benchmark-v5.md) | Current repaired-fixture comparison and remaining failures |
+| [Workflows first pass](docs/results/workflows-v1-first-pass.md) | The executable ladder on the pilot scenario, and what one sample can and cannot show |
 | [Frozen expansion first pass](docs/results/benchmark-expansion-first-pass.md) | Untuned generalization record that motivated the V5 changes |
 | [PersonaMem-v2 first pass](docs/results/personamem-v0-first-pass.md) | Untuned 30-person development comparison and per-corpus results |
 | [Real-world evaluation](docs/real-world-evaluation.md) | Limits of the controlled benchmark and the human-calibrated end-to-end judge design |
@@ -100,14 +117,17 @@ source of truth is the architecture page, evaluation contract, CLI, and tests.
 
 ```text
 src/parm_bench/               benchmark package and CLI
+src/parm_bench/workflows/     environments, trajectory runner, and verifier
 tests/                        unit and CLI smoke tests
 scripts/                      dataset and retrieval-artifact builders
 data/benchmark_v1/            54 executable cases and large contexts
 data/benchmark_personamem_v0/ 90 development cases over 30 persona corpora
+data/workflows_v1/            executable agent cases, fixtures, and corpus
 data/personamem-v2-train-v0/  bounded source records and provenance
 data/retrieval-indexes/       frozen neutral memory substrate
 data/expansion-caches/        frozen enhanced-mode query expansions
 data/response-caches/         replayable model calls
+data/workflow-caches/         replayable agent turns and admission decisions
 data/benchmark-results/       predictions, configs, and metrics
 docs/                         canonical guides, evidence, roadmap, and history
 ```

@@ -107,3 +107,61 @@ the query feeding it is not frozen.
 the full request), `--response-cache`/`--response-policy` CLI flags, and a
 response-cache hash in the config sidecar. Verified byte-identical replay across
 a populate-then-frozen pass.
+
+## 2026-08-01
+
+### Reproduce MCPMark's environments locally instead of running MCPMark
+
+**Why:** MCPMark is the right source for realistic agent work, but its GitHub
+service duplicates a seed repository into a live private org and drives it over
+the REST API. That needs credentials this checkout does not have, mutates
+account-visible state on every run, is validated on macOS and Linux only, and
+cannot give a positive and its cue-ablated twin independent resets inside one
+parallel run. Those last two properties are load-bearing for a paired
+benchmark, not conveniences.
+
+**What:** Added a `github_fixture` adapter that keeps MCPMark's artifact
+shapes, tool surface, and final-state verification style while running in
+process from a tracked JSON fixture. Every case records the MCPMark task,
+revision, and Apache-2.0 license it derives from. What this gives up is real
+pagination, rate limits, and API error taxonomies; an `mcpmark_live` adapter
+can register under the same protocol if that fidelity turns out to matter.
+
+### Score workflows from state, admission, and timing rather than a judge
+
+**Why:** The [real-world evaluation plan](../real-world-evaluation.md) assumed
+realistic open-ended tasks would need an LLM judge, and warned that a judge
+would make the benchmark a general answer-quality contest. Building the suite
+showed the assumption was wrong: an agent working through tools leaves a final
+state that can be asserted exactly, so the judge was never needed for the
+primary result.
+
+**What:** Workflow cases declare role-tagged assertions over the final
+environment state, the mutation log, and the step log. Decisive assertions must
+differ between a positive and its control, which validation enforces. The judge
+protocol stays documented as the plan for a secondary explanation-quality
+layer.
+
+### Treat admission timing as a result, not a diagnostic
+
+**Why:** In a single-turn benchmark, memory either reached the model or it did
+not. In a trajectory it can also arrive too late. A system that recalls the
+merge prohibition one step after merging has logged the right source and caused
+the wrong outcome, and a metric that counts it as a recall success is lying.
+
+**What:** Every case declares where its cue becomes visible and which calls
+dispose of the governed locus. Scoring reports `timely_gold_admission_rate` and
+`late_gold_admission_rate` separately from recall.
+
+### Check that a workflow goal cannot reach its own gold memory
+
+**Why:** The pilot broke this twice. First the corpus was small enough that a
+top-five prompt retrieval covered a quarter of it. Then a goal reworded to
+force a decision on the open pull requests said "merge the ones that are safe
+to merge" — the exact act the stored commitment governs — which pulled the
+memory into the prompt-only results. Either way input RAG wins without the
+mechanism under test existing.
+
+**What:** `scripts/evaluate_workflows_v1_fairness.py` fails when any non-ceiling
+goal retrieves a gold source in the top five under dense or hybrid. It runs
+outside `workflow validate` so validation stays offline.

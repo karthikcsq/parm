@@ -346,10 +346,12 @@ def run_trajectory(
         if action.is_final:
             result.final_text = action.final_text or ""
             break
-        handled = policy.handle_tool(action.tool_name, action.arguments)
+        step_index = len(result.steps)
+        handled = policy.handle_tool(
+            action.tool_name, action.arguments, step_index=step_index
+        )
         if handled is not None:
             observation, admissions = handled
-            step_index = len(result.steps)
             result.steps.append(
                 {
                     "step_index": step_index,
@@ -373,7 +375,6 @@ def run_trajectory(
             continue
 
         tool_result = environment.invoke(action.tool_name, action.arguments)
-        step_index = len(result.steps)
         result.steps.append(
             {
                 "step_index": step_index,

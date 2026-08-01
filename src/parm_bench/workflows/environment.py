@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Protocol
@@ -100,8 +101,6 @@ def get_environment(name: str, fixture: dict[str, Any]) -> WorkflowEnvironment:
 
 
 def load_fixture(path: str | Path) -> dict[str, Any]:
-    import json
-
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 

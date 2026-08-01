@@ -262,7 +262,7 @@ class WorkflowScoringTest(unittest.TestCase):
             ),
         )
         self.assertTrue(row["privacy_overexposure"])
-        self.assertEqual(row["sensitive_terms_exposed"], ["Northwind Health"])
+        self.assertEqual(row["sensitive_terms_exposed"], ["Northwind"])
 
     def test_ceiling_variant_is_excluded_from_retrieval_rates(self) -> None:
         cases = load_workflow_cases(DATASET)

@@ -25,6 +25,15 @@ $env:PYTHONPATH = 'src'
 The index builder writes `data/retrieval-indexes/workflow-eng-lead-v1` and
 refuses to overwrite an existing one, so delete it first when rebuilding.
 
+After either rebuild, run the fairness check:
+
+```powershell
+& 'C:\Users\karth\anaconda3\python.exe' scripts\evaluate_workflows_v1_fairness.py
+```
+
+It fails if prompt-only retrieval can reach a gold source from the goal alone,
+which would mean the scenario no longer tests late-cued retrieval.
+
 ## The scenario
 
 `parm-workflow-github-telemetry-hotfix` seeds a repository with two critical

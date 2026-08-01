@@ -31,7 +31,7 @@ class MemoryPolicy(Protocol):
     def extra_tools(self) -> tuple[ToolSpec, ...]: ...
 
     def handle_tool(
-        self, name: str, arguments: dict[str, Any]
+        self, name: str, arguments: dict[str, Any], *, step_index: int
     ) -> tuple[str, list[AdmittedMemory]] | None: ...
 
     def drain_retrieved(self) -> list[str]: ...
@@ -55,7 +55,7 @@ class _BasePolicy:
         return ()
 
     def handle_tool(
-        self, name: str, arguments: dict[str, Any]
+        self, name: str, arguments: dict[str, Any], *, step_index: int
     ) -> tuple[str, list[AdmittedMemory]] | None:
         return None
 
@@ -181,19 +181,12 @@ class PromptedMemoryToolPolicy(_BasePolicy):
 
     name: str = "prompted_memory_tool"
     retriever: Any = None
-    _step: int = field(default=0, init=False)
-
-    def on_observation(
-        self, *, step_index: int, goal: str, observation_text: str
-    ) -> list[AdmittedMemory]:
-        self._step = step_index
-        return []
 
     def extra_tools(self) -> tuple[ToolSpec, ...]:
         return (MEMORY_SEARCH_TOOL,)
 
     def handle_tool(
-        self, name: str, arguments: dict[str, Any]
+        self, name: str, arguments: dict[str, Any], *, step_index: int
     ) -> tuple[str, list[AdmittedMemory]] | None:
         if name != MEMORY_SEARCH_TOOL.name:
             return None
@@ -207,7 +200,7 @@ class PromptedMemoryToolPolicy(_BasePolicy):
                 query, top_k=self.retrieval_limit, corpus_id=self.corpus_id
             )
         )
-        admissions = self._admit(retrieval.hits, self._step + 1, "prompted_memory_tool")
+        admissions = self._admit(retrieval.hits, step_index, "prompted_memory_tool")
         if not admissions:
             return "No personal memory matched that query.", []
         return (

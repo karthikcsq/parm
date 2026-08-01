@@ -18,6 +18,7 @@ from ..semantic_parm import (
 )
 from .agent import (
     MAX_TRAJECTORY_STEPS,
+    TrajectoryResult,
     WorkflowModel,
     WorkflowTruncationError,
     run_trajectory,
@@ -183,9 +184,7 @@ def run_workflow_cases(
         return list(pool.map(run_one, cases))
 
 
-def _empty_trajectory(case_id: str, error: WorkflowTruncationError) -> Any:
-    from .agent import TrajectoryResult
-
+def _empty_trajectory(case_id: str, error: WorkflowTruncationError) -> TrajectoryResult:
     result = TrajectoryResult(case_id=case_id, final_text="")
     result.stopped_reason = f"truncated:{error.reason}"
     return result

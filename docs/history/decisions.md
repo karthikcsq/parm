@@ -5,6 +5,29 @@ entries appear first. Current behavior is documented in
 [Architecture](../architecture.md) and the
 [Evaluation Contract](../benchmark-evaluation.md).
 
+## 2026-07-31
+
+### Construction generates the decision directly from the fact
+
+**Why:** The selection-predicate chain (mapper, task-family registry,
+relation-type routing, capability labels, LLM decision-validity judge)
+retained one scenario out of 48 mapped supply rows, and manual adjudication
+rejected that survivor too. The diagnosis was structural, not a single bug:
+good scenarios were lost to metadata conflicts between stages even when a
+person could write a sensible example immediately, and the ordinary
+mechanism the mapper emitted kept paraphrasing the cue's own axis.
+
+**What:** New construction is one generation call per gated fact
+(`scripts/build_parmbench_simple_v1.py`, prompt family
+`parmbench_construction_simple_v*`): the model reads the claim, the raw
+span, and the triplet requirements, may decline, and returns the scenario
+plus three plain why-sentences. Acceptance is a nine-item human checklist
+with deterministic assertions, not a judge. The first calibration round
+built 29 scenarios from 34 rows and manual review accepted 11, with the
+measured failure classes written into the v2 prompt as
+counter-instructions. The predicate stage, its caches, and the old builder
+versions survive for frozen replay only.
+
 ## 2026-07-30
 
 ### Relevance is enforced by three gates, not one

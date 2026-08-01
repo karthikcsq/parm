@@ -80,116 +80,105 @@ Every accepted scenario records the exact source span that supports the fact.
 An expected final answer is not a success when the retrieved evidence does not
 support that fact.
 
-## Relevance gates
+## Supply gates
 
-Source support is one of three separate judgments, and the v1 relevance
-audit (`data/parmbench-v1-supply/relevance-audit-v1.md`) showed it is the
-weakest gate on its own: a claim can be perfectly supported and still be an
-anecdote no ordinary task turns on, or a well-built scenario can wrap a real
-fact in an invented permission. Construction therefore runs three versioned
-gates, each cached and each recording its rejection reasons in provenance:
+Source support is one of two separate supply judgments, and the v1
+relevance audit (`data/parmbench-v1-supply/relevance-audit-v1.md`) showed
+it is the weakest gate on its own: a claim can be perfectly supported and
+still be an anecdote no ordinary task turns on. Before construction, every
+candidate fact passes two versioned, cached gates that record their
+rejection reasons in provenance:
 
 1. **Source support** (`evidence_gate`, rubric
-   `personamem_source_support_v2`): did the user say it?
+   `personamem_source_support_v2`): did the user say it? A row whose grade
+   carries any deterministic rejection, such as `topical_question_only`, is
+   also a hard construction reject.
 2. **Memory quality** (`memory_quality`, rubric
-   `parmbench_memory_quality_v1`, pre-construction): is the fact durable or
-   currently operative — a preference, constraint, exclusion, active
-   commitment, stable relationship, owned item, accessibility need, or
-   concrete schedule? Editing requests, questions, and in-session states are
+   `parmbench_memory_quality_v1`): is the fact durable or currently
+   operative — a preference, constraint, exclusion, active commitment,
+   stable relationship, owned item, accessibility need, or concrete
+   schedule? Editing requests, questions, and in-session states are
    rejected deterministically before any model call. The gate also labels
    sensitive facts so `memory.sensitive_terms` is populated at the source.
-3. **Decision validity** (`decision_validity`, rubric
-   `parmbench_decision_validity_v1`, post-construction): does this exact
-   task, cue, and choice change follow from the fact without invented
-   assumptions? The auditor sees the fixture roles — it audits dataset
-   quality and never touches benchmark answer scoring. The construction
-   model must also return an evaluator-only causal chain (why A wins, why
-   the cue is neutral without memory, why memory plus cue prefers B, what
-   assumptions are required, why the control removes the advantage), and any
-   material assumption rejects the core before the gate is called.
-   Deterministic backstops reject lexical residue of the claim in the
-   target's name or ablated body and relational capability labels whose
-   answer is named after the memory's own words.
 
 The failure taxonomy shared by the gates lives in
 `parm_bench.relevance_taxonomy`. Fairness (steps 6-7 below) proves a model
-follows the intended A/A/B pattern; the relevance gates are what make the
+follows the intended A/A/B pattern; the supply gates are what make the
 pattern worth following.
 
-## Selection-predicate stage
+## Direct scenario generation
 
-The v3 pilot showed that gates alone cannot rescue a bad construction
-premise: asking one model call to invent the task, the affordance, and the
-causal relationship around a fact makes valid scenarios needlessly rare.
-Construction therefore starts from the decision rule the fact directly
-implies, and only then generates a familiar task around it:
+Construction is one generation call per gated fact, implemented in
+`scripts/build_parmbench_simple_v1.py` under the versioned prompt family
+`parmbench_construction_simple_v*`. The call receives the plain claim, the
+raw user-authored span, and the triplet requirements, and performs the
+reasoning a person would:
 
-```text
-raw user history -> supported durable fact -> concrete selection predicate
--> compatible task family -> ordinary winner A + compatible target B
--> cue-ablated control
-```
+1. Name one plausible request in which the fact could change which option
+   the person should pick. Plausible means a normal thing somebody might
+   ask an assistant, even if it only comes up occasionally.
+2. Write an ordinary option set for that request.
+3. Give the winner a default advantage unrelated to the fact: popularity, a
+   recommendation, price, convenience, condition, or availability.
+4. Give the target one concrete property matching the fact, delivered as a
+   late cue sentence.
+5. Without the fact, the winner is the sensible answer; with the fact and
+   the cue, the target is; with the cue replaced by a neutral detail, the
+   winner is again, even for a reader who knows the fact.
 
-Before any scenario is constructed, a versioned mapper produces
-evaluator-only fields. The names below are the schema contract between the
-mapper and the builder:
+The model may decline a fact it cannot turn into a plausible decision after
+a serious attempt, and a declined row is dropped, not repaired. It is never
+asked to classify the fact, select from a task ontology, or prove an
+entailment chain first. Task family, relation type, and capability labels
+may be derived afterward for analysis; they are not construction inputs,
+and disagreement about them cannot reject an otherwise valid scenario.
 
-| field | meaning |
-| --- | --- |
-| `selection_predicate` | a concise condition that follows directly from the raw fact |
-| `task_family` | a bounded family in which that condition naturally affects a choice |
-| `target_affordance` | the visible, checkable property of B that satisfies the predicate |
-| `ordinary_mechanism` | the visible reason A wins for a person without this memory |
-| `control_affordance` | a neutral replacement that removes the predicate match without creating a new personalized match |
-| `relation_type` | direct_constraint, compatibility, active_project_relevance, schedule_fit, accessibility_need, stable_preference, or relationship_obligation |
-| `material_assumptions` | must be empty; a non-empty list rejects the mapping |
+Generation responses are cached by the sha256 of
+`{prompt_version, model, input}` in
+`data/construction-caches/parmbench-simple-v1`, so a build replays offline.
+Per-row request hints and candidate variation numbers are part of the input
+and are recorded in provenance. A seeded, model-free assembly then wraps
+the core in an observation envelope, rotates the filler vocabulary per
+scenario, and reassembles offenders until the batch-level
+construction-signature checks pass.
 
-The predicate must express an action-relevant implication, never a topic
-restatement. "The user owns an NES" maps to "prefer vintage items usable
-with an NES", not to "the user likes retro games". A supported durable fact
-with no direct selection implication is a correct abstention, not a mapping
-failure.
+Accepted scenarios face a short human checklist rather than an LLM validity
+judge. A case is good when all answers are yes:
 
-Task families are routed by compatibility, from a small auditable registry:
-food preferences or exclusions to menu, dessert, grocery, or catering
-selection; active research or work topics to books, talks, courses,
-archives, or reading groups; owned devices or items to compatible games,
-accessories, parts, repair, or vintage finds; hobbies to events, supplies,
-clubs, or workshops; concrete schedules to appointment, event, delivery, or
-travel slots; accessibility needs to rooms, routes, seating, transport, or
-delivery; stable relationships or obligations to gifts, visits,
-communications, or travel, only when the relationship itself is directly
-supported. Global domain balancing is subordinate to compatibility: variety
-is applied to envelopes, names, ordering, and surface form after the causal
-structure is valid, and the construction-signature checks still run on the
-finished set.
+1. Did the user actually state the memory in their own words?
+2. Is the request something a real person might ask?
+3. Does the winner have a clear default advantage unrelated to the memory?
+4. Does the target's late cue plainly connect to the memory?
+5. Would a person without the memory still choose the winner?
+6. Would a person with the memory reasonably switch to the target?
+7. Does cue ablation restore the winner without redirecting the memory to
+   another option?
+8. Is the prompt ordinary and silent about memory retrieval?
+9. Does the scenario avoid invented possessions, relationships, medical
+   needs, or plans?
 
-The stage is implemented in `parm_bench.selection_predicate` under rubric
-`parmbench_selection_predicate_v1`, cached the same way as the relevance
-gates in `data/selection-predicate-caches/parmbench-v1`, and it runs as stage
-5 of `scripts/draft_parmbench_v1_claims.py` behind
-`--selection-predicate-gate`. It reads the memory-quality category,
-durability, and sensitivity labels and passes the sensitivity labels through
-untouched, so `sensitive_terms` reaches the builder from the source rather
-than being reset. `TASK_FAMILY_REGISTRY` holds the routing list above, one
-entry per family, naming the relation types that may reach it. Three
-deterministic post-checks run on every mapping the model returns: a task
-family the registry does not allow for the declared relation type is
-rejected as `incompatible_task_family_routing`, a non-empty
-`material_assumptions` list is rejected as `material_assumption_required`,
-and a predicate that shares no content word with the fact or its span while
-naming no target affordance is rejected as
-`unanchored_selection_predicate`. An abstention is recorded as
-`no_selection_predicate` and counted separately from failures. A passing
-supply row carries the builder's interface object under `predicate`.
+Deterministic assertions cover what they can (label uniqueness, cue and
+ablation symmetry, leak checks, prompt contracts); the semantic questions
+are answered by manual review, recorded per scenario in the pilot's
+adjudication files. The first calibration round and its measured failure
+classes are in `data/benchmark_parmbench_pilot_simple_v1/README.md`, and
+each class became a counter-instruction in the next prompt version.
 
-Three user-approved anchor scenarios define the quality bar and are frozen
-with their verified raw spans in
-`data/parmbench-v1-supply/selection_predicate_anchors.json`: a dessert menu
-against a stated fresh-fruit habit, a reading-group book against an active
-theology-and-pluralism writing project, and a vintage-store find against an
-owned NES. A generator version that cannot produce these three examples is
-not fit to generate anything else.
+### Superseded: selection-predicate stage
+
+Earlier construction inserted a mapper between the fact and the builder: a
+selection predicate, a bounded task-family registry, relation-type routing,
+an ordinary mechanism, and a capability label, followed by an LLM
+decision-validity judge. Over 48 mapped supply rows this chain retained one
+scenario, which manual adjudication then rejected; the causes are recorded
+in `data/benchmark_parmbench_pilot_v5/README.md` and
+`data/parmbench-v1-supply/pilot-v6-adjudication.jsonl`. The stage survives
+for frozen replay only: `parm_bench.selection_predicate`,
+`scripts/build_parmbench_v1_benchmark.py` versions v4 through v6, their
+caches, and the anchor file
+`data/parmbench-v1-supply/selection_predicate_anchors.json` (whose verified
+raw spans the current path still reuses). None of its fields are inputs to
+the direct generation path.
 
 ## Capability coverage
 

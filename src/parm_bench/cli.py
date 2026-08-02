@@ -224,6 +224,16 @@ def main(argv: list[str] | None = None) -> int:
     )
     workflow_run.add_argument("--model")
     workflow_run.add_argument(
+        "--sample",
+        type=int,
+        default=0,
+        help=(
+            "independent trajectory index for the same condition; mixed into "
+            "the trajectory cache key so repeated samples do not replay each "
+            "other. Sample 0 replays trajectories cached before sampling"
+        ),
+    )
+    workflow_run.add_argument(
         "--max-steps", type=_positive_int, default=MAX_TRAJECTORY_STEPS
     )
     workflow_run.add_argument(
@@ -617,8 +627,10 @@ def _workflow_run(args: argparse.Namespace) -> int:
     model: Any = OpenAIWorkflowModel(_resolve_model(args.model))
     if args.trajectory_cache:
         model = CachingWorkflowModel(
-            model, args.trajectory_cache, args.trajectory_policy
+            model, args.trajectory_cache, args.trajectory_policy, args.sample
         )
+    elif args.sample:
+        raise ValueError("--sample requires --trajectory-cache")
     rows = run_workflow_cases(
         cases,
         policy_name=args.policy,
@@ -643,6 +655,7 @@ def _workflow_run(args: argparse.Namespace) -> int:
         "retrieval_mode": args.retrieval_mode,
         "retrieval_limit": args.retrieval_limit,
         "requested_model": model.model_name,
+        "sample": args.sample,
         "max_steps": args.max_steps,
         "workers": args.workers,
         "trajectory_cache_hash": (

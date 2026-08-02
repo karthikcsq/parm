@@ -45,6 +45,7 @@ def score_workflow_predictions(
         totals["admitted"] += row["admitted_count"]
         totals["gold_admitted"] += row["gold_admitted_count"]
         totals["spurious_admitted"] += row["spurious_admitted_count"]
+        totals["injected_memory_tokens"] += row["injected_memory_tokens"]
         if case.variant == "positive":
             totals["gold_total"] += len(case.gold_source_ids)
         if row["workflow_total"]:
@@ -90,6 +91,11 @@ def score_workflow_predictions(
         "late_gold_admission_rate": totals["late_gold_admission"] / positives,
         "privacy_overexposure_rate": totals["privacy_overexposure"] / cases_n,
         "abstention_rate": totals["abstained"] / cases_n,
+        # No policy is capped across a trajectory, so this is the honest cost
+        # axis: how much of the user's history a policy had to put in front of
+        # the model to get where it got.
+        "injected_memory_tokens": totals["injected_memory_tokens"],
+        "mean_injected_memory_tokens": totals["injected_memory_tokens"] / cases_n,
         "rows": rows,
     }
 
@@ -156,6 +162,7 @@ def score_workflow_case(case: Any, prediction: dict[str, Any]) -> dict[str, Any]
         "admitted_count": len(admitted),
         "gold_admitted_count": len(gold_admitted),
         "spurious_admitted_count": len(spurious),
+        "injected_memory_tokens": int(prediction.get("injected_memory_tokens", 0)),
         "cue_step": cue_step,
         "decisive_action_step": decisive_step,
         "first_gold_admission_step": first_gold_step,

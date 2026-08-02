@@ -126,6 +126,7 @@ def run_workflow_case(
         if memory.perturbations:
             perturbations[memory.source_id] = list(memory.perturbations)
     return {
+        "injected_memory_tokens": _injected_memory_tokens(trajectory.admitted),
         "case_id": case.case_id,
         "variant": case.variant,
         "policy": policy_name,
@@ -149,6 +150,32 @@ def run_workflow_case(
             "retrieval_events": trajectory.retrieval_events,
         },
     }
+
+
+def _injected_memory_tokens(admitted: list[Any]) -> int:
+    """Count the memory tokens a policy actually put in front of the model.
+
+    Every policy gets the same top-k per observation, and none is capped across
+    a trajectory, because capping the total would handicap a broad policy rather
+    than measure it. What separates them is how much history they end up
+    injecting to reach the same decision, so that cost is reported instead of
+    constrained. Admissions are deduplicated by source before injection, so this
+    counts each record once however many times it was retrieved.
+    """
+
+    import tiktoken
+
+    encoding = tiktoken.get_encoding("cl100k_base")
+    seen: set[str] = set()
+    total = 0
+    for memory in admitted:
+        if memory.source_id in seen:
+            continue
+        seen.add(memory.source_id)
+        total += len(encoding.encode(memory.text))
+        if memory.trigger_text:
+            total += len(encoding.encode(memory.trigger_text))
+    return total
 
 
 def run_workflow_cases(

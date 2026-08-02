@@ -155,12 +155,21 @@ class CachingWorkflowModel:
         base: WorkflowModel,
         cache_dir: str | Path,
         policy: str = "frozen",
+        sample: int = 0,
     ) -> None:
         self.base = base
         self.cache_dir = Path(cache_dir)
         if policy not in {"frozen", "populate"}:
             raise ValueError("workflow cache policy must be frozen or populate")
+        if sample < 0:
+            raise ValueError("sample must be a non-negative index")
         self.policy = policy
+        # Repeated samples of one condition ask the model identical questions,
+        # so without this they would all replay the first trajectory and the
+        # variance measurement would report zero by construction. Sample 0 is
+        # deliberately excluded from the key so trajectories cached before
+        # sampling existed still replay.
+        self.sample = sample
         self._used: list[Path] = []
 
     @property
@@ -175,7 +184,7 @@ class CachingWorkflowModel:
         tools: list[dict[str, Any]],
     ) -> AgentAction:
         request_hash = _request_hash(
-            self.base.model_name, instructions, conversation, tools
+            self.base.model_name, instructions, conversation, tools, self.sample
         )
         path = self.cache_dir / f"{request_hash}.json"
         if path.exists():
@@ -430,6 +439,7 @@ def _request_hash(
     instructions: str,
     conversation: list[dict[str, Any]],
     tools: list[dict[str, Any]],
+    sample: int = 0,
 ) -> str:
     payload = {
         "schema": WORKFLOW_CACHE_SCHEMA,
@@ -438,6 +448,8 @@ def _request_hash(
         "conversation": _cache_safe(conversation),
         "tools": [tool.get("name") for tool in tools],
     }
+    if sample:
+        payload["sample"] = sample
     encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 

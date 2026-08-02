@@ -15,6 +15,7 @@ Exits non-zero when any goal reaches a gold source.
 from __future__ import annotations
 
 import sys
+import argparse
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -31,16 +32,24 @@ from parm_bench.workflows import load_workflow_cases, validate_workflow_cases
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data" / "workflows_v1"
-INDEX = ROOT / "data" / "retrieval-indexes" / "workflow-eng-lead-v1"
+TIER_INDEXES = {
+    "tier-28": ROOT / "data" / "retrieval-indexes" / "workflow-eng-lead-v1",
+    "tier-100": ROOT / "data" / "retrieval-indexes" / "workflow-eng-lead-v1-100",
+}
 TOP_K = 5
 MODES = (RetrievalMode.DENSE, RetrievalMode.HYBRID)
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--tier", default="tier-100", choices=sorted(TIER_INDEXES))
+    tier = parser.parse_args().tier
+
     load_dotenv(ROOT / ".env", override=False)
     cases = load_workflow_cases(DATASET)
     validate_workflow_cases(cases)
-    index = RetrievalIndex.load(INDEX)
+    index = RetrievalIndex.load(TIER_INDEXES[tier])
+    print(f"tier: {tier}, {len(index.pages)} records\n")
     embedder = OpenAIEmbedder()
     leaked = False
     for mode in MODES:

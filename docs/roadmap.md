@@ -58,13 +58,27 @@ The pilot is one scenario in one environment. What it needs next, in order:
   The judge admits at most one memory per observation, which reads as restraint
   on a single-turn case and accumulates over twenty-odd observations in a
   trajectory.
-- Grow the corpus past the point where dumping all of it is a viable strategy.
-  At 24 records a broad output-RAG policy admits essentially the whole history
-  and still reaches the right decision, so the decision metric cannot separate
-  it from selective retrieval on this scenario; only admission precision can.
-  The corpus needs to be large enough that indiscriminate retrieval does not
-  fit in context, which is the condition under which precision starts to buy
-  decisions rather than just tidiness.
+- Keep growing the corpus toward the scale where dumping it stops being
+  viable. 28 and 100 records are both below it: the history still fits in
+  context, broad output RAG still reaches the right decision, and the decision
+  metric still cannot separate it from selective retrieval. See the
+  [scaling result](results/workflows-v1-scaling.md). What the two points do
+  show is the rate: across a 3.6x corpus increase PARM's injected memory grew
+  5% while naive output RAG grew 97% and all-entity grew 175%. The target is
+  the scale where that divergence forces a choice rather than only costing
+  context.
+- Decide how `all_entity_output_rag` should be budgeted before the corpus grows
+  much further. Its top-k is per entity seed rather than per observation, so it
+  admits 45-49 records from a single observation and saturated against the
+  100-record corpus rather than against its budget. Keeping it per-seed is
+  defensible, since that is what the baseline is, but the asymmetry should be a
+  recorded decision rather than an accident.
+- Decide whether context compaction belongs in the workflow runner. Real agents
+  compact, so a benchmark without it is less realistic. The cost is that
+  compaction confounds exactly what this suite measures: injected memory tokens
+  stop describing what the model had, and a policy that admits sixty records
+  looks cheap once most are evicted. If it is added, add it as a declared
+  condition beside the uncompacted measurement rather than replacing it.
 - Add the restaurant-expense, legal-review, and running-shoe conversions from
   the same MCPMark sources, each with its own environment adapter.
 - Run more than one trajectory per case. This is the first thing to fix, not a

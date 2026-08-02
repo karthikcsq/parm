@@ -96,6 +96,7 @@ are manifests, not alternate project guides.
 | --- | --- |
 | [V5 development result](docs/results/benchmark-v5.md) | Current repaired-fixture comparison and remaining failures |
 | [Workflows first pass](docs/results/workflows-v1-first-pass.md) | The executable ladder on the pilot scenario, and what one sample can and cannot show |
+| [Workflows scaling result](docs/results/workflows-v1-scaling.md) | The same ladder at 28 and 100 memories: what corpus growth changed and what it did not |
 | [Frozen expansion first pass](docs/results/benchmark-expansion-first-pass.md) | Untuned generalization record that motivated the V5 changes |
 | [PersonaMem-v2 first pass](docs/results/personamem-v0-first-pass.md) | Untuned 30-person development comparison and per-corpus results |
 | [Real-world evaluation](docs/real-world-evaluation.md) | Limits of the controlled benchmark and the human-calibrated end-to-end judge design |

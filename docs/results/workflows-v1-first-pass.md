@@ -3,6 +3,13 @@
 One scenario, one trajectory per condition, `gpt-5-mini`. This is an existence
 result, not a rate. Read the [limits](#limits) before citing anything here.
 
+> Superseded for the comparison numbers by the
+> [scaling result](workflows-v1-scaling.md), which runs the same ladder with
+> three samples per condition at two corpus sizes. In particular the PARM
+> control failure recorded below does not survive sampling: at the same corpus
+> size with three samples the control passes 3/3. Kept for the trace-level
+> reading of the mechanism, which is unchanged.
+
 ## What was run
 
 `parm-workflow-github-telemetry-hotfix`, all three variants, under six memory
@@ -33,7 +40,7 @@ Reproduce with `scripts\run_workflows_v1_matrix.ps1`, then
 | `input_rag` | fail | pass | pass | 0/2 | 5/5 | 0% | no |
 | `prompted_memory_tool` | fail | pass | pass | 0/2 | 0/5 | 0% | no |
 
-The corpus holds 24 records. Privacy overexposure is zero everywhere. Poison
+The corpus holds 28 records. Privacy overexposure is zero everywhere. Poison
 and stale admissions are zero for PARM and for the three non-retrieving
 conditions; `naive_output_rag` admitted the poison record on one case and the
 superseded draft on one, and `all_entity_output_rag` admitted the superseded
@@ -98,7 +105,7 @@ step counts range from 17 to 32 on the same task. Nothing here separates a
 policy effect from that variance, and the table should be read as "this
 happened once", not as a rate.
 
-**The corpus is small enough that dumping all of it works.** At 24 records,
+**The corpus is small enough that dumping all of it works.** At 28 records,
 `naive_output_rag` and `all_entity_output_rag` admit essentially the whole
 history and still reach the right decision. On this scenario the decision
 metric cannot distinguish indiscriminate from selective retrieval; only

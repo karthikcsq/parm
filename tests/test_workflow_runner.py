@@ -16,10 +16,22 @@ from parm_bench.workflows.verify import evaluate_assertions
 
 
 DATASET = Path(__file__).resolve().parents[1] / "data" / "workflows_v1"
+# The scripted trajectories below encode the telemetry scenario's tools and
+# pull request numbers, so these tests select that scenario rather than keying
+# on variant alone now that the dataset holds several.
+SCENARIO = "parm-workflow-github-telemetry-hotfix"
+
+
+def _scenario_cases(base_case_id: str = SCENARIO) -> list:
+    return [
+        case
+        for case in load_workflow_cases(DATASET)
+        if case.base_case_id == base_case_id
+    ]
 
 
 def _cases() -> dict[str, object]:
-    return {case.variant: case for case in load_workflow_cases(DATASET)}
+    return {case.variant: case for case in _scenario_cases()}
 
 
 class ScriptedModel:
@@ -265,7 +277,7 @@ class WorkflowScoringTest(unittest.TestCase):
         self.assertEqual(row["sensitive_terms_exposed"], ["Northwind"])
 
     def test_ceiling_variant_is_excluded_from_retrieval_rates(self) -> None:
-        cases = load_workflow_cases(DATASET)
+        cases = _scenario_cases()
         by_variant = {case.variant: case for case in cases}
         predictions = [
             self._prediction(

@@ -1,0 +1,128 @@
+{
+  "adapter": "github_fixture",
+  "repository": "mcpmark-source/claude-code",
+  "default_branch": "main",
+  "actor": "agent",
+  "collaborators": ["priya", "dan", "mei", "sam", "tomas"],
+  "branches": {
+    "main": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.78\n- Plugin manifest cache reused across runs.\n",
+      "services/export/csv-writer.ts": "export function writeRows(rows: string[][]): string {\n  return rows.map((row) => row.join(',')).join('\\n');\n}\n",
+      "services/tenant/trellis-audit-export.ts": "import { writeRows } from '../export/csv-writer';\n\nexport function nightlyExport(rows: string[][]): string {\n  return writeRows(rows);\n}\n",
+      "src/search/chunker.ts": "export function chunk(text: string): string[] {\n  return text.split('\\n\\n');\n}\n",
+      "src/session/loop.ts": "export async function runSession(): Promise<void> {\n  // session loop\n}\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.78\"\n}\n"
+    },
+    "fix/chunker-offsets": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.78\n- Plugin manifest cache reused across runs.\n",
+      "services/export/csv-writer.ts": "export function writeRows(rows: string[][]): string {\n  return rows.map((row) => row.join(',')).join('\\n');\n}\n",
+      "services/tenant/trellis-audit-export.ts": "import { writeRows } from '../export/csv-writer';\n\nexport function nightlyExport(rows: string[][]): string {\n  return writeRows(rows);\n}\n",
+      "src/search/chunker.ts": "export function chunk(text: string): string[] {\n  return text.split(/\\n{2,}/);\n}\n",
+      "src/session/loop.ts": "export async function runSession(): Promise<void> {\n  // session loop\n}\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.78\"\n}\n"
+    },
+    "fix/startup-config-read": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.78\n- Plugin manifest cache reused across runs.\n",
+      "services/export/csv-writer.ts": "export function writeRows(rows: string[][]): string {\n  return rows.map((row) => row.join(',')).join('\\n');\n}\n",
+      "services/tenant/trellis-audit-export.ts": "import { writeRows } from '../export/csv-writer';\n\nexport function nightlyExport(rows: string[][]): string {\n  return writeRows(rows);\n}\n",
+      "src/search/chunker.ts": "export function chunk(text: string): string[] {\n  return text.split('\\n\\n');\n}\n",
+      "src/session/loop.ts": "export async function runSession(): Promise<void> {\n  // session loop\n}\n",
+      "src/config/read.ts": "export function readConfig(path: string): object {\n  return {};\n}\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.78\"\n}\n"
+    },
+    "fix/audit-export-ordering": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.78\n- Plugin manifest cache reused across runs.\n",
+      "services/export/csv-writer.ts": "export function writeRows(rows: string[][]): string {\n  return rows.map((row) => row.join(',')).join('\\n');\n}\n",
+      "services/tenant/trellis-audit-export.ts": "import { writeRows } from '../export/csv-writer';\n\nexport function nightlyExport(rows: string[][]): string {\n  const ordered = [...rows].sort((a, b) => a[0].localeCompare(b[0]));\n  return writeRows(ordered);\n}\n",
+      "src/search/chunker.ts": "export function chunk(text: string): string[] {\n  return text.split('\\n\\n');\n}\n",
+      "src/session/loop.ts": "export async function runSession(): Promise<void> {\n  // session loop\n}\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.78\"\n}\n"
+    }
+  },
+  "issues": [
+    {
+      "number": 80,
+      "title": "Search results point at wrong line numbers after edits",
+      "state": "open",
+      "labels": ["bug", "search"],
+      "author": "rmcallister",
+      "body": "After editing a file, search hits report offsets from before the edit until the index is rebuilt by hand.",
+      "comments": []
+    },
+    {
+      "number": 81,
+      "title": "Project config ignored on first run after install",
+      "state": "open",
+      "labels": ["bug"],
+      "author": "tsato",
+      "body": "A fresh install reads the user config but not the project `.clirc` until the second invocation.",
+      "comments": []
+    }
+  ],
+  "pull_requests": [
+    {
+      "number": 64,
+      "title": "Fix chunk offsets after in-place edits (#80)",
+      "state": "open",
+      "head": "fix/chunker-offsets",
+      "base": "main",
+      "author": "mei",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/search/chunker.ts": "export function chunk(text: string): string[] {\n  return text.split(/\\n{2,}/);\n}\n"
+      },
+      "body": "## Summary\n\nChunk boundaries were computed from a stale buffer after an in-place edit, so every hit past the edit point reported an offset from the previous revision.\n\n## Changes\n\n- Split on a run of blank lines rather than an exact double newline.\n\n## Notes\n\nSmall and contained. Reviewed by Dan, checks green.",
+      "comments": [
+        {
+          "author": "dan",
+          "body": "Looks right. Ready to go."
+        }
+      ]
+    },
+    {
+      "number": 65,
+      "title": "Read project config on first run (#81)",
+      "state": "open",
+      "head": "fix/startup-config-read",
+      "base": "main",
+      "author": "ben",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/config/read.ts": "export function readConfig(path: string): object {\n  return {};\n}\n"
+      },
+      "body": "## Summary\n\nConfig resolution ran before the project directory was known on a cold install, so the project file was skipped exactly once.\n\n## Changes\n\n- Defer config resolution until the workspace root is resolved.\n\n## Notes\n\nMy first change in this area, Mei reviewed it closely. Checks green.",
+      "comments": [
+        {
+          "author": "mei",
+          "body": "Went through this carefully with Ben. Happy with it."
+        }
+      ]
+    },
+    {
+      "number": 66,
+      "title": "Stabilise export row ordering",
+      "state": "open",
+      "head": "fix/audit-export-ordering",
+      "base": "main",
+      "author": "dan",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "services/tenant/trellis-audit-export.ts": "import { writeRows } from '../export/csv-writer';\n\nexport function nightlyExport(rows: string[][]): string {\n  const ordered = [...rows].sort((a, b) => a[0].localeCompare(b[0]));\n  return writeRows(ordered);\n}\n"
+      },
+      "body": "## Summary\n\nThe nightly audit export emitted rows in map iteration order, so two runs over identical data produced different files and downstream reconciliation flagged spurious differences.\n\n## Changes\n\n- Sorts rows by timestamp in `services/tenant/trellis-audit-export.ts` before writing.\n\n## Notes\n\nThis only touches the Trellis Retail tenant's nightly export path; no other tenant runs this code. Checks green, and their platform team have been asking about it.",
+      "comments": [
+        {
+          "author": "mei",
+          "body": "Reads fine. One-line sort, no behaviour change beyond ordering."
+        }
+      ]
+    }
+  ]
+}

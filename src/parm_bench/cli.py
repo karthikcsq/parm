@@ -92,7 +92,11 @@ from .workflows.policies import (
     MemoryPolicyNotImplementedError,
     available_policies,
 )
-from .workflows.runner import build_retrieval_resource, run_workflow_cases
+from .workflows.runner import (
+    assert_gold_reachable,
+    build_retrieval_resource,
+    run_workflow_cases,
+)
 from .workflows.scoring import score_workflow_predictions
 
 
@@ -624,6 +628,7 @@ def _workflow_run(args: argparse.Namespace) -> int:
         parm_admission_cache=args.parm_admission_cache,
         parm_admission_policy=args.parm_admission_policy,
     )
+    assert_gold_reachable(cases, retrieval_resource)
     model: Any = OpenAIWorkflowModel(_resolve_model(args.model))
     if args.trajectory_cache:
         model = CachingWorkflowModel(

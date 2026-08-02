@@ -78,6 +78,30 @@ def build_retrieval_resource(
     return IndexRetriever(index, mode, OpenAIEmbedder())
 
 
+def assert_gold_reachable(cases: list[WorkflowCase], retrieval_resource: Any) -> None:
+    """Refuse to run a memory policy against an index missing a case's gold.
+
+    Without this, running a scenario whose commitment lives above the first
+    corpus tier against the first tier's index produces a clean-looking zero:
+    every policy fails the positive, and nothing distinguishes "the retrieval
+    policy missed it" from "the memory was not in the index". That is the most
+    expensive kind of wrong result, because it looks like evidence.
+    """
+
+    index = getattr(retrieval_resource, "index", None)
+    if index is None:
+        return
+    available = {page.slug for page in index.pages}
+    for case in cases:
+        missing = sorted(set(case.gold_source_ids) - available)
+        if missing:
+            raise ValueError(
+                f"{case.case_id} declares tier {case.corpus_tier!r} but the "
+                f"retrieval index at {index.path} is missing its gold "
+                f"record(s): {', '.join(missing)}"
+            )
+
+
 def run_workflow_case(
     case: WorkflowCase,
     *,

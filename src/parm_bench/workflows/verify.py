@@ -162,10 +162,61 @@ def _comment_contains(
     if target is None:
         return False, f"no issue or pull request #{number}"
     keywords = assertion.get("keywords", [])
+    # "all" is the default because most checks name one specific thing. Use
+    # "any" when several wordings are equally honest ways to say the same
+    # thing, so the assertion measures the decision rather than the phrasing.
+    match_any = str(assertion.get("match", "all")) == "any"
     for comment in target["comments"]:
-        if not _missing_keywords(comment["body"], keywords):
+        missing = _missing_keywords(comment["body"], keywords)
+        if match_any and len(missing) < len(list(keywords)):
             return True, f"#{number} has a matching comment"
-    return False, f"#{number} has no comment containing {', '.join(keywords)}"
+        if not match_any and not missing:
+            return True, f"#{number} has a matching comment"
+    joiner = " or " if match_any else ", "
+    return False, f"#{number} has no comment containing {joiner.join(keywords)}"
+
+
+def _issue_state(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    number = int(assertion["issue_number"])
+    issue = context["state"]["issues"].get(number)
+    if issue is None:
+        return False, f"no issue #{number}"
+    expected = str(assertion["expected"])
+    if issue["state"] == expected:
+        return True, f"#{number} is {expected}"
+    return False, f"#{number} is {issue['state']}, expected {expected}"
+
+
+def _issues_closed(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    issues = context["state"]["issues"]
+    numbers = [int(value) for value in assertion.get("issue_numbers", [])]
+    open_numbers = [
+        number
+        for number in numbers
+        if number not in issues or issues[number]["state"] != "closed"
+    ]
+    if open_numbers:
+        return False, "still open: " + ", ".join(f"#{n}" for n in open_numbers)
+    return True, "closed " + ", ".join(f"#{n}" for n in numbers)
+
+
+def _pull_requests_merged(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    pulls = context["state"]["pull_requests"]
+    numbers = [int(value) for value in assertion.get("pull_numbers", [])]
+    unmerged = [
+        number
+        for number in numbers
+        if number not in pulls or pulls[number]["state"] != "merged"
+    ]
+    if unmerged:
+        return False, "not merged: " + ", ".join(f"#{n}" for n in unmerged)
+    return True, "merged " + ", ".join(f"#{n}" for n in numbers)
 
 
 def _no_mutation(
@@ -244,8 +295,11 @@ _CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[bool, str]]]
     "branch_exists": _branch_exists,
     "file_exists": _file_exists,
     "issue_exists": _issue_exists,
+    "issue_state": _issue_state,
+    "issues_closed": _issues_closed,
     "pull_request_exists": _pull_request_exists,
     "pull_request_state": _pull_request_state,
+    "pull_requests_merged": _pull_requests_merged,
     "reviewer_requested": _reviewer_requested,
     "no_reviewer_requested": _no_reviewer_requested,
     "comment_contains": _comment_contains,

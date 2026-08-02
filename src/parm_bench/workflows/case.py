@@ -18,6 +18,7 @@ REQUIRED_FIELDS = {
     "case_id",
     "base_case_id",
     "corpus_id",
+    "corpus_tier",
     "variant",
     "goal",
     "environment",
@@ -68,6 +69,18 @@ class WorkflowCase:
     @property
     def corpus_id(self) -> str:
         return str(self.data["corpus_id"])
+
+    @property
+    def corpus_tier(self) -> str:
+        """Smallest declared tier holding every gold record for this case.
+
+        A scenario whose commitment was written above the first tier cannot be
+        evaluated against that tier's index: the memory is simply absent, and
+        the run would look like a retrieval failure rather than a missing
+        fixture.
+        """
+
+        return str(self.data.get("corpus_tier", ""))
 
     @property
     def goal(self) -> str:

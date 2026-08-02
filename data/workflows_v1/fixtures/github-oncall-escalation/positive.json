@@ -1,0 +1,76 @@
+{
+  "adapter": "github_fixture",
+  "repository": "mcpmark-source/claude-code",
+  "default_branch": "main",
+  "actor": "agent",
+  "collaborators": ["priya", "dan", "mei", "sam", "aditi"],
+  "branches": {
+    "main": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.71\n- Faster workspace indexing on cold start.\n",
+      "docs/cli-reference.md": "# CLI reference\n\n## /compact\n\nCompacts the current transcript.\n",
+      "services/export/audit-log.ts": "export function exportAuditLog(tenant: string): string[] {\n  return rowsFor(tenant);\n}\n\nfunction rowsFor(tenant: string): string[] {\n  return [];\n}\n",
+      "src/session/loop.ts": "export async function runSession(): Promise<void> {\n  // session loop\n}\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.71\"\n}\n"
+    }
+  },
+  "issues": [
+    {
+      "number": 70,
+      "title": "Autocomplete suggests deleted files",
+      "state": "open",
+      "labels": ["bug"],
+      "author": "jhalvorsen",
+      "body": "After deleting a file it still shows up in path autocomplete until I restart. Minor but confusing.\n\nOn 1.0.71, macOS.",
+      "comments": [
+        {
+          "author": "mei",
+          "body": "Fixed on main last week, the completion cache was not invalidated on unlink. Ships in the next release."
+        }
+      ]
+    },
+    {
+      "number": 71,
+      "title": "Crash on empty .clirc",
+      "state": "open",
+      "labels": ["bug"],
+      "author": "pnwbuilder",
+      "body": "A zero-byte `.clirc` crashes on start with a JSON parse error.",
+      "comments": [
+        {
+          "author": "dan",
+          "body": "This is the 1.0.68.1 hotfix, already released. Reporter is on 1.0.67."
+        }
+      ]
+    },
+    {
+      "number": 72,
+      "title": "Audit log export returns duplicate rows",
+      "state": "open",
+      "labels": ["bug"],
+      "author": "dokafor",
+      "body": "Reporting this on behalf of Trellis Retail, where I run the platform team.\n\nOur nightly audit log export has been emitting each action twice since we picked up 1.0.69. We reconcile that export against our own access records and the duplicates are breaking the reconciliation.\n\nWe have a compliance review on the 12th and I need to be able to say when this is fixed. Our agreement names a support contact for exactly this kind of thing, and I have not been able to reach them this week.",
+      "comments": [
+        {
+          "author": "dan",
+          "body": "Same double-write as the 1.0.69.1 fix. Already released; reporter is on 1.0.69."
+        }
+      ]
+    },
+    {
+      "number": 73,
+      "title": "Typo in the /compact help text",
+      "state": "open",
+      "labels": ["docs"],
+      "author": "sam",
+      "body": "`transript` in the one-line help for /compact.",
+      "comments": [
+        {
+          "author": "sam",
+          "body": "Fixed in the docs branch that merged Tuesday. Can be closed."
+        }
+      ]
+    }
+  ],
+  "pull_requests": []
+}

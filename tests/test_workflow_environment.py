@@ -13,21 +13,34 @@ from parm_bench.workflows.verify import evaluate_assertions
 
 
 DATASET = Path(__file__).resolve().parents[1] / "data" / "workflows_v1"
+# These tests are about the telemetry scenario specifically: its fixture, its
+# cue, and its assertions. The dataset holds several scenarios, so select one
+# rather than keying on variant alone.
+SCENARIO = "parm-workflow-github-telemetry-hotfix"
+
+
+def _scenario_cases(base_case_id: str = SCENARIO) -> list:
+    return [
+        case
+        for case in load_workflow_cases(DATASET)
+        if case.base_case_id == base_case_id
+    ]
 
 
 def _cases() -> dict[str, object]:
-    return {case.variant: case for case in load_workflow_cases(DATASET)}
+    return {case.variant: case for case in _scenario_cases()}
 
 
 class WorkflowDatasetTest(unittest.TestCase):
     def test_pilot_dataset_validates(self) -> None:
         cases = load_workflow_cases(DATASET)
         validate_workflow_cases(cases)
-        self.assertEqual(len(cases), 3)
+        self.assertEqual(len(cases) % 3, 0)
         self.assertEqual(
             {case.variant for case in cases},
             {"positive", "cue-ablated", "memory-included"},
         )
+        self.assertEqual(len(_scenario_cases()), 3)
 
     def test_every_case_pins_an_upstream_revision(self) -> None:
         for case in load_workflow_cases(DATASET):
@@ -46,7 +59,7 @@ class WorkflowDatasetTest(unittest.TestCase):
             self.assertIs(cue["text"] in result.text, expected, variant)
 
     def test_cue_leaking_into_the_goal_is_rejected(self) -> None:
-        cases = load_workflow_cases(DATASET)
+        cases = _scenario_cases()
         positive = next(case for case in cases if case.variant == "positive")
         positive.data["goal"] += " Watch for Statsig event logging."
         with self.assertRaises(WorkflowCaseValidationError) as raised:
@@ -54,7 +67,7 @@ class WorkflowDatasetTest(unittest.TestCase):
         self.assertIn("cue leaks into goal", str(raised.exception))
 
     def test_identical_decisive_assertions_are_rejected(self) -> None:
-        cases = load_workflow_cases(DATASET)
+        cases = _scenario_cases()
         control = next(case for case in cases if case.variant == "cue-ablated")
         positive = next(case for case in cases if case.variant == "positive")
         control.data["assertions"] = list(positive.data["assertions"])

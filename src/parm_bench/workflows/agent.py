@@ -72,10 +72,42 @@ class WorkflowModel(Protocol):
     ) -> AgentAction: ...
 
 
+_PREWARM_LOCK = threading.Lock()
+_PREWARMED = False
+
+
+def prewarm_response_models() -> None:
+    """Build the OpenAI response schemas before any worker thread needs them.
+
+    The SDK's response models carry a lazily-built pydantic core schema. The
+    first parse builds it, and under concurrent workers two threads can race so
+    that one reads the placeholder and raises ``PydanticUserError`` from deep
+    inside response parsing. That surfaces as a run that dies partway through a
+    matrix for no reason connected to the benchmark. Building the schemas once
+    up front, single-threaded, removes the race.
+
+    Best effort on purpose: this reaches into SDK internals, so a version that
+    no longer needs it should not break the runner.
+    """
+
+    global _PREWARMED
+    with _PREWARM_LOCK:
+        if _PREWARMED:
+            return
+        try:
+            from openai.types.responses import Response
+
+            Response.model_rebuild(_types_namespace=None)
+        except Exception:
+            pass
+        _PREWARMED = True
+
+
 class OpenAIWorkflowModel:
     def __init__(self, model_name: str, client: Any | None = None) -> None:
         from openai import OpenAI
 
+        prewarm_response_models()
         self.model_name = model_name
         self.client = client or OpenAI()
 

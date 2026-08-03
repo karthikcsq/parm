@@ -176,6 +176,32 @@ def _comment_contains(
     return False, f"#{number} has no comment containing {joiner.join(keywords)}"
 
 
+def _comment_absent(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Require that nothing on the target says the thing named by keywords.
+
+    The mirror of ``comment_contains``, for a control where the intervention
+    would show up as words rather than as state.
+    """
+
+    number = int(assertion["number"])
+    state = context["state"]
+    target = state["issues"].get(number) or state["pull_requests"].get(number)
+    if target is None:
+        return False, f"no issue or pull request #{number}"
+    keywords = list(assertion.get("keywords", []))
+    for comment in target["comments"]:
+        present = [
+            keyword
+            for keyword in keywords
+            if str(keyword).casefold() in str(comment["body"]).casefold()
+        ]
+        if present:
+            return False, f"#{number} mentions {', '.join(present)}"
+    return True, f"#{number} says none of {', '.join(keywords)}"
+
+
 def _issue_state(
     assertion: dict[str, Any], context: dict[str, Any]
 ) -> tuple[bool, str]:
@@ -303,6 +329,7 @@ _CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[bool, str]]]
     "reviewer_requested": _reviewer_requested,
     "no_reviewer_requested": _no_reviewer_requested,
     "comment_contains": _comment_contains,
+    "comment_absent": _comment_absent,
     "no_mutation": _no_mutation,
     "files_unchanged": _files_unchanged,
 }

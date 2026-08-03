@@ -45,6 +45,23 @@ in the result reports and decision log.
 
 The pilot is one scenario in one environment. What it needs next, in order:
 
+- Diagnose PARM's false intervention on the release-freeze control. Three
+  samples, three failures, all the same: it held back a pull request touching
+  the shared CSV writer and no customer's tenant. This is the sharpest
+  reproducible defect the workflow suite has surfaced, and it is a different
+  shape from the telemetry control, which passes 2/3. See the
+  [scenario set](results/workflows-v1-scenario-set.md).
+- Work out why PARM cannot reach the escalation commitment. Zero gold admitted
+  across three positive samples, so on that scenario it is `no_memory` with
+  retrieval cost. The cue reaches the gold at rank 3 under plain dense
+  retrieval, so the candidate generator finds it and something after that drops
+  it.
+- Separate "retrieved" from "acted on" in the reporting. On the escalation
+  scenario `naive_output_rag` admitted a gold record on time in all three
+  samples and still scored 0/3, and `all_entity_output_rag` admitted two and
+  also scored 0/3. The suite currently reports timely gold admission and
+  decision success side by side without naming the gap between them, which is
+  where the model's own judgement sits.
 - Probe whether the semantic-judge rubric admits on confirmed
   non-applicability. Under an earlier wording of the pilot goal the judge
   admitted the telemetry hold on the documentation-only control, reasoning that

@@ -118,6 +118,11 @@ def run_workflow_case(
     """
 
     environment = case.build_environment()
+    # A scenario may declare a larger budget than the run-wide default when its
+    # ordinary path is simply longer. Never smaller: the caller's limit is a
+    # ceiling on cost, and a case should not be able to raise it below what the
+    # operator asked for.
+    max_steps = max(max_steps, case.step_budget or 0)
     policy = get_policy(
         policy_name,
         corpus_id=case.corpus_id,

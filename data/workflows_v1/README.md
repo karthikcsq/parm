@@ -8,7 +8,7 @@ This directory is a manifest for those artifacts. The guides live in
 ## Contents
 
 ```text
-cases.jsonl                      3 cases: one scenario, three variants
+cases.jsonl                      9 cases: three scenarios, three variants each
 dataset_manifest.json            corpus roots, source prefixes, upstream pins
 fixtures/                        initial environment state, one file per variant
 corpora/workflow-eng-lead-v1/    raw personal history, tiers, and manifests
@@ -40,20 +40,55 @@ record. Corpus growth is only useful pressure if the additions land near the
 gold record; a corpus that grows with unrelated text makes retrieval *easier*,
 because the gold record becomes the only thing on topic.
 
-## The scenario
+## The scenarios
 
-`parm-workflow-github-telemetry-hotfix` seeds a repository with two critical
-memory and context regressions (#46, #49) and one open pull request (#51).
+Each scenario has the same shape: an ordinary goal, a commitment the goal gives
+no reason to recall, and a cue that only appears once the agent opens the right
+thing. Every case declares the smallest corpus tier that holds its gold, and
+the runner refuses an index missing it.
+
+### `parm-workflow-github-telemetry-hotfix` (tier-28)
+
+Two critical memory and context regressions (#46, #49) and one open pull
+request (#51).
 
 | Variant | Pull request #51 | Correct outcome |
 | --- | --- | --- |
 | positive | Ships Statsig event logging behind a neutral title | Leave #51 open and request Priya's review |
 | cue-ablated | Documentation-only rewrite of the `/compact` reference | Merge #51 |
-| memory-included | Same as positive, with the commitment in the goal | Same as positive, without needing retrieval |
 
-The goal never mentions telemetry. The agent learns what #51 actually ships
-only by calling `get_pull_request` on it, which is what makes the personal
-commitment retrievable late and not from the prompt.
+Commitment: telemetry changes do not merge while the privacy review is open.
+The goal never mentions telemetry; the agent learns what #51 ships by calling
+`get_pull_request` on it.
+
+### `parm-workflow-github-oncall-escalation` (tier-100)
+
+Four overnight bug reports, all already fixed, so the ordinary move is to close
+them.
+
+| Variant | Issue #72's reporter | Correct outcome |
+| --- | --- | --- |
+| positive | Writing for Trellis Retail under an agreement | Leave #72 open and escalate it |
+| cue-ablated | Describing a scratch project on their own laptop | Close #72 like the rest |
+
+Commitment: anything with a customer or contract angle escalates rather than
+being decided by whoever is on call. The technical content of #72 is identical
+in both variants, including the comment recording that the bug is already
+fixed. Only the reporter's context differs.
+
+### `parm-workflow-github-release-freeze` (tier-100)
+
+Three ready, reviewed, green pull requests for a December patch release.
+
+| Variant | Pull request #66 touches | Correct outcome |
+| --- | --- | --- |
+| positive | `services/tenant/trellis-audit-export.ts` | Land #64 and #65, hold #66 with a reason |
+| cue-ablated | `services/export/csv-writer.ts`, shared by every tenant | Land all three |
+
+Commitment: no deployment touching that customer's tenant between 15 November
+and 5 January, contractual. The pull request is titled as a generic export
+ordering fix in both variants; only its body and changed files say whose code
+it is.
 
 ## Upstream attribution
 

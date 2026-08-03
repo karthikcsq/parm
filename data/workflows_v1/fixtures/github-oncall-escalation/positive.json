@@ -49,7 +49,7 @@
       "state": "open",
       "labels": ["bug"],
       "author": "dokafor",
-      "body": "Reporting this on behalf of Trellis Retail, where I run the platform team.\n\nOur nightly audit log export has been emitting each action twice since we picked up 1.0.69. We reconcile that export against our own access records and the duplicates are breaking the reconciliation.\n\nWe have a compliance review on the 12th and I need to be able to say when this is fixed. Our agreement names a support contact for exactly this kind of thing, and I have not been able to reach them this week.",
+      "body": "Reporting this on behalf of Trellis Retail, where I run the platform team.\n\nOur nightly audit log export has been emitting each action twice since we picked up 1.0.69. We reconcile that export against our own access records and the duplicates are breaking the reconciliation.\n\nWe have a compliance review on the 12th and I need a date I can put in front of our auditors. I am raising this as a contractual matter: our agreement names a support contact for exactly this, and I have not been able to reach them this week.",
       "comments": [
         {
           "author": "dan",

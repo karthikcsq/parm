@@ -71,6 +71,19 @@ class WorkflowCase:
         return str(self.data["corpus_id"])
 
     @property
+    def step_budget(self) -> int | None:
+        """Steps this scenario's task needs, when the default is not enough.
+
+        The budget is per scenario because it describes the task, not the
+        policy. A run that dies at the step limit scores as a decision failure
+        while actually being a truncation, so a scenario whose ordinary path is
+        longer needs to say so rather than have every policy look worse on it.
+        """
+
+        value = self.data.get("step_budget")
+        return int(value) if value is not None else None
+
+    @property
     def corpus_tier(self) -> str:
         """Smallest declared tier holding every gold record for this case.
 

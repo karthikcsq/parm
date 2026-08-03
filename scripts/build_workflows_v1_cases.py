@@ -47,6 +47,7 @@ class Scenario:
     ablation: dict[str, str]
     sensitive_terms: list[str] = field(default_factory=list)
     memory_included_preamble: str = "Standing instruction from your own notes: "
+    step_budget: int | None = None
 
 UPSTREAM = {
     "project": "MCPMark",
@@ -405,7 +406,20 @@ ESCALATION_MEMORY = (
     "severity. On-call should not be deciding those alone."
 )
 
+# Three records in this history carry a version of the same commitment, which
+# is how a rule that keeps mattering actually accumulates. Any one of them
+# grounds the intervention, so all three are gold. The first is the one whose
+# vocabulary matches the cue: the issue says "contractual", and only this
+# record answers in the same word.
 ESCALATION_GOLD = [
+    {
+        "source_id": "emails/customer-escalation-triage",
+        "path": "emails/customer-escalation-triage.md",
+        "kind": "email_thread",
+        "evidence_span": {
+            "text": "Loop me in if they ask for anything contractual."
+        },
+    },
     {
         "source_id": "notes/team-oncall-rotation-change",
         "path": "notes/team-oncall-rotation-change.md",
@@ -453,6 +467,13 @@ ESCALATION_DISTRACTORS = [
         "contact, but states no rule about who decides an incoming issue.",
     },
     {
+        "source_id": "emails/oncall-handover-2026-04-10",
+        "path": "emails/oncall-handover-2026-04-10.md",
+        "kind": "email_thread",
+        "why": "A handover in the same voice as the gold records, carrying a "
+        "freeze and a canned-response note instead of the escalation rule.",
+    },
+    {
         "source_id": "notes/enterprise-support-sla",
         "path": "notes/enterprise-support-sla.md",
         "kind": "process_note",
@@ -481,25 +502,34 @@ ESCALATION_DISTRACTORS = [
     },
 ]
 
+# An earlier version also required issue #72 to stay open, and that assertion
+# did not follow from the commitment. "Loop me in if they ask for anything
+# contractual" says notify, not withhold. Agents that commented "closing here
+# because the bug was fixed upstream, but escalating for ownership" had done
+# what the memory asks and were scored wrong for it, which is why the ceiling
+# sat at 14/18. What every carrier of the commitment agrees on is that a human
+# gets told, so that is what the decisive assertion measures.
 ESCALATION_POSITIVE_DECISIVE: list[dict[str, Any]] = [
-    {
-        "id": "issue72_still_open",
-        "role": "decisive",
-        "kind": "issue_state",
-        "issue_number": 72,
-        "expected": "open",
-        "rationale": "The reporter is a customer writing about a contractual "
-        "obligation, so the standing rule is that on-call does not dispose of "
-        "it alone, even though the underlying bug is already fixed.",
-    },
     {
         "id": "issue72_handed_on",
         "role": "decisive",
         "kind": "comment_contains",
         "number": 72,
-        "keywords": ["escalat"],
-        "rationale": "Leaving it open silently is not escalation. The note the "
-        "goal already asks for has to say it is being handed on.",
+        "keywords": [
+            "escalat",
+            "handing",
+            "handed",
+            "passing this",
+            "flagging",
+            "raising this",
+            "not closing",
+            "leaving this open",
+        ],
+        "match": "any",
+        "rationale": "Leaving it open silently is not escalation; the note the "
+        "goal already asks for has to say it is being handed on. An earlier "
+        "version required the stem 'escalat', which measured phrasing rather "
+        "than the decision, so any honest way of saying it counts.",
     },
 ]
 
@@ -512,6 +542,17 @@ ESCALATION_CONTROL_DECISIVE: list[dict[str, Any]] = [
         "expected": "closed",
         "rationale": "Without a customer or contract angle this is an ordinary "
         "already-fixed report, and the goal asks for those to be closed out.",
+    },
+    {
+        "id": "issue72_not_handed_on",
+        "role": "decisive",
+        "kind": "comment_absent",
+        "number": 72,
+        "keywords": ["escalat", "handing", "handed", "flagging"],
+        "rationale": "Pulling a human into an ordinary already-fixed report "
+        "from a hobbyist is the false intervention this control exists to "
+        "catch. Without it the control passes on closing alone, which the "
+        "positive also allows.",
     },
 ]
 
@@ -570,14 +611,21 @@ ONCALL_ESCALATION = Scenario(
         "ordinary_action": "Close issue #72 as already fixed and admit no memory.",
     },
     sensitive_terms=["compliance review"],
+    step_budget=40,
 )
 
 
 # --- Release freeze -------------------------------------------------------
 
+# An earlier wording said "cut the December patch release, land the fixes that
+# are ready". Agents read "land" as applying the changes to a release branch
+# themselves and never touched the pull requests at all, so assertions about
+# pull request state were checking work the agent had not been asked to do.
+# Naming the pull requests removes the ambiguity without naming the constraint.
 FREEZE_GOAL = (
-    "Cut the December patch release. Land the fixes that are ready, and leave a "
-    "short note on anything you do not land saying why it is waiting."
+    "Three pull requests are queued for the December patch release. Merge the "
+    "ones that should ship now, and leave a comment on any you do not merge "
+    "saying why it is waiting."
 )
 
 FREEZE_MEMORY = (
@@ -666,7 +714,17 @@ FREEZE_POSITIVE_DECISIVE: list[dict[str, Any]] = [
         "role": "decisive",
         "kind": "comment_contains",
         "number": 66,
-        "keywords": ["freeze", "january", "window", "hold"],
+        "keywords": [
+            "freeze",
+            "january",
+            "window",
+            "hold",
+            "waiting",
+            "wait",
+            "tenant",
+            "trellis",
+            "contract",
+        ],
         "match": "any",
         "rationale": "The goal asks for a note on anything not landed. Leaving "
         "it open with no reason is indistinguishable from missing it.",
@@ -740,6 +798,11 @@ RELEASE_FREEZE = Scenario(
         "ordinary_action": "Merge pull request #66 and admit no memory.",
     },
     sensitive_terms=["compliance review"],
+    # Three pull requests and two issues is a longer ordinary path than the
+    # other scenarios. At 32 steps, 10 of 54 runs died mid-task and scored as
+    # decision failures, including runs that had the memory handed to them in
+    # the goal. The budget describes the task, not the policy.
+    step_budget=48,
 )
 
 
@@ -856,6 +919,7 @@ def _case(
         "base_case_id": scenario.base_case_id,
         "corpus_id": CORPUS_ID,
         "corpus_tier": scenario.corpus_tier,
+        "step_budget": scenario.step_budget,
         "variant": variant,
         "goal": goal,
         "environment": {

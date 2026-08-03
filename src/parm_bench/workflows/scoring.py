@@ -147,8 +147,10 @@ def score_workflow_case(case: Any, prediction: dict[str, Any]) -> dict[str, Any]
 
     return {
         "case_id": case.case_id,
+        "base_case_id": case.base_case_id,
         "variant": case.variant,
         "corpus_id": case.corpus_id,
+        "corpus_tier": case.corpus_tier,
         "decisive_success": decisive_success,
         "decisive_failures": [
             row["id"] for row in decisive if not row["passed"]

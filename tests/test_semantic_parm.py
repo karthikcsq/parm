@@ -14,6 +14,7 @@ from parm_bench.retrieval import (
     SentenceRecord,
 )
 from parm_bench.semantic_parm import (
+    AdmissionCacheMissError,
     AdmissionCachePolicy,
     CachedOpenAIAdmissionJudge,
     PARMSemanticJudgeRetriever,
@@ -179,7 +180,7 @@ class SemanticPARMRetrieverTests(unittest.TestCase):
 
 
 class AdmissionJudgeCacheTests(unittest.TestCase):
-    def test_populate_then_frozen_replay(self) -> None:
+    def test_frozen_replay_rejects_a_changed_candidate_set(self) -> None:
         response = SimpleNamespace(
             output_text=(
                 '{"admit":true,"candidate_id":"C01",'
@@ -220,22 +221,21 @@ class AdmissionJudgeCacheTests(unittest.TestCase):
                 cache_namespace="fixture-namespace",
                 client=SimpleNamespace(),
             )
-            replay = frozen.judge(
-                prompt="Choose one.",
-                observation_text="A long observation.",
-                candidates=[
-                    {
-                        "candidate_id": "C99",
-                        "region_text": "A slightly different candidate set.",
-                        "memory_text": "A different ranking replay.",
-                        "page_id": "corpus:p2",
-                        "region_id": "region-2",
-                    }
-                ],
-            )
-            self.assertEqual(first, replay)
-            self.assertEqual(first["candidate_id"], "C01")
-            self.assertIsNotNone(frozen.cache_hash)
+            with self.assertRaises(AdmissionCacheMissError):
+                frozen.judge(
+                    prompt="Choose one.",
+                    observation_text="A long observation.",
+                    candidates=[
+                        {
+                            "candidate_id": "C99",
+                            "region_text": "A slightly different candidate set.",
+                            "memory_text": "A different ranking replay.",
+                            "page_id": "corpus:p2",
+                            "region_id": "region-2",
+                        }
+                    ],
+                )
+            self.assertIsNone(frozen.cache_hash)
 
 
 def _index() -> RetrievalIndex:

@@ -132,6 +132,7 @@ class CachedOpenAIAdmissionJudge:
         request_hash = semantic_admission_cache_key(
             prompt,
             observation_text,
+            candidates,
             cache_namespace=self.cache_namespace,
         )
         cache_path = self.cache_dir / f"{request_hash}.json"
@@ -667,15 +668,37 @@ def semantic_admission_cache_namespace(
 def semantic_admission_cache_key(
     prompt: str,
     observation_text: str,
+    candidates: Sequence[dict[str, Any]],
     *,
     cache_namespace: str,
 ) -> str:
+    """Fingerprint the complete judge input, not just the observation.
+
+    Candidate generation is part of the admission policy. Replaying a decision
+    after the ranker changes can select a source that the judge never saw and
+    makes an optimization appear validated when it was not.
+    """
+
     payload = {
         "model": PARM_SEMANTIC_JUDGE_MODEL,
         "rubric_version": PARM_SEMANTIC_JUDGE_RUBRIC,
+        "instructions": PARM_SEMANTIC_JUDGE_INSTRUCTIONS,
         "cache_namespace": cache_namespace,
         "prompt": prompt,
         "observation_text": observation_text,
+        "candidates": [
+            {
+                key: candidate[key]
+                for key in (
+                    "candidate_id",
+                    "region_id",
+                    "region_text",
+                    "page_id",
+                    "memory_text",
+                )
+            }
+            for candidate in candidates
+        ],
     }
     return hashlib.sha256(
         json.dumps(

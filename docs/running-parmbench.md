@@ -211,8 +211,11 @@ parm-bench workflow score data\benchmark-results\workflows-v1\parm.jsonl `
 ```
 
 `--trajectory-cache` freezes each agent turn keyed by the whole conversation so
-far, which is what makes a multi-step comparison replayable. Add
-`--trajectory-policy frozen` to forbid new live calls; a miss is then an error.
+far, which is what makes a multi-step comparison replayable. PARM admission
+entries are keyed by the complete judge input (prompt, observation, candidate
+pairs, model, and rubric), so a change to candidate generation intentionally
+requires a new admission cache. Add `--trajectory-policy frozen` to forbid new
+live calls; a miss is then an error.
 
 The whole ladder, one condition after another:
 

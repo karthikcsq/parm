@@ -98,6 +98,7 @@ are manifests, not alternate project guides.
 | [Workflows first pass](docs/results/workflows-v1-first-pass.md) | The executable ladder on the pilot scenario, and what one sample can and cannot show |
 | [Workflows scaling result](docs/results/workflows-v1-scaling.md) | The same ladder at 28 and 100 memories: what corpus growth changed and what it did not |
 | [Workflows scenario set](docs/results/workflows-v1-scenario-set.md) | Three scenarios on the same ladder, why the pilot result does not generalise, and the construction defects that took two rounds to find |
+| [Workflows cache-input v2 recertification](docs/results/workflows-v1-cache-v2.md) | Fresh PARM rerun after cache keys were made sensitive to the judge's complete candidate input |
 | [Frozen expansion first pass](docs/results/benchmark-expansion-first-pass.md) | Untuned generalization record that motivated the V5 changes |
 | [Real-world evaluation](docs/real-world-evaluation.md) | Limits of the controlled benchmark and the human-calibrated end-to-end judge design |
 | [Larger dataset candidates](docs/dataset-candidates.md) | Hugging Face survey, recommended sources, conversion procedure, and retrieval-substrate changes |

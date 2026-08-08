@@ -115,19 +115,19 @@ silently make a new nondeterministic response-model call. PARM still embeds
 runtime cue queries, so the replay requires `OPENAI_API_KEY` unless query
 embeddings are separately cached.
 
-The PersonaMem semantic-pair development path adds a frozen admission cache:
+The semantic-pair path adds a frozen admission cache. It is the workflow
+default, so the replay that exercises it is a workflow run:
 
 ```powershell
-parm-bench run data\benchmark_personamem_mixed_v0 `
-  --baseline parm `
-  --retrieval-index data\retrieval-indexes\personamem-v2-train-v0 `
-  --parm-retriever semantic-judge `
-  --parm-admission-cache data\retrieval-experiments\personamem-mixed-v0\admission-judge-v2-frozen-cache `
+& $python -m parm_bench.cli workflow run data\workflows_v1 `
+  --policy parm `
+  --retrieval-index data\retrieval-indexes\workflow-eng-lead-v1-100 `
+  --parm-admission-cache data\workflow-caches\parm-admission-tier-100 `
   --parm-admission-policy frozen `
-  --response-cache data\response-caches\personamem-mixed-v0-semantic-parm `
-  --response-policy frozen `
+  --trajectory-cache data\workflow-caches\trajectories-gpt5mini `
+  --trajectory-policy frozen `
   --model gpt-5-mini `
-  --out data\retrieval-experiments\personamem-mixed-v0\semantic-parm-replay.jsonl
+  --out data\benchmark-results\workflows-v1-replay.jsonl
 ```
 
 Use `--parm-admission-policy populate` only to construct a new versioned judge
@@ -223,9 +223,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_workflows_v1_mat
 
 PARM defaults to `--parm-retriever semantic-judge` here. The workflow corpora
 are ordinary personal histories with no link graph and no review/reflection
-filename convention, which is the same shape that motivated the semantic path
-for PersonaMem. Pass `--parm-retriever convergence` to run the deterministic
-waterfall instead.
+filename convention, which is the shape the semantic path exists for. Pass
+`--parm-retriever convergence` to run the deterministic waterfall instead.
 
 Rebuild the dataset and its index after editing the corpus:
 

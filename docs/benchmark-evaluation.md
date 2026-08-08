@@ -58,9 +58,8 @@ ambiguous and does not count as one final choice. Source IDs are used only in
 optional retrieval traces. An LLM judge may be used later only as a
 disagreement audit.
 
-Metrics are also reported by evaluation split and corpus. In the PersonaMem-v2
-development benchmark, each corpus is one persona, so the corpus breakdown is
-the per-persona view.
+Metrics are also reported by evaluation split and corpus. Where a benchmark
+puts one persona per corpus, the corpus breakdown is the per-persona view.
 
 ## Failure taxonomy
 

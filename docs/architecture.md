@@ -51,12 +51,9 @@ policy so the benchmark can compare mechanisms over the same memory substrate.
 `data/benchmark_v1/cases.jsonl` contains 54 cases: 18 scenarios, each with
 three variants.
 
-`data/benchmark_personamem_v0/cases.jsonl` is a separate development
-benchmark with 90 cases over 30 persona-disjoint PersonaMem-v2 corpora. It
-uses the same triplet contract. A dataset manifest links each case to its
-corpus, bounded upstream source, normalized record, construction decision,
-and passing no-memory fairness artifact. The frozen Amara cases and index are
-not inputs to this benchmark.
+`data/workflows_v1/cases.jsonl` is the executable workflow suite: three
+scenarios over one engineering-lead corpus, scored on the environment an agent
+leaves behind rather than on a single label. It uses the same triplet contract.
 
 | Variant | Observation | Expected behavior |
 | --- | --- | --- |
@@ -191,9 +188,10 @@ the retrieval scores.
 
 ## Semantic-pair admission development path
 
-PersonaMem histories do not have the link graph or review/reflection filename
-conventions that make the deterministic waterfall effective on Amara. The
-development semantic path keeps corpus isolation and the frozen raw index but
+Ordinary personal histories do not have the link graph or review/reflection
+filename conventions that make the deterministic waterfall effective on Amara.
+The workflow corpus is one such history, which is why the semantic path is the
+workflow default. It keeps corpus isolation and the frozen raw index but
 changes candidate generation and admission. Its canonical replay waterfall is:
 
 ```mermaid
@@ -247,9 +245,10 @@ Canonical runs depend on tracked, hashed artifacts:
 | Artifact | Purpose |
 | --- | --- |
 | `data/retrieval-indexes/amara-life-v1` | Neutral pages, chunks, sentences, links, and embeddings |
-| `data/retrieval-indexes/personamem-v2-train-v0` | Schema-v3 index whose pages, chunks, sentences, and retrieval requests carry a persona corpus scope |
+| `data/retrieval-indexes/workflow-eng-lead-v1[-100]` | Schema-v3 workflow corpus indexes, one per declared scale tier |
 | `data/expansion-caches/...` | Frozen enhanced-mode query alternatives |
-| `data/retrieval-experiments/.../admission-judge-*-cache` | Frozen semantic-pair admission decisions for development runs |
+| `data/workflow-caches/parm-admission-*` | Frozen semantic-pair admission decisions, namespaced per retrieval index |
+| `data/workflow-caches/trajectories-*` | Replayable agent turns keyed by the full request |
 | `data/response-caches/...` | Reusable response-model calls keyed by the full request |
 | `data/benchmark-results/*.jsonl` | One prediction and trace per case |
 | `data/benchmark-results/*.config.json` | Exact condition, model, constants, and artifact hashes |

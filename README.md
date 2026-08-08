@@ -51,16 +51,16 @@ $python = 'C:\Users\karth\anaconda3\python.exe'
 & $python -m spacy download en_core_web_sm
 
 parm-bench validate data\benchmark_v1
-parm-bench validate data\benchmark_personamem_v0
 parm-bench inspect data\benchmark_v1 `
   --case parm-amara-conference-agenda-positive
 
 $env:PYTHONPATH = 'src'
 & $python -m unittest discover -s tests
+& $python -m parm_bench.cli workflow validate data\workflows_v1
 ```
 
-Validation should report 54 frozen Amara cases and 90 PersonaMem-v2
-development cases, and the test suite should pass. Continue with
+Validation should report 54 frozen Amara cases and 9 workflow cases, and the
+test suite should pass. Continue with
 [How to Run PARMBench](docs/running-parmbench.md) to replay the published run
 or execute another retrieval condition.
 
@@ -99,7 +99,6 @@ are manifests, not alternate project guides.
 | [Workflows scaling result](docs/results/workflows-v1-scaling.md) | The same ladder at 28 and 100 memories: what corpus growth changed and what it did not |
 | [Workflows scenario set](docs/results/workflows-v1-scenario-set.md) | Three scenarios on the same ladder, why the pilot result does not generalise, and the construction defects that took two rounds to find |
 | [Frozen expansion first pass](docs/results/benchmark-expansion-first-pass.md) | Untuned generalization record that motivated the V5 changes |
-| [PersonaMem-v2 first pass](docs/results/personamem-v0-first-pass.md) | Untuned 30-person development comparison and per-corpus results |
 | [Real-world evaluation](docs/real-world-evaluation.md) | Limits of the controlled benchmark and the human-calibrated end-to-end judge design |
 | [Larger dataset candidates](docs/dataset-candidates.md) | Hugging Face survey, recommended sources, conversion procedure, and retrieval-substrate changes |
 | [Roadmap](docs/roadmap.md) | Next retrieval and external-validity work, in priority order |
@@ -123,9 +122,7 @@ src/parm_bench/workflows/     environments, trajectory runner, and verifier
 tests/                        unit and CLI smoke tests
 scripts/                      dataset and retrieval-artifact builders
 data/benchmark_v1/            54 executable cases and large contexts
-data/benchmark_personamem_v0/ 90 development cases over 30 persona corpora
 data/workflows_v1/            executable agent cases, fixtures, and corpus
-data/personamem-v2-train-v0/  bounded source records and provenance
 data/retrieval-indexes/       frozen neutral memory substrate
 data/expansion-caches/        frozen enhanced-mode query expansions
 data/response-caches/         replayable model calls

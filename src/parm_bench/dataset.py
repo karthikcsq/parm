@@ -140,27 +140,12 @@ def observation_text(case: dict[str, Any], dataset_root: str | Path) -> str:
     return text
 
 
-def validate_cases(
-    cases: list[dict[str, Any]], *, include_profile: bool = True
-) -> None:
+def validate_cases(cases: list[dict[str, Any]]) -> None:
     issues: list[ValidationIssue] = []
     seen: set[str] = set()
     bases: dict[str, set[str]] = {}
     base_corpora: dict[str, set[str]] = {}
     encoding = tiktoken.get_encoding(TOKENIZER)
-    dataset_root = Path(cases[0].get("_dataset_root", ".")) if cases else None
-    manifest_path = (
-        dataset_root / "dataset_manifest.json"
-        if dataset_root is not None
-        else None
-    )
-    manifest = (
-        json.loads(manifest_path.read_text(encoding="utf-8"))
-        if manifest_path is not None and manifest_path.is_file()
-        else {}
-    )
-    validation_profile = manifest.get("validation_profile")
-    require_listing_rows = validation_profile != "personamem_v2_mixed_v0"
 
     for index, case in enumerate(cases):
         case_id = str(case.get("case_id", f"<case {index}>"))
@@ -176,13 +161,7 @@ def validate_cases(
         base_corpora.setdefault(base_case_id, set()).add(
             str(case.get("corpus_id"))
         )
-        _validate_case(
-            case,
-            case_id,
-            encoding,
-            issues,
-            require_listing_rows=require_listing_rows,
-        )
+        _validate_case(case, case_id, encoding, issues)
 
     for base_case_id, variants in bases.items():
         if variants != VARIANTS:
@@ -202,19 +181,6 @@ def validate_cases(
             )
     if issues:
         raise DatasetValidationError(issues)
-    if include_profile and manifest_path is not None and manifest_path.is_file():
-        if manifest.get("validation_profile") in {
-            "personamem_v2_v0",
-            "personamem_v2_mixed_v0",
-        }:
-            from .personamem import personamem_pilot_validation_issues
-
-            profile_issues = [
-                ValidationIssue(case_id, message)
-                for case_id, message in personamem_pilot_validation_issues(cases)
-            ]
-            if profile_issues:
-                raise DatasetValidationError(profile_issues)
 
 
 def _validate_case(
@@ -222,8 +188,6 @@ def _validate_case(
     case_id: str,
     encoding: Any,
     issues: list[ValidationIssue],
-    *,
-    require_listing_rows: bool = True,
 ) -> None:
     variant = case.get("variant")
     if variant not in VARIANTS:
@@ -300,11 +264,9 @@ def _validate_case(
         if line.startswith(LISTING_PREFIXES)
     ]
     distractor_sources = case.get("distractors", {}).get("sources", [])
-    if require_listing_rows and len(visible_labels) < 25:
+    if len(visible_labels) < 25:
         issues.append(ValidationIssue(case_id, "needs at least 25 visible choices"))
-    if require_listing_rows and len(visible_labels) != len(
-        {label.casefold() for label in visible_labels}
-    ):
+    if len(visible_labels) != len({label.casefold() for label in visible_labels}):
         issues.append(
             ValidationIssue(case_id, "visible choice labels must be unique")
         )

@@ -29,10 +29,6 @@ in the result reports and decision log.
 ## Add external validity
 
 - Add corpus-scoped adapters and index isolation for multi-person datasets.
-- Convert 30 PersonaMem-v2 development records before freezing the generation
-  and acceptance procedure.
-- Publish a sealed, persona-disjoint set of 500 human-audited PersonaMem-v2
-  triplets.
 - Build 50 to 100 paired end-to-end cases from LongMemEval-V2 web and
   enterprise trajectories.
 - Measure task success, causal memory lift, false intervention, faithfulness,
@@ -70,7 +66,8 @@ The pilot is one scenario in one environment. What it needs next, in order:
   goal was reworded, so the rubric is not currently failing this way and the
   observation is unconfirmed rather than a known defect. It is cheap to test
   directly and worth knowing. Rubric `parm_pair_admission_v3` is frozen into
-  published PersonaMem results, so any change needs a new version.
+  the tracked workflow admission caches, so any change needs a new version
+  rather than an edit.
 - Decide whether per-observation admission needs a trajectory-level budget.
   The judge admits at most one memory per observation, which reads as restraint
   on a single-turn case and accumulates over twenty-odd observations in a

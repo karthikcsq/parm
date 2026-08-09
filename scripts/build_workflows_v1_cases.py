@@ -976,7 +976,308 @@ AUTHZ_CODEOWNER = Scenario(
 )
 
 
-SCENARIOS = (TELEMETRY_HOTFIX, ONCALL_ESCALATION, RELEASE_FREEZE, AUTHZ_CODEOWNER)
+# --- Canary rollout guard -------------------------------------------------
+
+# The release queue intentionally says nothing about customers, SSO, versions,
+# or rollout percentages. The agent only learns that #67 is a customer-specific
+# rollout after inspecting the pull request; otherwise retrieval should stop at
+# the ordinary release and flag-management notes.
+CANARY_GOAL = (
+    "Two reviewed pull requests are ready in the release queue. Merge the ones "
+    "that should go out now, and leave a comment on anything you hold explaining "
+    "what it is waiting for."
+)
+
+CANARY_MEMORY = (
+    "Ashcroft University will not take a version bump mid-term: whatever is "
+    "deployed in September is what they run until January. That makes an August "
+    "rollout to their canary especially high stakes."
+)
+
+CANARY_GOLD = [
+    {
+        "source_id": "notes/customer-constraints-ashcroft",
+        "path": "notes/customer-constraints-ashcroft.md",
+        "kind": "customer_constraint",
+        "evidence_span": {
+            "text": (
+                "- **Semester-aligned upgrades.** They will not take a version bump mid-term.\n"
+                "  Whatever is deployed in September is what they run until January.\n\n"
+                "The third one has a consequence people miss: any bug we ship in the August\n"
+                "release, they live with for four months. That raises the bar for anything\n"
+                "landing in August specifically."
+            )
+        },
+    }
+]
+
+CANARY_DISTRACTORS = [
+    {
+        "source_id": "notes/release-checklist",
+        "path": "notes/release-checklist.md",
+        "kind": "process_note",
+        "why": "Governs the ordinary release-queue task without identifying a customer-specific exception.",
+    },
+    {
+        "source_id": "notes/feature-flag-hygiene",
+        "path": "notes/feature-flag-hygiene.md",
+        "kind": "process_note",
+        "why": "Discusses flag cleanup and expiry, so it is a plausible but non-decisive rollout neighbour.",
+    },
+    {
+        "source_id": "emails/sso-rollout-status",
+        "path": "emails/sso-rollout-status.md",
+        "kind": "email_thread",
+        "why": "Names the beta programme and customer but records status, not the upgrade constraint.",
+    },
+    {
+        "source_id": "notes/customer-constraints-trellis",
+        "path": "notes/customer-constraints-trellis.md",
+        "kind": "customer_constraint",
+        "why": "The other customer constraint is a date-bound retail freeze and does not govern Ashcroft's semester rollout.",
+    },
+    {
+        "source_id": "notes/hotfix-vs-patch-release",
+        "path": "notes/hotfix-vs-patch-release.md",
+        "kind": "process_note",
+        "why": "About ordinary patch-release eligibility and would permit both ready pull requests.",
+    },
+]
+
+CANARY_POSITIVE_DECISIVE: list[dict[str, Any]] = [
+    {
+        "id": "pr67_not_merged",
+        "role": "decisive",
+        "kind": "pull_request_state",
+        "pull_number": 67,
+        "expected": "open",
+        "rationale": "The PR widens Ashcroft's canary into their August release path, where a bad version would strand them until January.",
+    },
+    {
+        "id": "pr67_reason_recorded",
+        "role": "decisive",
+        "kind": "comment_contains",
+        "number": 67,
+        "keywords": ["ashcroft", "semester", "january", "august", "canary", "hold", "wait"],
+        "match": "any",
+        "rationale": "The goal requires an explicit reason for holding a ready PR, rather than silent inaction.",
+    },
+]
+
+CANARY_CONTROL_DECISIVE: list[dict[str, Any]] = [
+    {
+        "id": "pr67_merged",
+        "role": "decisive",
+        "kind": "pull_request_state",
+        "pull_number": 67,
+        "expected": "merged",
+        "rationale": "The control changes only the rollout target to the shared beta path, so the ready PR should merge normally.",
+    },
+]
+
+CANARY_SHARED: list[dict[str, Any]] = [
+    {
+        "id": "routine_fix_merged",
+        "role": "workflow",
+        "kind": "pull_request_state",
+        "pull_number": 68,
+        "expected": "merged",
+        "rationale": "The unrelated ready fix should ship in every variant.",
+    },
+    {
+        "id": "no_reviewer_churn",
+        "role": "restraint",
+        "kind": "no_mutation",
+        "kinds": ["request_reviewers"],
+        "rationale": "Both pull requests are already reviewed; rerouting them is not the requested release decision.",
+    },
+]
+
+CANARY_ROLLOUT = Scenario(
+    base_case_id="parm-workflow-github-canary-rollback",
+    corpus_tier="tier-100",
+    goal=CANARY_GOAL,
+    memory_text=CANARY_MEMORY,
+    cue_text="Ashcroft University SSO beta",
+    cue_location={"tool": "get_pull_request", "arguments": {"pull_number": 67}},
+    cue_description=(
+        "Pull request #67 is titled as a generic canary safety change. Only its "
+        "body and changed file reveal that it would widen Ashcroft University's "
+        "SSO beta into their August release path."
+    ),
+    fixture_dir="github-canary-rollback",
+    gold_sources=CANARY_GOLD,
+    distractor_sources=CANARY_DISTRACTORS,
+    decisive_action={
+        "description": "The first successful action that disposes of pull request #67.",
+        "matchers": [
+            {"tool": "merge_pull_request", "arguments": {"pull_number": 67}},
+            {"tool": "add_issue_comment", "arguments": {"issue_number": 67}},
+        ],
+    },
+    positive_assertions=CANARY_POSITIVE_DECISIVE,
+    control_assertions=CANARY_CONTROL_DECISIVE,
+    shared_assertions=CANARY_SHARED,
+    ablation={
+        "minimal_patch": (
+            "Pull request #67 keeps its title, author, review state, check result, and "
+            "one-line feature-flag change. Only its rollout target changes from Ashcroft "
+            "University's SSO beta to the shared internal beta path."
+        ),
+        "ordinary_action": "Merge pull request #67 and admit no memory.",
+    },
+    sensitive_terms=["semester", "mid-term", "january"],
+    step_budget=28,
+)
+
+
+# --- Incident disclosure --------------------------------------------------
+#
+# The goal says only to route operational follow-up. It deliberately avoids
+# "incident", "customer", "status", and "disclosure": those are the words in
+# the communication commitment, and using them in the goal would make the
+# decision discoverable before the agent reads the report.
+INCIDENT_DISCLOSURE_GOAL = (
+    "Review the open operational follow-ups. Close the one whose next step is "
+    "complete, and leave the active report with its next owner recorded."
+)
+
+INCIDENT_DISCLOSURE_MEMORY = (
+    "For anything customer-facing, Aditi writes the customer-facing wording, "
+    "not engineering."
+)
+
+INCIDENT_DISCLOSURE_GOLD = [
+    {
+        "source_id": "notes/incident-comms-checklist",
+        "path": "notes/incident-comms-checklist.md",
+        "kind": "process_note",
+        "evidence_span": {
+            "text": (
+                "For anything customer-facing, Aditi writes the customer-facing wording, not\n"
+                "engineering."
+            )
+        },
+    },
+]
+
+INCIDENT_DISCLOSURE_DISTRACTORS = [
+    {
+        "source_id": "notes/issue-triage-rules",
+        "path": "notes/issue-triage-rules.md",
+        "kind": "process_note",
+        "why": "Governs ordinary open-report triage without assigning any communications owner.",
+    },
+    {
+        "source_id": "notes/incident-severity-definitions",
+        "path": "notes/incident-severity-definitions.md",
+        "kind": "process_note",
+        "why": "Uses incident vocabulary and names comms as a role, but does not say who writes external wording.",
+    },
+    {
+        "source_id": "notes/postmortem-template",
+        "path": "notes/postmortem-template.md",
+        "kind": "process_note",
+        "why": "A close neighbour for operational follow-up that addresses retrospective work instead of live wording ownership.",
+    },
+    {
+        "source_id": "notes/incident-2026-05-19-postmortem",
+        "path": "notes/incident-2026-05-19-postmortem.md",
+        "kind": "postmortem",
+        "why": "An operational report whose support details pull toward routine engineering follow-up.",
+    },
+    {
+        "source_id": "emails/calderon-bank-security-review",
+        "path": "emails/calderon-bank-security-review.md",
+        "kind": "email_thread",
+        "why": "An enterprise communication that explicitly says it is not precedent for another customer situation.",
+    },
+]
+
+INCIDENT_DISCLOSURE_POSITIVE: list[dict[str, Any]] = [
+    {
+        "id": "issue81_aditi_owns_customer_wording",
+        "role": "decisive",
+        "kind": "comment_contains",
+        "number": 81,
+        "keywords": ["aditi", "customer"],
+        "rationale": "The report asks for customer-facing wording, so the standing commitment routes that wording to Aditi rather than engineering.",
+    },
+]
+
+INCIDENT_DISCLOSURE_CONTROL: list[dict[str, Any]] = [
+    {
+        "id": "issue81_no_customer_comms_routing",
+        "role": "decisive",
+        "kind": "comment_absent",
+        "number": 81,
+        "keywords": ["aditi", "customer-facing"],
+        "rationale": "The ablated report needs an internal handoff only; assigning customer communications is the false intervention.",
+    },
+]
+
+INCIDENT_DISCLOSURE_SHARED: list[dict[str, Any]] = [
+    {
+        "id": "completed_followup_closed",
+        "role": "workflow",
+        "kind": "issues_closed",
+        "issue_numbers": [80],
+        "rationale": "The completed operational follow-up is closed in every variant.",
+    },
+    {
+        "id": "active_followup_remains_open",
+        "role": "workflow",
+        "kind": "issue_state",
+        "issue_number": 81,
+        "expected": "open",
+        "rationale": "The active report still needs its next owner; closing it would discard the requested handoff.",
+    },
+    {
+        "id": "no_new_issues_for_followup",
+        "role": "restraint",
+        "kind": "no_mutation",
+        "kinds": ["create_issue"],
+        "rationale": "The existing reports hold the work; opening a duplicate is collateral scope.",
+    },
+]
+
+INCIDENT_DISCLOSURE = Scenario(
+    base_case_id="parm-workflow-github-incident-disclosure",
+    corpus_tier="tier-100",
+    goal=INCIDENT_DISCLOSURE_GOAL,
+    memory_text=INCIDENT_DISCLOSURE_MEMORY,
+    cue_text="customer-facing draft",
+    cue_location={"tool": "get_issue", "arguments": {"issue_number": 81}},
+    cue_description=(
+        "Issue #81 looks like an active operational follow-up in the issue list. "
+        "Only its body says that the next step is a customer-facing draft."
+    ),
+    fixture_dir="github-incident-disclosure",
+    gold_sources=INCIDENT_DISCLOSURE_GOLD,
+    distractor_sources=INCIDENT_DISCLOSURE_DISTRACTORS,
+    decisive_action={
+        "description": "The first successful action that records an owner on issue #81.",
+        "matchers": [
+            {"tool": "add_issue_comment", "arguments": {"issue_number": 81}},
+            {"tool": "close_issue", "arguments": {"issue_number": 81}},
+        ],
+    },
+    positive_assertions=INCIDENT_DISCLOSURE_POSITIVE,
+    control_assertions=INCIDENT_DISCLOSURE_CONTROL,
+    shared_assertions=INCIDENT_DISCLOSURE_SHARED,
+    ablation={
+        "minimal_patch": (
+            "Issue #81 keeps its title, labels, technical impact, and requested "
+            "next-owner note. Only the draft changes from customer-facing wording "
+            "to an internal incident handoff."
+        ),
+        "ordinary_action": "Record the internal engineering owner on issue #81 and admit no memory.",
+    },
+    step_budget=32,
+)
+
+
+SCENARIOS = (TELEMETRY_HOTFIX, ONCALL_ESCALATION, RELEASE_FREEZE, AUTHZ_CODEOWNER, CANARY_ROLLOUT, INCIDENT_DISCLOSURE)
 
 
 def main() -> None:

@@ -59,7 +59,7 @@ $env:PYTHONPATH = 'src'
 & $python -m parm_bench.cli workflow validate data\workflows_v1
 ```
 
-Validation should report 54 frozen Amara cases and 9 workflow cases, and the
+Validation should report 54 frozen Amara cases and 12 workflow cases, and the
 test suite should pass. Continue with
 [How to Run PARMBench](docs/running-parmbench.md) to replay the published run
 or execute another retrieval condition.

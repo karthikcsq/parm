@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from parm_bench.workflows import load_workflow_cases, validate_workflow_cases
+from parm_bench.workflows import WorkflowCase, load_workflow_cases, validate_workflow_cases
 from parm_bench.workflows.runner import assert_gold_reachable
 from parm_bench.workflows.corpus_tiers import load_tiers
 from parm_bench.workflows.verify import evaluate_assertions
@@ -14,8 +14,8 @@ DATASET = ROOT / "data" / "workflows_v1"
 CORPUS = DATASET / "corpora" / "workflow-eng-lead-v1"
 
 
-def _cases() -> dict[str, dict[str, object]]:
-    grouped: dict[str, dict[str, object]] = {}
+def _cases() -> dict[str, dict[str, WorkflowCase]]:
+    grouped: dict[str, dict[str, WorkflowCase]] = {}
     for case in load_workflow_cases(DATASET):
         grouped.setdefault(case.base_case_id, {})[case.variant] = case
     return grouped
@@ -52,6 +52,34 @@ class ScenarioSetTest(unittest.TestCase):
             with self.subTest(case.case_id):
                 cue = str(case.data["cue"]["text"]).casefold()
                 self.assertNotIn(cue, case.goal.casefold())
+
+    def test_authz_codeowner_triplet_changes_only_after_pr_inspection(self) -> None:
+        variants = _cases()["parm-workflow-github-authz-codeowner"]
+        positive = variants["positive"]
+        control = variants["cue-ablated"]
+        ceiling = variants["memory-included"]
+
+        self.assertEqual(positive.corpus_tier, "tier-100")
+        self.assertEqual(positive.gold_source_ids, ("notes/code-owners-policy",))
+        self.assertEqual(
+            positive.data["cue"]["location"],
+            {"tool": "get_pull_request", "arguments": {"pull_number": 83}},
+        )
+        positive_environment = positive.build_environment()
+        control_environment = control.build_environment()
+        self.assertNotIn("src/auth/", positive_environment.invoke(
+            "list_pull_requests", {"state": "open"}
+        ).text)
+        self.assertIn("src/auth/", positive_environment.invoke(
+            "get_pull_request", {"pull_number": 83}
+        ).text)
+        self.assertNotIn("src/auth/", control_environment.invoke(
+            "get_pull_request", {"pull_number": 83}
+        ).text)
+        self.assertEqual(
+            positive.data["environment"]["fixture_path"],
+            ceiling.data["environment"]["fixture_path"],
+        )
 
 
 class GoldReachabilityTest(unittest.TestCase):

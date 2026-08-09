@@ -362,6 +362,21 @@ def _follow_up_assigned(
     return True, f"follow-up for {thread_id} is assigned"
 
 
+def _follow_up_routed(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Require a follow-up on the named thread to reach a resolved target."""
+
+    thread_id = str(assertion["thread_id"])
+    actual = context["state"].get("follow_ups", {}).get(thread_id)
+    if actual is None:
+        return False, f"no follow-up is routed for {thread_id}"
+    target_id = str(assertion["target_id"])
+    if str(actual.get("target_id")) != target_id:
+        return False, f"follow-up for {thread_id} is not routed to {target_id}"
+    return True, f"follow-up for {thread_id} is routed to {target_id}"
+
+
 def _event_response(
     assertion: dict[str, Any], context: dict[str, Any]
 ) -> tuple[bool, str]:
@@ -399,6 +414,41 @@ def _event_rescheduled(
     ):
         return False, f"event {event_id} has no matching approval reference"
     return True, f"event {event_id} was rescheduled"
+
+
+def _event_rescheduled_outside_window(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Require the named event to move wholly outside a prohibited interval."""
+
+    event_id = str(assertion["event_id"])
+    event = context["state"].get("events", {}).get(event_id)
+    if event is None:
+        return False, f"no event {event_id}"
+    mutations = [
+        row for row in context["mutations"]
+        if row["kind"] == "reschedule_event" and row.get("event_id") == event_id
+    ]
+    if not mutations:
+        return False, f"event {event_id} was not rescheduled"
+    window_start = str(assertion["window_start"])
+    window_end = str(assertion["window_end"])
+    if str(event.get("end")) <= window_start or str(event.get("start")) >= window_end:
+        return True, f"event {event_id} was moved outside the prohibited window"
+    return False, f"event {event_id} remains inside the prohibited window"
+
+
+def _event_comment_content(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    event_id = str(assertion["event_id"])
+    event = context["state"].get("events", {}).get(event_id)
+    if event is None:
+        return False, f"no event {event_id}"
+    for comment in event.get("comments", []):
+        if not _missing_keywords(str(comment), assertion.get("includes", [])):
+            return True, f"event {event_id} has a matching comment"
+    return False, f"event {event_id} has no comment with the required content"
 
 
 def _event_attendees(
@@ -448,6 +498,38 @@ def _any_of(
     return False, "no alternative satisfied (" + "; ".join(details) + ")"
 
 
+def _constraint_compliance(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Evaluate a bounded family of compliant actions and explicit violations.
+
+    This is intentionally a scenario-level contract, not a tool-call matcher:
+    an allowed outcome may be a draft, a sent restraint, or a resolved routing
+    action.  Every alternative still names the governed thread/event, while a
+    forbidden outcome vetoes an otherwise plausible action.
+    """
+
+    allowed = assertion.get("allowed_outcomes", [])
+    forbidden = assertion.get("forbidden_outcomes", [])
+    if not allowed:
+        raise AssertionKindError("constraint_compliance needs allowed_outcomes")
+    passed_allowed, allowed_detail = _any_of({"assertions": allowed}, context)
+    violations = []
+    for outcome in forbidden:
+        kind = str(outcome.get("kind", ""))
+        checker = _CHECKS.get(kind)
+        if checker is None:
+            raise AssertionKindError(f"unknown assertion kind: {kind!r}")
+        passed, detail = checker(outcome, context)
+        if passed:
+            violations.append(f"{kind}: {detail}")
+    if violations:
+        return False, "forbidden outcome occurred (" + "; ".join(violations) + ")"
+    if passed_allowed:
+        return True, allowed_detail
+    return False, allowed_detail
+
+
 _CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[bool, str]]] = {
     "any_of": _any_of,
     "branch_exists": _branch_exists,
@@ -467,9 +549,13 @@ _CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[bool, str]]]
     "message_sent": _message_sent,
     "thread_message_content": _thread_message_content,
     "follow_up_assigned": _follow_up_assigned,
+    "follow_up_routed": _follow_up_routed,
     "event_response": _event_response,
     "event_rescheduled": _event_rescheduled,
+    "event_rescheduled_outside_window": _event_rescheduled_outside_window,
+    "event_comment_content": _event_comment_content,
     "event_attendees": _event_attendees,
+    "constraint_compliance": _constraint_compliance,
 }
 
 

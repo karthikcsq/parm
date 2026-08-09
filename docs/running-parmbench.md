@@ -275,6 +275,26 @@ For a genuinely fresh run, use a new, empty `-CacheNamespace` and result root
 rather than deleting a replay cache that may be needed to reproduce an older
 report.
 
+### Natural Email + Calendar v2 rates
+
+The v2 natural pilot measures semantic constraint compliance, not one exact
+tool call or reply string.  After scoring independently sampled workflow runs,
+render its per-triplet and aggregate positive, cue-ablated control, and
+memory-included oracle rates with:
+
+```powershell
+$env:PYTHONPATH = 'src'
+python scripts\summarize_email_calendar_v2_results.py `
+  data\benchmark-results\workflows-email-calendar-v2-diagnostic
+```
+
+The report includes `cue_triggered_lift` (positive minus control) and, when
+both conditions are present, `parm_minus_no_memory_positive` plus the
+PARM-minus-no-memory cue-lift difference.  These are rates over samples; do
+not impose a fixed `3/3` gate.  Any claim about a retrieval effect requires
+fresh independent samples and an explicit threshold preregistered before the
+comparison.
+
 Run this after any edit to a goal or a corpus, before spending a run. If
 prompt-only retrieval finds a gold source from the goal alone, the scenario is
 no longer testing late-cued retrieval and input RAG will win for the wrong

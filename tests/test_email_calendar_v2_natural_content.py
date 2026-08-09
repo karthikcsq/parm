@@ -118,8 +118,12 @@ class EmailCalendarV2NaturalContentTest(unittest.TestCase):
                 self.assertTrue(row["assertions"])
                 self.assertTrue(any(item["role"] == "decisive" for item in row["assertions"]))
                 self.assertNotEqual(row["assertions"], [{"kind": "no_mutation"}])
-        orion = next(row for row in rows() if row["case_id"].endswith("orion-incident-travel-approval-positive"))
-        self.assertTrue(any(item["kind"] == "any_of" for item in orion["assertions"]))
+        for scenario in ("atlas-renewal-sla-legal-review", "trellis-production-migration-blackout", "orion-incident-travel-approval"):
+            positive = next(row for row in rows() if row["case_id"].endswith(f"{scenario}-positive"))
+            contract = next(item for item in positive["assertions"] if item["kind"] == "constraint_compliance")
+            self.assertGreaterEqual(len(contract["allowed_outcomes"]), 2)
+            self.assertTrue(contract["forbidden_outcomes"])
+            self.assertTrue(positive["target"])
 
 
 if __name__ == "__main__":

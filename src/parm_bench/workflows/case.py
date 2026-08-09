@@ -371,7 +371,14 @@ def _validate_source(
                 f"{source.get('path')}",
             )
         )
-    if span_text.casefold() in case.goal.casefold():
+    # Ceiling cases intentionally carry the complete tracked gold record as the
+    # retrieval handoff.  That is provenance, not a goal leak: require an exact
+    # source-text injection rather than permitting a builder-authored summary.
+    injected_source = (
+        case.variant == "memory-included"
+        and str(case.data.get("memory", {}).get("text", "")) == text
+    )
+    if span_text.casefold() in case.goal.casefold() and not injected_source:
         issues.append(
             WorkflowCaseIssue(case_id, f"evidence_span for {source_id} leaks into goal")
         )

@@ -19,6 +19,7 @@ from parm_bench.corpus import NormalizedSourceRecord, SensitivityMetadata
 from parm_bench.corpus_index import write_corpus_retrieval_index
 from parm_bench.retrieval import OpenAIEmbedder
 from parm_bench.workflows.corpus_tiers import load_tiers
+from parm_bench.workflows.email_calendar_index import source_records as _source_records
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,40 +56,15 @@ def main() -> None:
 
 
 def source_records() -> tuple[list[NormalizedSourceRecord], list[dict[str, str]]]:
-    """Return canonical tier records and their byte-level source manifest rows."""
+    """Return the v1 tier's canonical records through the shared builder."""
 
-    perturbations = _perturbations_from_cases()
-    members = load_tiers(DATASET / "corpora" / CORPUS_ID)[TIER]
-    paths = [CORPUS_ROOT / f"{source_id}.md" for source_id in sorted(members)]
-    missing = [path for path in paths if not path.is_file()]
-    if missing:
-        raise SystemExit(f"tier {TIER} names missing records: {missing}")
-
-    records: list[NormalizedSourceRecord] = []
-    rows: list[dict[str, str]] = []
-    for path in paths:
-        relative = path.relative_to(CORPUS_ROOT).as_posix()
-        source_id = relative[: -len(".md")]
-        text = path.read_text(encoding="utf-8")
-        rows.append({"path": relative, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
-        records.append(
-            NormalizedSourceRecord(
-                corpus_id=CORPUS_ID,
-                source_id=source_id,
-                timestamp=_timestamp(text),
-                title=_title(text, source_id),
-                text=text,
-                provenance={
-                    "dataset": "parmbench-workflows-email-calendar-v1",
-                    "corpus_id": CORPUS_ID,
-                    "path": relative,
-                },
-                who="operations-lead",
-                perturbations=perturbations.get(source_id, ()),
-                sensitivity=SensitivityMetadata(False, "ordinary", ()),
-            )
-        )
-    return records, rows
+    return _source_records(
+        dataset=DATASET,
+        corpus_id=CORPUS_ID,
+        dataset_revision=DATASET_REVISION,
+        source_ids=tuple(load_tiers(DATASET / "corpora" / CORPUS_ID)[TIER]),
+        provenance_dataset="parmbench-workflows-email-calendar-v1",
+    )
 
 
 def source_manifest(rows: list[dict[str, str]]) -> dict[str, object]:

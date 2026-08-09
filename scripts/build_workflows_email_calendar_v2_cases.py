@@ -24,7 +24,7 @@ UPSTREAM = {
 SCENARIOS = (
     {
         "slug": "atlas-renewal-sla-legal-review", "kind": "email", "entity": "atlas-renewal",
-        "goal": "Please take care of the Atlas renewal question and keep the customer moving.",
+        "goal": "Please take care of the customer request that came in this morning and keep things moving.",
         "positive": "The customer asks whether the contractual service-level target can be confirmed in the renewal addendum.",
         "control": "The customer asks whether the current product-status summary can be confirmed in the renewal addendum.",
         "gold": ("notes/atlas-renewal-sla-review", "notes/atlas-renewal-sla-review.md", "For the Atlas renewal addendum, any external confirmation of the contractual service-level target requires Legal review before it is sent."),
@@ -32,7 +32,7 @@ SCENARIOS = (
     },
     {
         "slug": "trellis-production-migration-blackout", "kind": "event", "entity": "trellis-migration",
-        "goal": "Please resolve the Trellis migration session on the calendar.",
+        "goal": "Please deal with the delivery session on my calendar later this year.",
         "positive": "This session moves the Trellis production environment on December 23.",
         "control": "This session moves the Trellis sandbox environment on December 23.",
         "gold": ("notes/trellis-production-window", "notes/trellis-production-window.md", "Production migrations for Trellis are held during the year-end change window, from December 20 through January 5."),
@@ -40,7 +40,7 @@ SCENARIOS = (
     },
     {
         "slug": "orion-incident-travel-approval", "kind": "email", "entity": "orion-travel",
-        "goal": "Please handle the Orion travel reimbursement request.",
+        "goal": "Please take care of the expense request in my inbox.",
         "positive": "The receipt is for emergency travel while the Orion service was being restored.",
         "control": "The receipt is for travel to an Orion customer planning meeting.",
         "gold": ("notes/orion-incident-travel", "notes/orion-incident-travel.md", "Emergency travel incurred while restoring the Orion service needs incident-manager approval before reimbursement is approved."),
@@ -103,7 +103,7 @@ def case(item: dict[str, Any], variant: str) -> dict[str, Any]:
     gold_file = (SOURCE / source_path).read_text(encoding="utf-8")
     cue_path, cue_location = details(item)
     goal = item["goal"] if variant != "memory-included" else f"{item['goal']}\n\nRelevant prior note:\n{gold_file}"
-    return {"case_id": f"parm-email-calendar-v2-{item['slug']}-{variant}", "base_case_id": f"parm-email-calendar-v2-{item['slug']}", "corpus_id": CORPUS_ID, "corpus_tier": "pilot-12", "step_budget": 12, "variant": variant, "goal": goal, "environment": {"adapter": "email_calendar_fixture", "fixture_path": f"fixtures/{item['slug']}/{'positive' if positive else 'cue-ablated'}.json", "upstream": UPSTREAM}, "cue": {"present": positive, "text": item["positive"], "location": cue_location, "description": "One applicability fact appears only in the selected full detail."}, "memory": {"corpus_id": CORPUS_ID, "text": gold_file, "gold_source_ids": [source_id], "sources": [source_record(source_id, source_path, evidence)]}, "distractors": {"sources": [source_record(*entry) for entry in item["distractors"]]}, "decisive_action": {"matchers": actions(item, positive)}, "expects_intervention": positive, "assertions": assertions(item, positive), "ablation": {"fixture_path": cue_path, "positive_value": item["positive"], "control_value": item["control"], "description": "Only this late semantic applicability proposition varies across the pair."}, "provenance": {"persona_id": "ops-lead-email-calendar", "evaluation_split": "email_calendar_v2_natural", "constructed_by": "scripts/build_workflows_email_calendar_v2_cases.py", "upstream": UPSTREAM}}
+    return {"case_id": f"parm-email-calendar-v2-{item['slug']}-{variant}", "base_case_id": f"parm-email-calendar-v2-{item['slug']}", "corpus_id": CORPUS_ID, "corpus_tier": "pilot-30", "step_budget": 12, "variant": variant, "goal": goal, "environment": {"adapter": "email_calendar_fixture", "fixture_path": f"fixtures/{item['slug']}/{'positive' if positive else 'cue-ablated'}.json", "upstream": UPSTREAM}, "cue": {"present": positive, "text": item["positive"], "location": cue_location, "description": "One applicability fact appears only in the selected full detail."}, "memory": {"corpus_id": CORPUS_ID, "text": gold_file, "gold_source_ids": [source_id], "sources": [source_record(source_id, source_path, evidence)]}, "distractors": {"sources": [source_record(*entry) for entry in item["distractors"]]}, "decisive_action": {"matchers": actions(item, positive)}, "expects_intervention": positive, "assertions": assertions(item, positive), "ablation": {"fixture_path": cue_path, "positive_value": item["positive"], "control_value": item["control"], "description": "Only this late semantic applicability proposition varies across the pair."}, "provenance": {"persona_id": "ops-lead-email-calendar", "evaluation_split": "email_calendar_v2_natural", "constructed_by": "scripts/build_workflows_email_calendar_v2_cases.py", "upstream": UPSTREAM}}
 
 
 def main() -> None:

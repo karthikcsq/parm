@@ -61,6 +61,15 @@ class EmailCalendarV2NaturalContentTest(unittest.TestCase):
         validate_workflow_cases(load_workflow_cases(DATASET))
 
     def test_goals_are_natural_and_ceiling_injects_gold_source_text(self) -> None:
+        opening_goals = {
+            "atlas-renewal-sla-legal-review": "Please take care of the customer request that came in this morning and keep things moving.",
+            "trellis-production-migration-blackout": "Please deal with the delivery session on my calendar later this year.",
+            "orion-incident-travel-approval": "Please take care of the expense request in my inbox.",
+        }
+        atomic_cues = re.compile(
+            r"\b(?:atlas|trellis|orion|contractual|service-level|production|migration|incident-manager|restoring)\b",
+            re.IGNORECASE,
+        )
         for row in rows():
             with self.subTest(case=row["case_id"]):
                 self.assertIsNone(FORBIDDEN_GOAL.search(row["goal"]), row["goal"])
@@ -71,6 +80,10 @@ class EmailCalendarV2NaturalContentTest(unittest.TestCase):
                     text = (CORPUS / "source" / gold["path"]).read_text(encoding="utf-8")
                     self.assertIn(text, row["goal"])
                     self.assertNotIn("standing instruction", row["goal"].casefold())
+                else:
+                    slug = row["base_case_id"].removeprefix("parm-email-calendar-v2-")
+                    self.assertEqual(row["goal"], opening_goals[slug])
+                    self.assertIsNone(atomic_cues.search(row["goal"]), row["goal"])
 
     def test_gold_sources_are_verbatim_and_semantic_pairs_change_one_detail_fact(self) -> None:
         data = rows()

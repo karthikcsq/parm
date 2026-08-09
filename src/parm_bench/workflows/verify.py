@@ -310,6 +310,40 @@ def _message_sent(
     return _thread_message_exists(assertion, context, "sent")
 
 
+def _thread_message_content(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    thread_id = str(assertion["thread_id"])
+    folder = str(assertion["folder"])
+    if folder not in {"drafts", "sent"}:
+        return False, f"unsupported message folder {folder!r}"
+    includes = assertion.get("includes", [])
+    excludes = assertion.get("excludes", [])
+    candidates = [
+        message for message in context["state"].get("messages", {}).values()
+        if message.get("thread_id") == thread_id and message.get("folder") == folder
+    ]
+    if not candidates:
+        return False, f"no {folder} message in {thread_id}"
+    failures = []
+    for message in candidates:
+        body = str(message.get("body", ""))
+        missing = _missing_keywords(body, includes)
+        forbidden = [
+            str(keyword) for keyword in excludes
+            if str(keyword).casefold() in body.casefold()
+        ]
+        if not missing and not forbidden:
+            return True, f"{folder} message in {thread_id} has required content"
+        details = []
+        if missing:
+            details.append("missing " + ", ".join(missing))
+        if forbidden:
+            details.append("contains " + ", ".join(forbidden))
+        failures.append("; ".join(details))
+    return False, f"no {folder} message in {thread_id} matches content ({' | '.join(failures)})"
+
+
 def _follow_up_assigned(
     assertion: dict[str, Any], context: dict[str, Any]
 ) -> tuple[bool, str]:
@@ -339,6 +373,32 @@ def _event_response(
     if expected_status is not None and event.get("status") != expected_status:
         return False, f"event {event_id} is {event.get('status')}, expected {expected_status}"
     return True, f"event {event_id} response is {event.get('status')}"
+
+
+def _event_rescheduled(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    event_id = str(assertion["event_id"])
+    event = context["state"].get("events", {}).get(event_id)
+    if event is None:
+        return False, f"no event {event_id}"
+    expected = {key: str(assertion[key]) for key in ("start", "end") if key in assertion}
+    mismatches = [key for key, value in expected.items() if str(event.get(key)) != value]
+    if mismatches:
+        return False, f"event {event_id} has different {', '.join(mismatches)}"
+    approvals = [
+        mutation for mutation in context["mutations"]
+        if mutation["kind"] == "reschedule_event" and mutation.get("event_id") == event_id
+    ]
+    if not approvals:
+        return False, f"event {event_id} was not rescheduled"
+    approval_reference = assertion.get("approval_reference")
+    if approval_reference is not None and not any(
+        mutation.get("approval_reference") == str(approval_reference)
+        for mutation in approvals
+    ):
+        return False, f"event {event_id} has no matching approval reference"
+    return True, f"event {event_id} was rescheduled"
 
 
 def _event_attendees(
@@ -405,8 +465,10 @@ _CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[bool, str]]]
     "no_mutation": _no_mutation,
     "files_unchanged": _files_unchanged,
     "message_sent": _message_sent,
+    "thread_message_content": _thread_message_content,
     "follow_up_assigned": _follow_up_assigned,
     "event_response": _event_response,
+    "event_rescheduled": _event_rescheduled,
     "event_attendees": _event_attendees,
 }
 

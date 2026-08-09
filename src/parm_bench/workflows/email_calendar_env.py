@@ -33,11 +33,14 @@ TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec("get_message_thread", "Read every message in one email thread.", _object({"thread_id": _STRING}, ["thread_id"])),
     ToolSpec("list_events", "List calendar events.", _object({}, [])),
     ToolSpec("get_event", "Read one calendar event including attendees and comments.", _object({"event_id": _STRING}, ["event_id"])),
+    ToolSpec("list_routing_targets", "List fixture contacts and queues available for follow-up routing.", _object({}, [])),
+    ToolSpec("route_follow_up", "Route a follow-up to a listed contact or queue by its resolved target ID.", _object({"thread_id": _STRING, "target_id": _STRING}, ["thread_id", "target_id"]), mutating=True),
     ToolSpec("create_draft_reply", "Create a draft reply in an existing thread.", _object({"thread_id": _STRING, "body": _STRING}, ["thread_id", "body"]), mutating=True),
     ToolSpec("send_reply", "Send a reply in an existing thread.", _object({"thread_id": _STRING, "body": _STRING}, ["thread_id", "body"]), mutating=True),
     ToolSpec("assign_follow_up", "Assign a follow-up for an email thread.", _object({"thread_id": _STRING, "owner": _STRING, "due_date": _STRING}, ["thread_id", "owner"]), mutating=True),
     ToolSpec("create_event", "Create a calendar event.", _object({"title": _STRING, "start": _STRING, "end": _STRING, "attendees": _STRING_ARRAY, "description": _STRING}, ["title", "start", "end", "attendees"]), mutating=True),
     ToolSpec("update_event", "Update selected fields on an existing calendar event.", _object({"event_id": _STRING, "title": _STRING, "start": _STRING, "end": _STRING, "attendees": _STRING_ARRAY, "description": _STRING}, ["event_id"]), mutating=True),
+    ToolSpec("reschedule_event", "Reschedule an event without declining it; optionally record the approving reference.", _object({"event_id": _STRING, "start": _STRING, "end": _STRING, "approval_reference": _STRING}, ["event_id", "start", "end"]), mutating=True),
     ToolSpec("decline_event", "Decline an existing calendar event, optionally with a comment.", _object({"event_id": _STRING, "comment": _STRING}, ["event_id"]), mutating=True),
     ToolSpec("add_event_comment", "Add a comment to an existing calendar event.", _object({"event_id": _STRING, "body": _STRING}, ["event_id", "body"]), mutating=True),
 )
@@ -93,6 +96,14 @@ class EmailCalendarFixtureEnvironment:
         self._follow_ups = {
             str(thread_id): copy.deepcopy(detail)
             for thread_id, detail in fixture.get("follow_ups", {}).items()
+        }
+        self._routing_targets = {
+            target["id"]: target
+            for target in (
+                _normalize_routing_target(row)
+                for row in fixture.get("contacts", [])
+                if _is_routing_target(row)
+            )
         }
         self._next_message_id = _next_id(self._messages, "m")
         self._next_event_id = _next_id(self._events, "e")
@@ -164,6 +175,32 @@ class EmailCalendarFixtureEnvironment:
             lines.extend(f"- {comment['author']}: {comment['body']}" for comment in event["comments"])
         return ToolResult(True, "\n".join(lines))
 
+    def _tool_list_routing_targets(self, step: int, args: dict[str, Any]) -> ToolResult:
+        if not self._routing_targets:
+            return ToolResult(True, "No routing targets are available.")
+        lines = [f"{len(self._routing_targets)} routing target(s):"]
+        for target in self._routing_targets.values():
+            lines.append(
+                f"{target['id']} [{target['kind']}] {target['name']} <{target['email']}>"
+            )
+        return ToolResult(True, "\n".join(lines))
+
+    def _tool_route_follow_up(self, step: int, args: dict[str, Any]) -> ToolResult:
+        thread_id = _required_thread(self._messages, args)
+        target_id = _required_str(args, "target_id")
+        target = self._routing_targets.get(target_id)
+        if target is None:
+            raise ToolInvocationError(f"no routing target {target_id!r}")
+        detail = {
+            "target_id": target["id"],
+            "target_name": target["name"],
+            "target_email": target["email"],
+            "target_kind": target["kind"],
+        }
+        self._follow_ups[thread_id] = detail
+        self._recorder.record_mutation(step, "route_follow_up", {"thread_id": thread_id, **detail})
+        return ToolResult(True, f"Routed follow-up for {thread_id} to {target['name']}.")
+
     def _tool_create_draft_reply(self, step: int, args: dict[str, Any]) -> ToolResult:
         message = self._reply(args, "drafts")
         self._recorder.record_mutation(step, "create_draft_reply", {"message_id": message["id"], "thread_id": message["thread_id"]})
@@ -203,6 +240,18 @@ class EmailCalendarFixtureEnvironment:
             raise ToolInvocationError("update_event needs at least one field to update")
         self._recorder.record_mutation(step, "update_event", {"event_id": event["id"], "fields": updated})
         return ToolResult(True, f"Updated event {event['id']}.")
+
+    def _tool_reschedule_event(self, step: int, args: dict[str, Any]) -> ToolResult:
+        event = self._event(_required_str(args, "event_id"))
+        start = _required_str(args, "start")
+        end = _required_str(args, "end")
+        event["start"] = start
+        event["end"] = end
+        mutation = {"event_id": event["id"], "start": start, "end": end}
+        if "approval_reference" in args:
+            mutation["approval_reference"] = _required_str(args, "approval_reference")
+        self._recorder.record_mutation(step, "reschedule_event", mutation)
+        return ToolResult(True, f"Rescheduled event {event['id']}.")
 
     def _tool_decline_event(self, step: int, args: dict[str, Any]) -> ToolResult:
         event = self._event(_required_str(args, "event_id"))
@@ -286,6 +335,25 @@ def _normalize_event(event: dict[str, Any]) -> dict[str, Any]:
         for value in event.get("attendees", [])
     ]
     return {"id": str(event["id"]), "title": str(event["title"]), "start": str(event["start"]), "end": str(event["end"]), "attendees": attendees, "description": str(event.get("description", "")), "status": str(event.get("status", "confirmed")), "comments": [{"author": str(row.get("author", "unknown")), "body": str(row["body"])} for row in event.get("comments", [])]}
+
+
+def _is_routing_target(target: Any) -> bool:
+    return isinstance(target, dict) and {"id", "name", "email", "kind"} <= set(target)
+
+
+def _normalize_routing_target(target: Any) -> dict[str, str]:
+    if not isinstance(target, dict):
+        raise ValueError("routing targets must be objects")
+    normalized = {
+        key: str(target.get(key, "")).strip()
+        for key in ("id", "name", "email", "kind")
+    }
+    missing = [key for key, value in normalized.items() if not value]
+    if missing:
+        raise ValueError("routing target needs " + ", ".join(missing))
+    if normalized["kind"] not in {"contact", "queue"}:
+        raise ValueError("routing target kind must be contact or queue")
+    return normalized
 
 
 def _next_id(rows: dict[str, Any], prefix: str) -> int:

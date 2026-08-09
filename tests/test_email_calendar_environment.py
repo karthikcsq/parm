@@ -23,7 +23,10 @@ FIXTURE = {
         "attendees": [{"email": "alex@example.test"}, {"email": "pat@example.test"}],
         "description": "Review launch readiness.", "status": "confirmed", "comments": [],
     }]},
-    "contacts": [],
+    "contacts": [
+        {"id": "queue-legal", "name": "Legal review", "email": "legal@example.test", "kind": "queue"},
+        {"id": "contact-maya", "name": "Maya", "email": "maya@example.test", "kind": "contact"},
+    ],
     "attachments": [],
 }
 
@@ -55,6 +58,30 @@ class EmailCalendarFixtureEnvironmentTest(unittest.TestCase):
         self.assertEqual(environment.state()["messages"]["m-1"]["body"], "Can we confirm the launch review?")
         self.assertEqual(environment.mutations(), ())
 
+    def test_routes_follow_up_to_a_resolved_contact_or_queue(self) -> None:
+        environment = self._environment()
+
+        targets = environment.invoke("list_routing_targets", {})
+        routed = environment.invoke(
+            "route_follow_up", {"thread_id": "t-1", "target_id": "queue-legal"}
+        )
+
+        self.assertTrue(targets.ok, targets.text)
+        self.assertIn("queue-legal", targets.text)
+        self.assertTrue(routed.ok, routed.text)
+        self.assertEqual(environment.state()["follow_ups"]["t-1"], {
+            "target_id": "queue-legal",
+            "target_name": "Legal review",
+            "target_email": "legal@example.test",
+            "target_kind": "queue",
+        })
+        self.assertEqual(environment.mutations()[-1]["kind"], "route_follow_up")
+        self.assertFalse(
+            environment.invoke(
+                "route_follow_up", {"thread_id": "t-1", "target_id": "not-a-target"}
+            ).ok
+        )
+
     def test_canonical_mutations_preserve_audit_state(self) -> None:
         environment = self._environment()
         self.assertTrue(environment.invoke("send_reply", {"thread_id": "t-1", "body": "Confirmed."}).ok)
@@ -65,6 +92,47 @@ class EmailCalendarFixtureEnvironmentTest(unittest.TestCase):
 
 
 class EmailCalendarAssertionTest(unittest.TestCase):
+    def test_rescheduling_is_reversible_and_scores_time_with_approval(self) -> None:
+        environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
+        result = environment.invoke(
+            "reschedule_event",
+            {
+                "event_id": "e-1",
+                "start": "2026-08-12T10:00:00Z",
+                "end": "2026-08-12T10:30:00Z",
+                "approval_reference": "approval-42",
+            },
+        )
+
+        self.assertTrue(result.ok, result.text)
+        self.assertEqual(environment.state()["events"]["e-1"]["status"], "confirmed")
+        rows = evaluate_assertions(
+            [{
+                "id": "rescheduled", "role": "decisive", "kind": "event_rescheduled",
+                "event_id": "e-1", "start": "2026-08-12T10:00:00Z",
+                "end": "2026-08-12T10:30:00Z", "approval_reference": "approval-42",
+            }],
+            state=environment.state(), mutations=environment.mutations(), trajectory=environment.trajectory,
+        )
+        self.assertTrue(rows[0]["passed"], rows)
+
+    def test_draft_content_assertion_requires_a_non_confirming_handoff(self) -> None:
+        environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
+        self.assertTrue(environment.invoke(
+            "create_draft_reply",
+            {"thread_id": "t-1", "body": "We have sent this to legal for review and cannot confirm terms yet."},
+        ).ok)
+
+        rows = evaluate_assertions(
+            [{
+                "id": "legal-handoff", "role": "decisive", "kind": "thread_message_content",
+                "thread_id": "t-1", "folder": "drafts", "includes": ["legal", "review"],
+                "excludes": ["confirmed", "we confirm"],
+            }],
+            state=environment.state(), mutations=environment.mutations(), trajectory=environment.trajectory,
+        )
+        self.assertTrue(rows[0]["passed"], rows)
+
     def test_public_assertions_score_message_owner_response_and_attendees(self) -> None:
         environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
         for name, arguments in [

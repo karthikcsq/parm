@@ -27,6 +27,14 @@ The read actions are `list_messages`, `get_message_thread`, `list_events`, and `
 
 `assign_follow_up` requires `{ "thread_id", "owner" }`; `due_date` is optional. Public action and assertion fields use **`owner`**, never `assignee`.
 
+Natural-pilot extensions are additive and use resolved fixture identities:
+
+- `list_routing_targets` lists normalized `contacts` entries with `id`, `name`, `email`, and `kind` (`contact` or `queue`).
+- `route_follow_up` requires `{ "thread_id", "target_id" }`; `target_id` must come from that list, and the final follow-up state records the resolved target identity rather than an arbitrary label.
+- `reschedule_event` requires `{ "event_id", "start", "end" }` and accepts optional `approval_reference`. It changes only the event time and leaves its response/status intact.
+
+These actions do not alter the v1 fixture schema or replace any v1 action.
+
 ## Assertions
 
 The Email + Calendar-specific decisive kinds are:
@@ -35,6 +43,10 @@ The Email + Calendar-specific decisive kinds are:
 - `follow_up_assigned`: `thread_id`, optional `owner` and `due_date`
 - `event_response`: `event_id`, `expected` status
 - `event_attendees`: `event_id`, optional `includes` and `excludes`
+- `event_rescheduled`: `event_id`, optional final `start`/`end`, and optional `approval_reference`; requires a matching `reschedule_event` mutation.
+- `thread_message_content`: `thread_id`, `folder` (`drafts` or `sent`), optional `includes` and `excludes`; one message must contain every included phrase and none of the excluded phrases.
+
+For example, a legal handoff can require a draft with `includes: ["legal", "review"]` and `excludes: ["we confirm"]`, making the handoff content deterministic without forcing an external send.
 
 Generic workflow kinds (for example `no_mutation`, with `kinds` and optional `where`) remain available. Dataset validation verifies structural triplets; the end-to-end scenario test additionally builds every fixture, reaches each declared cue, invokes its declared decisive action, and requires every assertion to pass.
 

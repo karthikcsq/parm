@@ -51,57 +51,62 @@ class EmailCalendarV2SemanticContractTest(unittest.TestCase):
         if run.returncode:
             raise AssertionError(run.stderr)
 
-    def test_positive_cases_declare_a_scenario_level_constraint_contract(self) -> None:
-        positive_cases = [case for case in cases().values() if case["variant"] == "positive"]
-        for case in positive_cases:
-            with self.subTest(case=case["case_id"]):
-                contract = next(
-                    assertion for assertion in case["assertions"]
-                    if assertion["kind"] == "constraint_compliance"
-                )
-                self.assertEqual(contract["role"], "decisive")
-                self.assertGreaterEqual(len(contract["allowed_outcomes"]), 2)
-                self.assertTrue(contract["forbidden_outcomes"])
-
-    def test_legal_contract_accepts_pending_review_or_resolved_legal_routing(self) -> None:
+    def test_atlas_positive_scores_target_bound_legal_review_state(self) -> None:
         case = cases()["parm-email-calendar-v2-atlas-renewal-sla-legal-review-positive"]
         thread = case["target"]["thread_id"]
-        self.assertTrue(all(row["passed"] for row in score(case, [
-            ("create_draft_reply", {"thread_id": thread, "body": "Legal review is pending, so we cannot confirm the service-level target yet."}),
-        ])))
-        self.assertTrue(all(row["passed"] for row in score(case, [
-            ("route_follow_up", {"thread_id": thread, "target_id": "contact-legal"}),
-        ])))
-        rejected = score(case, [
-            ("send_reply", {"thread_id": thread, "body": "We confirm the contractual service-level target in the renewal addendum."}),
-        ])
-        self.assertFalse(all(row["passed"] for row in rejected), rejected)
 
-    def test_trellis_contract_requires_a_target_specific_reschedule_or_exception(self) -> None:
+        rows = score(case, [
+            ("set_thread_hold", {"thread_id": thread, "hold_kind": "review", "target_id": "contact-legal"}),
+        ])
+
+        self.assertTrue(all(row["passed"] for row in rows), rows)
+        self.assertEqual([row["kind"] for row in rows], ["thread_hold_state"])
+
+    def test_atlas_control_scores_not_taking_legal_review_state_without_canned_action(self) -> None:
+        case = cases()["parm-email-calendar-v2-atlas-renewal-sla-legal-review-cue-ablated"]
+
+        rows = score(case, [])
+
+        self.assertTrue(all(row["passed"] for row in rows), rows)
+        self.assertEqual([row["kind"] for row in rows], ["thread_not_on_hold"])
+
+    def test_trellis_positive_scores_target_bound_change_window_exception_state(self) -> None:
         case = cases()["parm-email-calendar-v2-trellis-production-migration-blackout-positive"]
         event = case["target"]["event_id"]
-        self.assertTrue(all(row["passed"] for row in score(case, [
-            ("reschedule_event", {"event_id": event, "start": "2027-01-06T16:00:00Z", "end": "2027-01-06T17:00:00Z"}),
-        ])))
-        rejected = score(case, [
-            ("reschedule_event", {"event_id": "event-context-review", "start": "2027-01-06T16:00:00Z", "end": "2027-01-06T17:00:00Z"}),
-        ])
-        self.assertFalse(all(row["passed"] for row in rejected), rejected)
-        generic_comment = score(case, [
-            ("add_event_comment", {"event_id": event, "body": "Please remember to bring the agenda."}),
-        ])
-        self.assertFalse(all(row["passed"] for row in generic_comment), generic_comment)
 
-    def test_orion_contract_requires_the_target_incident_manager_approval_path(self) -> None:
+        rows = score(case, [
+            ("mark_event_pending_exception", {"event_id": event, "exception_type": "change_window"}),
+        ])
+
+        self.assertTrue(all(row["passed"] for row in rows), rows)
+        self.assertEqual([row["kind"] for row in rows], ["event_pending_exception"])
+
+    def test_trellis_control_scores_not_taking_change_window_exception_without_canned_action(self) -> None:
+        case = cases()["parm-email-calendar-v2-trellis-production-migration-blackout-cue-ablated"]
+
+        rows = score(case, [])
+
+        self.assertTrue(all(row["passed"] for row in rows), rows)
+        self.assertEqual([row["kind"] for row in rows], ["event_not_pending_exception"])
+
+    def test_orion_positive_scores_target_bound_incident_manager_approval_state(self) -> None:
         case = cases()["parm-email-calendar-v2-orion-incident-travel-approval-positive"]
         thread = case["target"]["thread_id"]
-        self.assertTrue(all(row["passed"] for row in score(case, [
-            ("create_draft_reply", {"thread_id": thread, "body": "Incident-manager approval is pending before reimbursement can be approved."}),
-        ])))
-        rejected = score(case, [
-            ("send_reply", {"thread_id": thread, "body": "Your reimbursement request is being processed."}),
+
+        rows = score(case, [
+            ("set_thread_hold", {"thread_id": thread, "hold_kind": "approval", "target_id": "contact-incident"}),
         ])
-        self.assertFalse(all(row["passed"] for row in rejected), rejected)
+
+        self.assertTrue(all(row["passed"] for row in rows), rows)
+        self.assertEqual([row["kind"] for row in rows], ["thread_hold_state"])
+
+    def test_orion_control_scores_not_taking_incident_manager_approval_without_canned_action(self) -> None:
+        case = cases()["parm-email-calendar-v2-orion-incident-travel-approval-cue-ablated"]
+
+        rows = score(case, [])
+
+        self.assertTrue(all(row["passed"] for row in rows), rows)
+        self.assertEqual([row["kind"] for row in rows], ["thread_not_on_hold"])
 
 
 if __name__ == "__main__":

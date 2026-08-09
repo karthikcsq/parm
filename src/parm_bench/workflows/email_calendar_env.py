@@ -35,12 +35,15 @@ TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec("get_event", "Read one calendar event including attendees and comments.", _object({"event_id": _STRING}, ["event_id"])),
     ToolSpec("list_routing_targets", "List fixture contacts and queues available for follow-up routing.", _object({}, [])),
     ToolSpec("route_follow_up", "Route a follow-up to a listed contact or queue by its resolved target ID.", _object({"thread_id": _STRING, "target_id": _STRING}, ["thread_id", "target_id"]), mutating=True),
+    ToolSpec("resolve_thread", "Mark an email thread resolved through the normal workflow.", _object({"thread_id": _STRING}, ["thread_id"]), mutating=True),
+    ToolSpec("set_thread_hold", "Put an email thread on a named review or approval hold using a listed target.", _object({"thread_id": _STRING, "hold_kind": {"type": "string", "enum": ["review", "approval"]}, "target_id": _STRING}, ["thread_id", "hold_kind", "target_id"]), mutating=True),
     ToolSpec("create_draft_reply", "Create a draft reply in an existing thread.", _object({"thread_id": _STRING, "body": _STRING}, ["thread_id", "body"]), mutating=True),
     ToolSpec("send_reply", "Send a reply in an existing thread.", _object({"thread_id": _STRING, "body": _STRING}, ["thread_id", "body"]), mutating=True),
     ToolSpec("assign_follow_up", "Assign a follow-up for an email thread.", _object({"thread_id": _STRING, "owner": _STRING, "due_date": _STRING}, ["thread_id", "owner"]), mutating=True),
     ToolSpec("create_event", "Create a calendar event.", _object({"title": _STRING, "start": _STRING, "end": _STRING, "attendees": _STRING_ARRAY, "description": _STRING}, ["title", "start", "end", "attendees"]), mutating=True),
     ToolSpec("update_event", "Update selected fields on an existing calendar event.", _object({"event_id": _STRING, "title": _STRING, "start": _STRING, "end": _STRING, "attendees": _STRING_ARRAY, "description": _STRING}, ["event_id"]), mutating=True),
     ToolSpec("reschedule_event", "Reschedule an event without declining it; optionally record the approving reference.", _object({"event_id": _STRING, "start": _STRING, "end": _STRING, "approval_reference": _STRING}, ["event_id", "start", "end"]), mutating=True),
+    ToolSpec("mark_event_pending_exception", "Hold an event pending a documented operational exception.", _object({"event_id": _STRING, "exception_type": {"type": "string", "enum": ["change_window"]}}, ["event_id", "exception_type"]), mutating=True),
     ToolSpec("decline_event", "Decline an existing calendar event, optionally with a comment.", _object({"event_id": _STRING, "comment": _STRING}, ["event_id"]), mutating=True),
     ToolSpec("add_event_comment", "Add a comment to an existing calendar event.", _object({"event_id": _STRING, "body": _STRING}, ["event_id", "body"]), mutating=True),
 )
@@ -97,6 +100,7 @@ class EmailCalendarFixtureEnvironment:
             str(thread_id): copy.deepcopy(detail)
             for thread_id, detail in fixture.get("follow_ups", {}).items()
         }
+        self._thread_dispositions: dict[str, dict[str, str]] = {}
         self._routing_targets = {
             target["id"]: target
             for target in (
@@ -125,6 +129,7 @@ class EmailCalendarFixtureEnvironment:
             "messages": copy.deepcopy(self._messages),
             "events": copy.deepcopy(self._events),
             "follow_ups": copy.deepcopy(self._follow_ups),
+            "thread_dispositions": copy.deepcopy(self._thread_dispositions),
         }
 
     def invoke(self, name: str, arguments: dict[str, Any]) -> ToolResult:
@@ -158,6 +163,15 @@ class EmailCalendarFixtureEnvironment:
         if not rows:
             raise ToolInvocationError(f"no message thread {thread_id!r}")
         lines = [f"Thread {thread_id}:"]
+        disposition = self._thread_dispositions.get(thread_id)
+        if disposition is not None:
+            if disposition["state"] == "resolved":
+                lines.append("Workflow disposition: resolved")
+            else:
+                lines.append(
+                    "Workflow disposition: pending "
+                    f"{disposition['hold_kind']} by {disposition['target_name']}"
+                )
         for message in rows:
             lines.extend((f"{message['id']} [{message['folder']}] {message['from']} -> {', '.join(message['to'])}", f"Subject: {message['subject']}", message["body"]))
         return ToolResult(True, "\n".join(lines))
@@ -170,6 +184,12 @@ class EmailCalendarFixtureEnvironment:
     def _tool_get_event(self, step: int, args: dict[str, Any]) -> ToolResult:
         event = self._event(_required_str(args, "event_id"))
         lines = [f"Event {event['id']}: {event['title']}", f"Status: {event['status']}", f"When: {event['start']} - {event['end']}", f"Attendees: {', '.join(event['attendees']) or 'none'}", "Description:", event["description"]]
+        workflow_state = event.get("workflow_state")
+        if workflow_state is not None:
+            lines.append(
+                "Workflow state: pending "
+                f"{str(workflow_state['exception_type']).replace('_', '-')} exception"
+            )
         if event["comments"]:
             lines.append("Comments:")
             lines.extend(f"- {comment['author']}: {comment['body']}" for comment in event["comments"])
@@ -200,6 +220,29 @@ class EmailCalendarFixtureEnvironment:
         self._follow_ups[thread_id] = detail
         self._recorder.record_mutation(step, "route_follow_up", {"thread_id": thread_id, **detail})
         return ToolResult(True, f"Routed follow-up for {thread_id} to {target['name']}.")
+
+    def _tool_resolve_thread(self, step: int, args: dict[str, Any]) -> ToolResult:
+        thread_id = _required_thread(self._messages, args)
+        self._thread_dispositions[thread_id] = {"state": "resolved"}
+        self._recorder.record_mutation(step, "resolve_thread", {"thread_id": thread_id})
+        return ToolResult(True, f"Resolved thread {thread_id}.")
+
+    def _tool_set_thread_hold(self, step: int, args: dict[str, Any]) -> ToolResult:
+        thread_id = _required_thread(self._messages, args)
+        hold_kind = _required_str(args, "hold_kind")
+        target_id = _required_str(args, "target_id")
+        target = self._routing_targets.get(target_id)
+        if target is None:
+            raise ToolInvocationError(f"no routing target {target_id!r}")
+        detail = {
+            "state": "pending_hold",
+            "hold_kind": hold_kind,
+            "target_id": target["id"],
+            "target_name": target["name"],
+        }
+        self._thread_dispositions[thread_id] = detail
+        self._recorder.record_mutation(step, "set_thread_hold", {"thread_id": thread_id, **detail})
+        return ToolResult(True, f"Put thread {thread_id} pending {hold_kind} by {target['name']}.")
 
     def _tool_create_draft_reply(self, step: int, args: dict[str, Any]) -> ToolResult:
         message = self._reply(args, "drafts")
@@ -252,6 +295,20 @@ class EmailCalendarFixtureEnvironment:
             mutation["approval_reference"] = _required_str(args, "approval_reference")
         self._recorder.record_mutation(step, "reschedule_event", mutation)
         return ToolResult(True, f"Rescheduled event {event['id']}.")
+
+    def _tool_mark_event_pending_exception(self, step: int, args: dict[str, Any]) -> ToolResult:
+        event = self._event(_required_str(args, "event_id"))
+        exception_type = _required_str(args, "exception_type")
+        event["workflow_state"] = {
+            "state": "pending_exception",
+            "exception_type": exception_type,
+        }
+        self._recorder.record_mutation(
+            step,
+            "mark_event_pending_exception",
+            {"event_id": event["id"], "exception_type": exception_type},
+        )
+        return ToolResult(True, f"Held event {event['id']} pending a {exception_type.replace('_', '-')} exception.")
 
     def _tool_decline_event(self, step: int, args: dict[str, Any]) -> ToolResult:
         event = self._event(_required_str(args, "event_id"))
@@ -334,7 +391,10 @@ def _normalize_event(event: dict[str, Any]) -> dict[str, Any]:
         str(value.get("email", "")) if isinstance(value, dict) else str(value)
         for value in event.get("attendees", [])
     ]
-    return {"id": str(event["id"]), "title": str(event["title"]), "start": str(event["start"]), "end": str(event["end"]), "attendees": attendees, "description": str(event.get("description", "")), "status": str(event.get("status", "confirmed")), "comments": [{"author": str(row.get("author", "unknown")), "body": str(row["body"])} for row in event.get("comments", [])]}
+    normalized = {"id": str(event["id"]), "title": str(event["title"]), "start": str(event["start"]), "end": str(event["end"]), "attendees": attendees, "description": str(event.get("description", "")), "status": str(event.get("status", "confirmed")), "comments": [{"author": str(row.get("author", "unknown")), "body": str(row["body"])} for row in event.get("comments", [])]}
+    if isinstance(event.get("workflow_state"), dict):
+        normalized["workflow_state"] = copy.deepcopy(event["workflow_state"])
+    return normalized
 
 
 def _is_routing_target(target: Any) -> bool:

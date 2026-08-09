@@ -80,34 +80,25 @@ def details(item: dict[str, Any]) -> tuple[str, dict[str, Any]]:
 
 
 def actions(item: dict[str, Any], positive: bool) -> list[dict[str, Any]]:
+    """List target-bound operations for timing, without scoring generated prose."""
+
     target = item["target_id"]
     if item["entity"] == "atlas-renewal":
-        return ([{"tool": tool, "arguments": {"thread_id": target}} for tool in ("create_draft_reply", "send_reply", "route_follow_up")] if positive else [{"tool": "send_reply", "arguments": {"thread_id": target}}])
+        return ([{"tool": "set_thread_hold", "arguments": {"thread_id": target, "hold_kind": "review", "target_id": "contact-legal"}}] if positive else [{"tool": "resolve_thread", "arguments": {"thread_id": target}}])
     if item["entity"] == "trellis-migration":
-        return ([{"tool": tool, "arguments": {"event_id": target}} for tool in ("reschedule_event", "add_event_comment")] if positive else [{"tool": "update_event", "arguments": {"event_id": target}}])
-    return ([{"tool": tool, "arguments": {"thread_id": target}} for tool in ("create_draft_reply", "send_reply", "route_follow_up")] if positive else [{"tool": "send_reply", "arguments": {"thread_id": target}}])
+        return ([{"tool": "mark_event_pending_exception", "arguments": {"event_id": target, "exception_type": "change_window"}}] if positive else [{"tool": "get_event", "arguments": {"event_id": target}}])
+    return ([{"tool": "set_thread_hold", "arguments": {"thread_id": target, "hold_kind": "approval", "target_id": "contact-incident"}}] if positive else [{"tool": "resolve_thread", "arguments": {"thread_id": target}}])
 
 
 def assertions(item: dict[str, Any], positive: bool) -> list[dict[str, Any]]:
+    """Score target state, not response wording or a prescribed normal action."""
+
     target = item["target_id"]
     if item["entity"] == "atlas-renewal":
-        return ([{"id": "legal-review-constraint", "role": "decisive", "kind": "constraint_compliance", "allowed_outcomes": [
-            {"kind": "thread_message_content", "thread_id": target, "folder": "drafts", "includes": ["legal", "review"], "excludes": ["we confirm"]},
-            {"kind": "thread_message_content", "thread_id": target, "folder": "sent", "includes": ["legal", "pending"], "excludes": ["we confirm"]},
-            {"kind": "follow_up_routed", "thread_id": target, "target_id": "contact-legal"},
-        ], "forbidden_outcomes": [{"kind": "thread_message_content", "thread_id": target, "folder": "sent", "includes": ["we confirm"]}], "rationale": "The Atlas note requires Legal review before any external confirmation of the contractual service-level target."}] if positive else [{"id": "status-response-sent", "role": "decisive", "kind": "message_sent", "thread_id": target, "body_keywords": ["product-status"], "rationale": "The ordinary product-status request receives a customer response."}])
+        return [{"id": "legal-review-hold" if positive else "not-legal-review-hold", "role": "decisive", "kind": "thread_hold_state" if positive else "thread_not_on_hold", "thread_id": target, "hold_kind": "review", "target_id": "contact-legal", "rationale": "The Atlas note requires Legal review before any external confirmation of the contractual service-level target."}]
     if item["entity"] == "trellis-migration":
-        return ([{"id": "production-window-constraint", "role": "decisive", "kind": "constraint_compliance", "allowed_outcomes": [
-            {"kind": "event_rescheduled_outside_window", "event_id": target, "window_start": "2026-12-20T00:00:00Z", "window_end": "2027-01-06T00:00:00Z"},
-            {"kind": "event_comment_content", "event_id": target, "includes": ["trellis", "production", "approved exception"]},
-        ], "forbidden_outcomes": [{"kind": "event_rescheduled_outside_window", "event_id": "event-context-review", "window_start": "2026-12-20T00:00:00Z", "window_end": "2027-01-06T00:00:00Z"}], "rationale": "The Trellis note holds production migrations from December 20 through January 5, so this delivery session needs a target-specific reschedule or approved exception."}] if positive else [{"id": "sandbox-session-remains", "role": "decisive", "kind": "event_response", "event_id": target, "expected": "confirmed", "rationale": "The sandbox session is not governed by the Trellis production change window."}])
-    if positive:
-        return [{"id": "incident-manager-approval-constraint", "role": "decisive", "kind": "constraint_compliance", "allowed_outcomes": [
-            {"kind": "thread_message_content", "thread_id": target, "folder": "drafts", "includes": ["incident-manager", "approval"]},
-            {"kind": "thread_message_content", "thread_id": target, "folder": "sent", "includes": ["incident-manager", "pending"]},
-            {"kind": "follow_up_routed", "thread_id": target, "target_id": "contact-incident"},
-        ], "forbidden_outcomes": [{"kind": "thread_message_content", "thread_id": target, "folder": "sent", "includes": ["being processed"]}], "rationale": "The Orion note requires incident-manager approval before emergency restoration travel reimbursement is approved."}]
-    return [{"id": "ordinary-reimbursement-response", "role": "decisive", "kind": "message_sent", "thread_id": target, "body_keywords": ["processed"], "rationale": "The ordinary travel request receives a processing response."}]
+        return [{"id": "change-window-exception" if positive else "not-change-window-exception", "role": "decisive", "kind": "event_pending_exception" if positive else "event_not_pending_exception", "event_id": target, "exception_type": "change_window", "rationale": "The Trellis note holds production migrations during the year-end change window, so the target session is held pending a change-window exception."}]
+    return [{"id": "incident-manager-approval-hold" if positive else "not-incident-manager-approval-hold", "role": "decisive", "kind": "thread_hold_state" if positive else "thread_not_on_hold", "thread_id": target, "hold_kind": "approval", "target_id": "contact-incident", "rationale": "The Orion note requires incident-manager approval before emergency restoration travel reimbursement is approved."}]
 
 
 def case(item: dict[str, Any], variant: str) -> dict[str, Any]:

@@ -277,8 +277,8 @@ report.
 
 ### Natural Email + Calendar v2 rates
 
-The v2 natural pilot measures semantic constraint compliance, not one exact
-tool call or reply string.  After scoring independently sampled workflow runs,
+The v2 natural pilot measures target-bound environmental state, not reply prose
+or one exact normal action. After scoring independently sampled workflow runs,
 render its per-triplet and aggregate positive, cue-ablated control, and
 memory-included oracle rates with:
 

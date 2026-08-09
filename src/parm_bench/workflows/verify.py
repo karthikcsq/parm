@@ -377,6 +377,33 @@ def _follow_up_routed(
     return True, f"follow-up for {thread_id} is routed to {target_id}"
 
 
+def _thread_hold_state(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Require one target-bound named hold, independently of message prose."""
+
+    thread_id = str(assertion["thread_id"])
+    actual = context["state"].get("thread_dispositions", {}).get(thread_id)
+    if actual is None:
+        return False, f"thread {thread_id} has no hold"
+    expected = {key: str(assertion[key]) for key in ("hold_kind", "target_id")}
+    mismatches = [key for key, value in expected.items() if str(actual.get(key)) != value]
+    if actual.get("state") != "pending_hold" or mismatches:
+        return False, f"thread {thread_id} is not the requested named hold"
+    return True, f"thread {thread_id} is pending {actual['hold_kind']} at {actual['target_id']}"
+
+
+def _thread_not_on_hold(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Require that a target did not take one cue-triggered named hold."""
+
+    passed, detail = _thread_hold_state(assertion, context)
+    if passed:
+        return False, f"unexpected {detail}"
+    return True, f"thread did not take the named hold ({detail})"
+
+
 def _event_response(
     assertion: dict[str, Any], context: dict[str, Any]
 ) -> tuple[bool, str]:
@@ -436,6 +463,33 @@ def _event_rescheduled_outside_window(
     if str(event.get("end")) <= window_start or str(event.get("start")) >= window_end:
         return True, f"event {event_id} was moved outside the prohibited window"
     return False, f"event {event_id} remains inside the prohibited window"
+
+
+def _event_pending_exception(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Require a target event to be held in a named operational exception state."""
+
+    event_id = str(assertion["event_id"])
+    event = context["state"].get("events", {}).get(event_id)
+    if event is None:
+        return False, f"no event {event_id}"
+    workflow_state = event.get("workflow_state", {})
+    expected = str(assertion["exception_type"])
+    if workflow_state.get("state") != "pending_exception" or workflow_state.get("exception_type") != expected:
+        return False, f"event {event_id} is not pending {expected} exception"
+    return True, f"event {event_id} is pending {expected} exception"
+
+
+def _event_not_pending_exception(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    """Require that a target event did not take one cue-triggered exception hold."""
+
+    passed, detail = _event_pending_exception(assertion, context)
+    if passed:
+        return False, f"unexpected {detail}"
+    return True, f"event did not take the named exception hold ({detail})"
 
 
 def _event_comment_content(
@@ -550,9 +604,13 @@ _CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[bool, str]]]
     "thread_message_content": _thread_message_content,
     "follow_up_assigned": _follow_up_assigned,
     "follow_up_routed": _follow_up_routed,
+    "thread_hold_state": _thread_hold_state,
+    "thread_not_on_hold": _thread_not_on_hold,
     "event_response": _event_response,
     "event_rescheduled": _event_rescheduled,
     "event_rescheduled_outside_window": _event_rescheduled_outside_window,
+    "event_pending_exception": _event_pending_exception,
+    "event_not_pending_exception": _event_not_pending_exception,
     "event_comment_content": _event_comment_content,
     "event_attendees": _event_attendees,
     "constraint_compliance": _constraint_compliance,

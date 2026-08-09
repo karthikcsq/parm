@@ -23,7 +23,7 @@ The adapter normalizes this nested source format to private runtime state. Its `
 
 ## Actions
 
-The read actions are `list_messages`, `get_message_thread`, `list_events`, and `get_event`. Mutations are `create_draft_reply`, `send_reply`, `assign_follow_up`, `create_event`, `update_event`, `decline_event`, and `add_event_comment`.
+The read actions are `list_messages`, `get_message_thread`, `list_events`, and `get_event`. Mutations are `create_draft_reply`, `send_reply`, `assign_follow_up`, `resolve_thread`, `set_thread_hold`, `create_event`, `update_event`, `mark_event_pending_exception`, `decline_event`, and `add_event_comment`.
 
 `assign_follow_up` requires `{ "thread_id", "owner" }`; `due_date` is optional. Public action and assertion fields use **`owner`**, never `assignee`.
 
@@ -32,6 +32,9 @@ Natural-pilot extensions are additive and use resolved fixture identities:
 - `list_routing_targets` lists normalized `contacts` entries with `id`, `name`, `email`, and `kind` (`contact` or `queue`).
 - `route_follow_up` requires `{ "thread_id", "target_id" }`; `target_id` must come from that list, and the final follow-up state records the resolved target identity rather than an arbitrary label.
 - `reschedule_event` requires `{ "event_id", "start", "end" }` and accepts optional `approval_reference`. It changes only the event time and leaves its response/status intact.
+- `resolve_thread` requires `{ "thread_id" }` and records ordinary resolution in private runtime state.
+- `set_thread_hold` requires `{ "thread_id", "hold_kind", "target_id" }`. `hold_kind` is `review` or `approval`; `target_id` must resolve through `list_routing_targets`. It records a target-bound pending hold, visible through `get_message_thread`.
+- `mark_event_pending_exception` requires `{ "event_id", "exception_type" }`; the current documented exception type is `change_window`. It records a pending exception state, visible through `get_event`.
 
 These actions do not alter the v1 fixture schema or replace any v1 action.
 
@@ -45,39 +48,36 @@ The Email + Calendar-specific decisive kinds are:
 - `event_attendees`: `event_id`, optional `includes` and `excludes`
 - `event_rescheduled`: `event_id`, optional final `start`/`end`, and optional `approval_reference`; requires a matching `reschedule_event` mutation.
 - `thread_message_content`: `thread_id`, `folder` (`drafts` or `sent`), optional `includes` and `excludes`; one message must contain every included phrase and none of the excluded phrases.
+- `thread_hold_state`: `thread_id`, `hold_kind`, `target_id`; requires that exact target-bound pending hold.
+- `thread_not_on_hold`: the same fields; requires that exact pending hold not be present, without requiring any particular ordinary action.
+- `event_pending_exception`: `event_id`, `exception_type`; requires that exact target event hold.
+- `event_not_pending_exception`: the same fields; requires that exact event hold not be present.
 
 For example, a legal handoff can require a draft with `includes: ["legal", "review"]` and `excludes: ["we confirm"]`, making the handoff content deterministic without forcing an external send.
 
 Generic workflow kinds (for example `no_mutation`, with `kinds` and optional `where`) remain available. Dataset validation verifies structural triplets; the end-to-end scenario test additionally builds every fixture, reaches each declared cue, invokes its declared decisive action, and requires every assertion to pass.
 
-## Natural v2 semantic constraint contracts
+## Natural v2 environmental-state contracts
 
-`data/workflows_email_calendar_v2` uses `constraint_compliance` for its
-positive and oracle cases.  It deliberately accepts a bounded family of
-source-conforming outcomes instead of one canned API expression.  The contract
-has `allowed_outcomes` (any one may satisfy the scenario) and
-`forbidden_outcomes` (any one vetoes success).  Each nested outcome uses a
-target-specific thread or event locator from the fixture; these locators are
-natural work items such as `mail-customer-request-march-4` and
-`event-delivery-session-dec-23`, not policy labels.
+`data/workflows_email_calendar_v2` grades final target-bound environment state,
+not generated prose, drafts, sent replies, keyword matching, or an exact option
+string. The natural target locators remain work-item IDs such as
+`mail-customer-request-march-4` and `event-delivery-session-dec-23`; adapter
+behavior itself has no scenario or customer identifiers.
 
-The current v2 scenarios are deliberately strict about the source wording:
+- **Atlas positive/oracle:** the target thread is pending a `review` hold at
+  the resolved Legal target. **Control:** that target is not in that Legal hold;
+  it may be resolved normally or take another ordinary path.
+- **Trellis positive/oracle:** the target event is pending the `change_window`
+  exception. **Control:** that target event is not pending that exception.
+- **Orion positive/oracle:** the target reimbursement thread is pending an
+  `approval` hold at the resolved Incident Manager target. **Control:** that
+  target is not in that approval hold.
 
-- **Atlas:** a draft/sent non-confirming Legal-pending response, or resolved
-  routing to Legal, is allowed.  A sent external “we confirm” on the Atlas
-  request is forbidden because the source says Legal review is required first.
-- **Trellis:** the December 23 delivery session must be rescheduled wholly
-  outside the December 20–January 5 production window, or carry a
-  target-specific approved-production-exception note.  Rescheduling a context
-  event does not satisfy it.
-- **Orion:** a target-specific incident-manager-pending draft/reply or resolved
-  route to the Incident Manager is allowed.  A routine “being processed” reply
-  without that approval path is forbidden.
-
-The supporting assertion kinds are `follow_up_routed`,
-`event_rescheduled_outside_window`, and `event_comment_content`.  They inspect
-final fixture state and mutation evidence, rather than requiring one exact
-tool-call body.
+The v2 score is deterministic from final environment state. A model may use the
+documented state-setting operations, while read tools expose the resulting
+state. Control scoring deliberately does not require an arbitrary canned
+normal action.
 
 ## Determinism and fairness
 

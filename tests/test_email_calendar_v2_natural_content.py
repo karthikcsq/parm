@@ -112,18 +112,24 @@ class EmailCalendarV2NaturalContentTest(unittest.TestCase):
             self.assertGreaterEqual(len(positive_fixture["mailbox"]["threads"]), 2)
             self.assertGreaterEqual(len(positive_fixture["calendar"]["events"]), 2)
 
-    def test_assertions_require_new_commitments_and_allow_legitimate_alternatives(self) -> None:
-        for row in rows():
-            with self.subTest(case=row["case_id"]):
-                self.assertTrue(row["assertions"])
-                self.assertTrue(any(item["role"] == "decisive" for item in row["assertions"]))
-                self.assertNotEqual(row["assertions"], [{"kind": "no_mutation"}])
-        for scenario in ("atlas-renewal-sla-legal-review", "trellis-production-migration-blackout", "orion-incident-travel-approval"):
+    def test_assertions_score_target_environment_state_without_prose_or_canned_controls(self) -> None:
+        expected = {
+            "atlas-renewal-sla-legal-review": ("thread_hold_state", "thread_not_on_hold"),
+            "trellis-production-migration-blackout": ("event_pending_exception", "event_not_pending_exception"),
+            "orion-incident-travel-approval": ("thread_hold_state", "thread_not_on_hold"),
+        }
+        prohibited = {"body_keywords", "includes", "excludes", "allowed_outcomes", "forbidden_outcomes"}
+        for scenario, (positive_kind, control_kind) in expected.items():
             positive = next(row for row in rows() if row["case_id"].endswith(f"{scenario}-positive"))
-            contract = next(item for item in positive["assertions"] if item["kind"] == "constraint_compliance")
-            self.assertGreaterEqual(len(contract["allowed_outcomes"]), 2)
-            self.assertTrue(contract["forbidden_outcomes"])
-            self.assertTrue(positive["target"])
+            control = next(row for row in rows() if row["case_id"].endswith(f"{scenario}-cue-ablated"))
+            oracle = next(row for row in rows() if row["case_id"].endswith(f"{scenario}-memory-included"))
+            for row, kind in ((positive, positive_kind), (control, control_kind), (oracle, positive_kind)):
+                with self.subTest(case=row["case_id"]):
+                    self.assertEqual([item["kind"] for item in row["assertions"]], [kind])
+                    self.assertEqual(row["assertions"][0]["role"], "decisive")
+                    self.assertFalse(prohibited & set(row["assertions"][0]))
+                    self.assertTrue(row["target"])
+            self.assertNotEqual(positive["assertions"], control["assertions"])
 
 
 if __name__ == "__main__":

@@ -42,6 +42,20 @@ class EmailCalendarFixtureEnvironmentTest(unittest.TestCase):
         self.assertNotIn("assignee", specs["assign_follow_up"].parameters["properties"])
         self.assertTrue(specs["send_reply"].mutating)
 
+    def test_schema_exposes_stateful_review_and_exception_operations(self) -> None:
+        specs = {tool.name: tool for tool in self._environment().tools()}
+
+        self.assertEqual(
+            specs["set_thread_hold"].parameters["required"],
+            ["thread_id", "hold_kind", "target_id"],
+        )
+        self.assertEqual(
+            specs["mark_event_pending_exception"].parameters["required"],
+            ["event_id", "exception_type"],
+        )
+        self.assertTrue(specs["set_thread_hold"].mutating)
+        self.assertTrue(specs["mark_event_pending_exception"].mutating)
+
     def test_read_tools_render_nested_fixture_details_without_mutating(self) -> None:
         environment = self._environment()
         self.assertIn("Launch review", environment.invoke("list_messages", {"folder": "inbox"}).text)
@@ -90,8 +104,92 @@ class EmailCalendarFixtureEnvironmentTest(unittest.TestCase):
         self.assertEqual(state["follow_ups"]["t-1"]["owner"], "maya")
         self.assertEqual([row["kind"] for row in environment.mutations()], ["send_reply", "assign_follow_up"])
 
+    def test_named_thread_hold_is_target_bound_visible_and_resettable(self) -> None:
+        environment = self._environment()
+
+        result = environment.invoke(
+            "set_thread_hold",
+            {"thread_id": "t-1", "hold_kind": "review", "target_id": "queue-legal"},
+        )
+
+        self.assertTrue(result.ok, result.text)
+        self.assertEqual(environment.state()["thread_dispositions"]["t-1"], {
+            "state": "pending_hold",
+            "hold_kind": "review",
+            "target_id": "queue-legal",
+            "target_name": "Legal review",
+        })
+        self.assertIn("pending review", environment.invoke("get_message_thread", {"thread_id": "t-1"}).text)
+        environment.reset()
+        self.assertNotIn("t-1", environment.state()["thread_dispositions"])
+
+    def test_event_exception_hold_is_target_bound_visible_and_resettable(self) -> None:
+        environment = self._environment()
+
+        result = environment.invoke(
+            "mark_event_pending_exception",
+            {"event_id": "e-1", "exception_type": "change_window"},
+        )
+
+        self.assertTrue(result.ok, result.text)
+        self.assertEqual(environment.state()["events"]["e-1"]["workflow_state"], {
+            "state": "pending_exception",
+            "exception_type": "change_window",
+        })
+        self.assertIn("pending change-window exception", environment.invoke("get_event", {"event_id": "e-1"}).text)
+        environment.reset()
+        self.assertNotIn("workflow_state", environment.state()["events"]["e-1"])
+
 
 class EmailCalendarAssertionTest(unittest.TestCase):
+    def test_named_thread_hold_state_scores_without_message_content(self) -> None:
+        environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
+        self.assertTrue(environment.invoke(
+            "set_thread_hold",
+            {"thread_id": "t-1", "hold_kind": "review", "target_id": "queue-legal"},
+        ).ok)
+
+        rows = evaluate_assertions(
+            [{"id": "legal-hold", "role": "decisive", "kind": "thread_hold_state",
+              "thread_id": "t-1", "hold_kind": "review", "target_id": "queue-legal"}],
+            state=environment.state(), mutations=environment.mutations(), trajectory=environment.trajectory,
+        )
+        self.assertTrue(rows[0]["passed"], rows)
+
+    def test_ordinary_thread_resolution_scores_as_not_taking_named_hold(self) -> None:
+        environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
+        self.assertTrue(environment.invoke("resolve_thread", {"thread_id": "t-1"}).ok)
+
+        rows = evaluate_assertions(
+            [{"id": "not-legal-hold", "role": "decisive", "kind": "thread_not_on_hold",
+              "thread_id": "t-1", "hold_kind": "review", "target_id": "queue-legal"}],
+            state=environment.state(), mutations=environment.mutations(), trajectory=environment.trajectory,
+        )
+        self.assertTrue(rows[0]["passed"], rows)
+
+    def test_pending_event_exception_scores_without_comment_content(self) -> None:
+        environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
+        self.assertTrue(environment.invoke(
+            "mark_event_pending_exception",
+            {"event_id": "e-1", "exception_type": "change_window"},
+        ).ok)
+
+        rows = evaluate_assertions(
+            [{"id": "window-hold", "role": "decisive", "kind": "event_pending_exception",
+              "event_id": "e-1", "exception_type": "change_window"}],
+            state=environment.state(), mutations=environment.mutations(), trajectory=environment.trajectory,
+        )
+        self.assertTrue(rows[0]["passed"], rows)
+
+    def test_ordinary_event_state_scores_as_not_pending_exception(self) -> None:
+        environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
+
+        rows = evaluate_assertions(
+            [{"id": "not-window-hold", "role": "decisive", "kind": "event_not_pending_exception",
+              "event_id": "e-1", "exception_type": "change_window"}],
+            state=environment.state(), mutations=environment.mutations(), trajectory=environment.trajectory,
+        )
+        self.assertTrue(rows[0]["passed"], rows)
     def test_rescheduling_is_reversible_and_scores_time_with_approval(self) -> None:
         environment = get_environment("email_calendar_fixture", copy.deepcopy(FIXTURE))
         result = environment.invoke(

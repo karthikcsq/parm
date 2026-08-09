@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
@@ -57,12 +58,54 @@ class ScenarioSetTest(unittest.TestCase):
             positive.data["environment"]["fixture_path"], ablated.data["environment"]["fixture_path"]
         )
         self.assertEqual(positive.data["memory"]["gold_source_ids"], ["notes/customer-constraints-ashcroft"])
-        self.assertIn("Ashcroft University SSO beta", positive.data["cue"]["text"])
+        self.assertIn("ashcroft-university-sso-beta", positive.data["cue"]["text"])
         self.assertNotIn(positive.data["cue"]["text"].casefold(), positive.goal.casefold())
         self.assertEqual(
             ablated.data["decisive_action"]["matchers"],
             positive.data["decisive_action"]["matchers"],
         )
+
+    def test_rollback_canary_fixture_is_ordinary_until_one_target_applicability_fact(self) -> None:
+        variants = _cases()["parm-workflow-github-canary-rollback"]
+        positive = variants["positive"]
+        control = variants["cue-ablated"]
+        opening = positive.goal.casefold()
+        for gold_or_cue_term in (
+            "ashcroft",
+            "university",
+            "sso",
+            "canary",
+            "rollout",
+            "august",
+            "semester",
+            "january",
+            "version bump",
+        ):
+            self.assertNotIn(gold_or_cue_term, opening)
+
+        positive_fixture = json.loads(
+            (DATASET / positive.data["environment"]["fixture_path"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        control_fixture = json.loads(
+            (DATASET / control.data["environment"]["fixture_path"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        positive_body = positive_fixture["pull_requests"][0]["body"]
+        control_body = control_fixture["pull_requests"][0]["body"]
+        self.assertIn("ashcroft-university-sso-beta", positive_body)
+        self.assertIn("shared-internal-sso-beta", control_body)
+        self.assertEqual(
+            positive_body.replace(
+                "ashcroft-university-sso-beta", "<target>"
+            ),
+            control_body.replace("shared-internal-sso-beta", "<target>"),
+        )
+        positive_fixture["pull_requests"][0]["body"] = "<target>"
+        control_fixture["pull_requests"][0]["body"] = "<target>"
+        self.assertEqual(positive_fixture, control_fixture)
 
     def test_rollback_canary_assertions_distinguish_hold_from_shared_rollout(self) -> None:
         variants = _cases()["parm-workflow-github-canary-rollback"]

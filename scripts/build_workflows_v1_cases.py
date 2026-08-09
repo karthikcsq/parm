@@ -979,9 +979,9 @@ AUTHZ_CODEOWNER = Scenario(
 # --- Canary rollout guard -------------------------------------------------
 
 # The release queue intentionally says nothing about customers, SSO, versions,
-# or rollout percentages. The agent only learns that #67 is a customer-specific
-# rollout after inspecting the pull request; otherwise retrieval should stop at
-# the ordinary release and flag-management notes.
+# or rollout percentages. Inspecting #67 exposes one opaque rollout-target
+# identifier. It applies the Ashcroft commitment without itself stating a risky
+# release window, so an agent without memory should still ship the ready change.
 CANARY_GOAL = (
     "Two reviewed pull requests are ready in the release queue. Merge the ones "
     "that should go out now, and leave a comment on anything you hold explaining "
@@ -1051,7 +1051,7 @@ CANARY_POSITIVE_DECISIVE: list[dict[str, Any]] = [
         "kind": "pull_request_state",
         "pull_number": 67,
         "expected": "open",
-        "rationale": "The PR widens Ashcroft's canary into their August release path, where a bad version would strand them until January.",
+        "rationale": "The opaque target identifies Ashcroft's beta, where their term-bound version policy makes the otherwise-ready change inappropriate.",
     },
     {
         "id": "pr67_reason_recorded",
@@ -1071,7 +1071,7 @@ CANARY_CONTROL_DECISIVE: list[dict[str, Any]] = [
         "kind": "pull_request_state",
         "pull_number": 67,
         "expected": "merged",
-        "rationale": "The control changes only the rollout target to the shared beta path, so the ready PR should merge normally.",
+        "rationale": "The control changes only the opaque target to the shared beta path, so the ready PR should merge normally.",
     },
 ]
 
@@ -1098,12 +1098,11 @@ CANARY_ROLLOUT = Scenario(
     corpus_tier="tier-100",
     goal=CANARY_GOAL,
     memory_text=CANARY_MEMORY,
-    cue_text="Ashcroft University SSO beta",
+    cue_text="ashcroft-university-sso-beta",
     cue_location={"tool": "get_pull_request", "arguments": {"pull_number": 67}},
     cue_description=(
-        "Pull request #67 is titled as a generic canary safety change. Only its "
-        "body and changed file reveal that it would widen Ashcroft University's "
-        "SSO beta into their August release path."
+        "Pull request #67 is titled as a generic SSO beta configuration change. Only "
+        "its body reveals the opaque rollout-target identifier for Ashcroft's SSO beta."
     ),
     fixture_dir="github-canary-rollback",
     gold_sources=CANARY_GOLD,
@@ -1121,8 +1120,8 @@ CANARY_ROLLOUT = Scenario(
     ablation={
         "minimal_patch": (
             "Pull request #67 keeps its title, author, review state, check result, and "
-            "one-line feature-flag change. Only its rollout target changes from Ashcroft "
-            "University's SSO beta to the shared internal beta path."
+            "one-line feature-flag change. Only its opaque rollout-target identifier changes "
+            "from Ashcroft's SSO beta to the shared internal beta path."
         ),
         "ordinary_action": "Merge pull request #67 and admit no memory.",
     },

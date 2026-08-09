@@ -149,6 +149,34 @@ class EmailCalendarScenarioDataTest(unittest.TestCase):
             normalized_control = replace_at(control_fixture, path, "<cue>")
             self.assertEqual(normalized_positive, normalized_control)
 
+    def test_cues_are_applicability_facts_and_controls_have_explicit_public_defaults(self) -> None:
+        """A cue identifies scope; it must not itself state the policy outcome."""
+        policy_vocabulary = {
+            "blackout", "nda", "legal", "review", "approval", "approve", "reject",
+            "route", "owner", "policy", "exception", "accessible", "accessibility",
+        }
+        grouped: dict[str, dict[str, dict]] = {}
+        for case in _load_cases():
+            grouped.setdefault(case["base_case_id"], {})[case["variant"]] = case
+        for base_id, variants in grouped.items():
+            with self.subTest(base_id=base_id):
+                positive = variants["positive"]
+                control = variants["cue-ablated"]
+                ceiling = variants["memory-included"]
+                self.assertEqual(positive["goal"], control["goal"])
+                cue_words = set(positive["cue"]["text"].casefold().replace("-", " ").split())
+                self.assertFalse(cue_words & policy_vocabulary, positive["cue"]["text"])
+                self.assertNotIn("blackout", positive["cue"]["text"].casefold())
+                matcher = control["decisive_action"]["matchers"]
+                self.assertEqual(len(matcher), 1)
+                tool = matcher[0]["tool"]
+                self.assertIn(tool, control["goal"])
+                for value in matcher[0]["arguments"].values():
+                    if isinstance(value, str) and value != control["environment"]["fixture_path"]:
+                        self.assertIn(value, control["goal"])
+                self.assertNotIn(positive["memory"]["text"].casefold(), positive["goal"].casefold())
+                self.assertIn(ceiling["memory"]["text"], ceiling["goal"])
+
 
 if __name__ == "__main__":
     unittest.main()

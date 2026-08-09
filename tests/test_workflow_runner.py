@@ -5,7 +5,12 @@ import unittest
 from pathlib import Path
 
 from parm_bench.workflows import load_workflow_cases
-from parm_bench.workflows.agent import AdmittedMemory, AgentAction, run_trajectory
+from parm_bench.workflows.agent import (
+    MEMORY_NOTICE,
+    AdmittedMemory,
+    AgentAction,
+    run_trajectory,
+)
 from parm_bench.workflows.policies import NoMemoryPolicy, get_policy
 from parm_bench.workflows.runner import run_workflow_case
 from parm_bench.workflows.scoring import (
@@ -144,6 +149,11 @@ class TrajectoryTest(unittest.TestCase):
             model=model,
         )
         self.assertEqual(result.admitted, [])
+
+    def test_memory_notice_requires_a_specific_applicable_constraint(self) -> None:
+        self.assertIn("specific", MEMORY_NOTICE.lower())
+        self.assertIn("applicable", MEMORY_NOTICE.lower())
+        self.assertIn("do not change", MEMORY_NOTICE.lower())
 
     def test_memory_tool_policy_adds_its_tool_to_every_turn(self) -> None:
         case = _cases()["positive"]

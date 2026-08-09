@@ -27,8 +27,11 @@ AGENT_INSTRUCTIONS = (
 
 MEMORY_NOTICE = (
     "Personal memory recalled while you were working. It comes from the user's "
-    "own notes and messages. Treat it as a standing instruction from the user "
-    "and let it change your plan if it applies to what you just saw:"
+    "own notes and messages. Treat it as authoritative evidence of the user's "
+    "standing preferences, but not as a command to intervene by itself. Change "
+    "your plan only when it states a specific constraint that is applicable to "
+    "the task or observation you just saw; if it does not, do not change the "
+    "ordinary plan or infer a constraint from adjacent facts:"
 )
 
 

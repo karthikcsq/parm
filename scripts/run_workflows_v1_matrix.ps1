@@ -15,6 +15,8 @@ param(
     [int]$Samples = 3,
     [string]$Results = 'data\benchmark-results\workflows-v1',
     [string]$Caches = 'data\workflow-caches',
+    [string]$Index = '',
+    [string]$CacheNamespace = '',
     [string]$Model = 'gpt-5-mini',
     [int]$Workers = 3
 )
@@ -26,22 +28,23 @@ $indexes = @{
     'tier-28'  = 'data\retrieval-indexes\workflow-eng-lead-v1'
     'tier-100' = 'data\retrieval-indexes\workflow-eng-lead-v1-100'
 }
-$Index = $indexes[$Tier]
+$selectedIndex = if ($Index) { $Index } else { $indexes[$Tier] }
 $outputRoot = Join-Path $Results $Tier
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
 
-$trajectoryCache = Join-Path $Caches 'trajectories-gpt5mini'
+$cacheSuffix = if ($CacheNamespace) { "-$CacheNamespace" } else { '' }
+$trajectoryCache = Join-Path $Caches "trajectories$cacheSuffix-gpt5mini"
 # The admission cache namespace is derived from the retrieval index hash, so a
 # tier change cannot silently replay the other tier's admissions.
-$admissionCache = Join-Path $Caches "parm-admission-$Tier"
+$admissionCache = Join-Path $Caches "parm-admission-$Tier$cacheSuffix"
 
 $conditions = @(
     @{ name = 'no_memory'; args = @() },
-    @{ name = 'input_rag'; args = @('--retrieval-index', $Index, '--retrieval-mode', 'dense') },
-    @{ name = 'naive_output_rag'; args = @('--retrieval-index', $Index, '--retrieval-mode', 'dense') },
-    @{ name = 'all_entity_output_rag'; args = @('--retrieval-index', $Index) },
-    @{ name = 'prompted_memory_tool'; args = @('--retrieval-index', $Index, '--retrieval-mode', 'dense') },
-    @{ name = 'parm'; args = @('--retrieval-index', $Index, '--parm-admission-cache', $admissionCache) }
+    @{ name = 'input_rag'; args = @('--retrieval-index', $selectedIndex, '--retrieval-mode', 'dense') },
+    @{ name = 'naive_output_rag'; args = @('--retrieval-index', $selectedIndex, '--retrieval-mode', 'dense') },
+    @{ name = 'all_entity_output_rag'; args = @('--retrieval-index', $selectedIndex) },
+    @{ name = 'prompted_memory_tool'; args = @('--retrieval-index', $selectedIndex, '--retrieval-mode', 'dense') },
+    @{ name = 'parm'; args = @('--retrieval-index', $selectedIndex, '--parm-admission-cache', $admissionCache) }
 )
 
 foreach ($condition in $conditions) {

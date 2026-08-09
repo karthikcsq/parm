@@ -43,12 +43,29 @@ MODES = (RetrievalMode.DENSE, RetrievalMode.HYBRID)
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tier", default="tier-100", choices=sorted(TIER_INDEXES))
-    tier = parser.parse_args().tier
+    parser.add_argument(
+        "--dataset",
+        type=Path,
+        default=DATASET,
+        help="workflow dataset directory (default: data/workflows_v1)",
+    )
+    parser.add_argument(
+        "--index",
+        type=Path,
+        help="retrieval index directory; overrides the index selected by --tier",
+    )
+    arguments = parser.parse_args()
+    tier = arguments.tier
+    dataset = arguments.dataset
+    index_path = arguments.index or TIER_INDEXES[tier]
 
     load_dotenv(ROOT / ".env", override=False)
-    cases = load_workflow_cases(DATASET)
+    cases = load_workflow_cases(dataset)
     validate_workflow_cases(cases)
-    index = RetrievalIndex.load(TIER_INDEXES[tier])
+    index = RetrievalIndex.load(index_path)
+    if arguments.dataset != DATASET or arguments.index:
+        print(f"dataset: {dataset}")
+        print(f"index: {index_path}")
     print(f"tier: {tier}, {len(index.pages)} records\n")
     embedder = OpenAIEmbedder()
     leaked = False

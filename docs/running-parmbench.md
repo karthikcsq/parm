@@ -244,6 +244,37 @@ Then check that no goal can reach its own gold memory:
 & 'C:\Users\karth\anaconda3\python.exe' scripts\evaluate_workflows_v1_fairness.py
 ```
 
+For another workflow environment, pass both the dataset and its frozen index;
+`--index` takes precedence over the legacy tier mapping. This check embeds the
+goals, so it needs `OPENAI_API_KEY`; the structural workflow tests do not.
+
+```powershell
+& 'C:\Users\karth\anaconda3\python.exe' scripts\evaluate_workflows_v1_fairness.py `
+  --dataset data\workflows_email_calendar_v1 `
+  --index data\retrieval-indexes\ops-lead-email-calendar-v1
+```
+
+Keep first-pass outputs and caches in environment-specific namespaces. Start a
+new namespace whenever the dataset, index, model, or prompt changes; do not
+reuse a cache from GitHub workflows for Email + Calendar. The v1 runner keeps
+its historic defaults, but accepts explicit values for a new environment:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_workflows_v1_matrix.ps1 `
+  -Dataset data\workflows_email_calendar_v1 `
+  -Index data\retrieval-indexes\ops-lead-email-calendar-v1 `
+  -Results data\benchmark-results\workflows-email-calendar-v1-first-pass `
+  -Caches data\workflow-caches `
+  -CacheNamespace email-calendar-v1-first-pass
+& 'C:\Users\karth\anaconda3\python.exe' scripts\summarize_workflows_v1_results.py `
+  --results data\benchmark-results\workflows-email-calendar-v1-first-pass `
+  --dataset data/workflows_email_calendar_v1
+```
+
+For a genuinely fresh run, use a new, empty `-CacheNamespace` and result root
+rather than deleting a replay cache that may be needed to reproduce an older
+report.
+
 Run this after any edit to a goal or a corpus, before spending a run. If
 prompt-only retrieval finds a gold source from the goal alone, the scenario is
 no longer testing late-cued retrieval and input RAG will win for the wrong

@@ -30,6 +30,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tier", default="tier-100")
     parser.add_argument("--results", default=str(RESULTS))
+    parser.add_argument(
+        "--dataset",
+        help="optional dataset label to include in the rendered report",
+    )
     parser.add_argument("--detail", action="store_true")
     arguments = parser.parse_args()
     root = Path(arguments.results) / arguments.tier
@@ -45,6 +49,9 @@ def main() -> int:
     if not conditions:
         print(f"no results under {root}")
         return 1
+
+    if arguments.dataset:
+        print(f"Dataset: {arguments.dataset}\n")
 
     total = len(conditions[0][1])
     scenarios = sorted(

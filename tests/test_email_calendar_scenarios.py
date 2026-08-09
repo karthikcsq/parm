@@ -7,6 +7,9 @@ import sys
 import unittest
 from pathlib import Path
 
+from parm_bench.workflows.case import load_workflow_cases, validate_workflow_cases
+from parm_bench.workflows.verify import available_assertion_kinds, evaluate_assertions
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data" / "workflows_email_calendar_v1"
@@ -32,6 +35,29 @@ def _load_cases() -> list[dict]:
 
 
 class EmailCalendarScenarioDataTest(unittest.TestCase):
+    def test_every_case_builds_reaches_its_cue_and_uses_public_assertions(self) -> None:
+        """The tracked dataset and fixture adapter must be executable together."""
+        cases = load_workflow_cases(DATASET)
+        self.assertEqual(len(cases), 18)
+        validate_workflow_cases(cases)
+        supported = set(available_assertion_kinds())
+        for case in cases:
+            with self.subTest(case_id=case.case_id):
+                environment = case.build_environment()
+                location = case.data["cue"]["location"]
+                result = environment.invoke(location["tool"], location["arguments"])
+                self.assertTrue(result.ok, result.text)
+                for assertion in case.data["assertions"]:
+                    self.assertIn(assertion["kind"], supported)
+                for matcher in case.data["decisive_action"]["matchers"]:
+                    action = environment.invoke(matcher["tool"], matcher["arguments"])
+                    self.assertTrue(action.ok, action.text)
+                rows = evaluate_assertions(
+                    case.data["assertions"], state=environment.state(),
+                    mutations=environment.mutations(), trajectory=environment.trajectory,
+                )
+                self.assertTrue(all(row["passed"] for row in rows), rows)
+
     def test_builder_is_deterministic(self) -> None:
         first = subprocess.run(
             [sys.executable, str(SCRIPT)], cwd=ROOT, text=True, capture_output=True

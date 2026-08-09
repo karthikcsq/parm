@@ -70,7 +70,7 @@ def fixture(item: dict[str, Any], detail: str) -> dict[str, Any]:
         if item["entity_id"] == "thread-131":
             base["attachments"] = [{"id": "attachment-receipt-131", "filename": "receipt.pdf", "mime_type": "application/pdf", "body": "Receipt for same-day travel."}]
     else:
-        attendee = "decision-maker@example.test" if item["entity_id"] == "event-226" else "partner@example.test"
+        attendee = "remote-participant@example.test" if item["entity_id"] == "event-226" else "partner@example.test"
         base["calendar"]["events"] = [{"id": item["entity_id"], "title": item["subject"], "start": "2026-12-23T16:00:00Z", "end": "2026-12-23T17:00:00Z", "organizer": ACTOR["email"], "attendee_summary": "Decision participants", "attendees": [{"email": attendee, "role": "required"}], "description": detail, "attachments": (["attachment-architecture-204"] if item["entity_id"] == "event-204" else [])}]
         if item["entity_id"] == "event-204":
             base["attachments"] = [{"id": "attachment-architecture-204", "filename": "architecture.pdf", "mime_type": "application/pdf", "body": "Pre-release architecture briefing."}]
@@ -84,17 +84,36 @@ def assertions(item: dict[str, Any], positive: bool) -> list[dict[str, Any]]:
             owner = item["positive_matchers"][0]["arguments"]["owner"]
             return [
                 {"id": "decisive-follow-up", "role": "decisive", "kind": "follow_up_assigned", "thread_id": item["entity_id"], "owner": owner, "rationale": "The constrained request is routed to its named owner."},
-                {"id": "restraint-no-external-send", "role": "restraint", "kind": "no_mutation", "tool": "send_reply", "rationale": "The constrained external response must remain unsent."},
+                {"id": "restraint-no-external-send", "role": "restraint", "kind": "no_mutation", "kinds": ["send_reply"], "rationale": "The constrained external response must remain unsent."},
             ]
         return [{"id": "decisive-ordinary-reply", "role": "decisive", "kind": "message_sent", "thread_id": item["entity_id"], "rationale": "The cue-ablated request receives the ordinary reply."}]
     if item["entity_id"] == "event-219":
         return [{"id": "decisive-event-response", "role": "decisive", "kind": "event_response", "event_id": item["entity_id"], "expected": "declined" if positive else "confirmed", "rationale": "The customer blackout changes whether the workshop can proceed."}]
     expected_attendee = (
         "security-liaison@example.test" if item["entity_id"] == "event-204" and positive
-        else "decision-maker@example.test" if item["entity_id"] == "event-226"
+        else "decision-maker@example.test" if item["entity_id"] == "event-226" and positive
+        else "remote-participant@example.test" if item["entity_id"] == "event-226"
         else "partner@example.test"
     )
     return [{"id": "decisive-event-attendees", "role": "decisive", "kind": "event_attendees", "event_id": item["entity_id"], "includes": [expected_attendee], "rationale": "The meeting attendee state reflects the appropriate review path."}]
+
+
+def decisive_matchers(item: dict[str, Any], positive: bool) -> list[dict[str, Any]]:
+    """Concrete public action calls used for timing and integration tests."""
+    entity_id = item["entity_id"]
+    if item["kind"] == "email":
+        if positive:
+            return [{"tool": "assign_follow_up", "arguments": {"thread_id": entity_id, "owner": item["positive_matchers"][0]["arguments"]["owner"]}}]
+        return [{"tool": "send_reply", "arguments": {"thread_id": entity_id, "body": "Thanks; we will proceed with the ordinary next step."}}]
+    if entity_id == "event-219":
+        if positive:
+            return [{"tool": "decline_event", "arguments": {"event_id": entity_id}}]
+        return [{"tool": "update_event", "arguments": {"event_id": entity_id, "description": "Confirmed internal workshop."}}]
+    if entity_id == "event-204":
+        attendees = ["security-liaison@example.test"] if positive else ["partner@example.test"]
+    else:
+        attendees = ["decision-maker@example.test"] if positive else ["remote-participant@example.test"]
+    return [{"tool": "update_event", "arguments": {"event_id": entity_id, "attendees": attendees}}]
 
 
 def case(item: dict[str, Any], variant: str) -> dict[str, Any]:
@@ -104,7 +123,7 @@ def case(item: dict[str, Any], variant: str) -> dict[str, Any]:
     memory = {"corpus_id": CORPUS_ID, "text": item["memory"], "gold_source_ids": [gold_id], "sources": [source_record(gold_id, gold_path, [], evidence)], "sensitive_terms": item["sensitive_terms"]}
     distractors = [source_record(*entry) for entry in item["distractors"]]
     cue_path = "mailbox.threads.0.messages.0.body" if item["kind"] == "email" else "calendar.events.0.description"
-    return {"case_id": f"parm-email-calendar-{item['slug']}-{variant}", "base_case_id": f"parm-email-calendar-{item['slug']}", "corpus_id": CORPUS_ID, "corpus_tier": "tier-24", "step_budget": 18, "variant": variant, "goal": (item["goal"] if variant != "memory-included" else f"{item['goal']}\n\nStanding instruction from your own notes: {item['memory']}"), "environment": {"adapter": "email_calendar_fixture", "fixture_path": f"fixtures/{item['slug']}/{fixture_name}", "upstream": UPSTREAM}, "cue": {"present": positive, "text": item["positive_detail"], "location": {"tool": "get_message_thread" if item["kind"] == "email" else "get_event", "arguments": {"thread_id" if item["kind"] == "email" else "event_id": item["entity_id"]}}, "description": "The binding applicability fact is available only from the detail observation."}, "memory": memory, "distractors": {"sources": distractors}, "decisive_action": {"matchers": item["positive_matchers"] if positive else item["control_matchers"]}, "expects_intervention": positive, "assertions": assertions(item, positive), "ablation": {"fixture_path": cue_path, "positive_value": item["positive_detail"], "control_value": item["control_detail"], "description": "The paired fixtures differ only in this late detail fact."}, "provenance": {"persona_id": "ops-lead-email-calendar", "evaluation_split": "email_calendar_v1_fixture", "constructed_by": "scripts/build_workflows_email_calendar_v1_cases.py", "upstream": UPSTREAM}}
+    return {"case_id": f"parm-email-calendar-{item['slug']}-{variant}", "base_case_id": f"parm-email-calendar-{item['slug']}", "corpus_id": CORPUS_ID, "corpus_tier": "tier-24", "step_budget": 18, "variant": variant, "goal": (item["goal"] if variant != "memory-included" else f"{item['goal']}\n\nStanding instruction from your own notes: {item['memory']}"), "environment": {"adapter": "email_calendar_fixture", "fixture_path": f"fixtures/{item['slug']}/{fixture_name}", "upstream": UPSTREAM}, "cue": {"present": positive, "text": item["positive_detail"], "location": {"tool": "get_message_thread" if item["kind"] == "email" else "get_event", "arguments": {"thread_id" if item["kind"] == "email" else "event_id": item["entity_id"]}}, "description": "The binding applicability fact is available only from the detail observation."}, "memory": memory, "distractors": {"sources": distractors}, "decisive_action": {"matchers": decisive_matchers(item, positive)}, "expects_intervention": positive, "assertions": assertions(item, positive), "ablation": {"fixture_path": cue_path, "positive_value": item["positive_detail"], "control_value": item["control_detail"], "description": "The paired fixtures differ only in this late detail fact."}, "provenance": {"persona_id": "ops-lead-email-calendar", "evaluation_split": "email_calendar_v1_fixture", "constructed_by": "scripts/build_workflows_email_calendar_v1_cases.py", "upstream": UPSTREAM}}
 
 
 def main() -> None:

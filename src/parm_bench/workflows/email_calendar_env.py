@@ -35,7 +35,7 @@ TOOLS: tuple[ToolSpec, ...] = (
     ToolSpec("get_event", "Read one calendar event including attendees and comments.", _object({"event_id": _STRING}, ["event_id"])),
     ToolSpec("create_draft_reply", "Create a draft reply in an existing thread.", _object({"thread_id": _STRING, "body": _STRING}, ["thread_id", "body"]), mutating=True),
     ToolSpec("send_reply", "Send a reply in an existing thread.", _object({"thread_id": _STRING, "body": _STRING}, ["thread_id", "body"]), mutating=True),
-    ToolSpec("assign_follow_up", "Assign a follow-up for an email thread.", _object({"thread_id": _STRING, "assignee": _STRING, "due_date": _STRING}, ["thread_id", "assignee", "due_date"]), mutating=True),
+    ToolSpec("assign_follow_up", "Assign a follow-up for an email thread.", _object({"thread_id": _STRING, "owner": _STRING, "due_date": _STRING}, ["thread_id", "owner"]), mutating=True),
     ToolSpec("create_event", "Create a calendar event.", _object({"title": _STRING, "start": _STRING, "end": _STRING, "attendees": _STRING_ARRAY, "description": _STRING}, ["title", "start", "end", "attendees"]), mutating=True),
     ToolSpec("update_event", "Update selected fields on an existing calendar event.", _object({"event_id": _STRING, "title": _STRING, "start": _STRING, "end": _STRING, "attendees": _STRING_ARRAY, "description": _STRING}, ["event_id"]), mutating=True),
     ToolSpec("decline_event", "Decline an existing calendar event, optionally with a comment.", _object({"event_id": _STRING, "comment": _STRING}, ["event_id"]), mutating=True),
@@ -46,6 +46,12 @@ _TOOLS_BY_NAME = {tool.name: tool for tool in TOOLS}
 
 class EmailCalendarFixtureEnvironment:
     """Deterministic in-process email and calendar fixture environment.
+
+    Public fixture schema v1 is nested: ``actor``, ``mailbox.threads``, and
+    ``calendar.events``.  Messages use ``sender``/``recipients`` and events
+    may use attendee objects with an ``email``. The action API names follow-up
+    responsibility ``owner``; verifier kinds are documented in
+    ``docs/email-calendar-fixture-contract.md``.
 
     The seed fixture is copied before normalization and ``reset`` rebuilds all
     mutable state from that private snapshot. This permits independent workflow
@@ -61,18 +67,28 @@ class EmailCalendarFixtureEnvironment:
 
     def reset(self) -> None:
         fixture = copy.deepcopy(self._seed)
-        account = fixture.get("account", "agent@example.test")
+        actor = fixture.get("actor")
+        if not isinstance(actor, dict):
+            raise ValueError("email calendar fixture needs an actor object")
+        account = actor.get("email")
         if not isinstance(account, str) or not account.strip():
             raise ValueError("email calendar fixture needs a non-empty account")
         self.account = account
-        self._actor = str(fixture.get("actor", self.account))
+        self._actor = str(actor.get("name") or actor.get("id") or account)
         self._messages = {
             str(message["id"]): _normalize_message(message)
-            for message in fixture.get("messages", [])
+            for message in _fixture_messages(fixture)
         }
+        mailbox = fixture.get("mailbox")
+        calendar = fixture.get("calendar")
+        if not isinstance(mailbox, dict) or not isinstance(mailbox.get("threads"), list):
+            raise ValueError("email calendar fixture needs mailbox.threads")
+        if not isinstance(calendar, dict) or not isinstance(calendar.get("events"), list):
+            raise ValueError("email calendar fixture needs calendar.events")
+        events = calendar["events"]
         self._events = {
             str(event["id"]): _normalize_event(event)
-            for event in fixture.get("events", [])
+            for event in events
         }
         self._follow_ups = {
             str(thread_id): copy.deepcopy(detail)
@@ -160,10 +176,12 @@ class EmailCalendarFixtureEnvironment:
 
     def _tool_assign_follow_up(self, step: int, args: dict[str, Any]) -> ToolResult:
         thread_id = _required_thread(self._messages, args)
-        detail = {"assignee": _required_str(args, "assignee"), "due_date": _required_str(args, "due_date")}
+        detail = {"owner": _required_str(args, "owner")}
+        if "due_date" in args:
+            detail["due_date"] = _required_str(args, "due_date")
         self._follow_ups[thread_id] = detail
         self._recorder.record_mutation(step, "assign_follow_up", {"thread_id": thread_id, **detail})
-        return ToolResult(True, f"Assigned follow-up for {thread_id} to {detail['assignee']} by {detail['due_date']}.")
+        return ToolResult(True, f"Assigned follow-up for {thread_id} to {detail['owner']}.")
 
     def _tool_create_event(self, step: int, args: dict[str, Any]) -> ToolResult:
         event_id = f"e-{self._next_event_id}"
@@ -237,12 +255,37 @@ def _validate_schema(spec: ToolSpec, args: dict[str, Any]) -> None:
             raise ToolInvocationError(f"{key} must be one of: {', '.join(schema['enum'])}")
 
 
+def _fixture_messages(fixture: dict[str, Any]) -> list[dict[str, Any]]:
+    """Normalize the public nested mailbox fixture schema into runtime rows."""
+    rows: list[dict[str, Any]] = []
+    for thread in fixture["mailbox"]["threads"]:
+        folder = "inbox" if "inbox" in thread.get("labels", []) else "all"
+        for message in thread.get("messages", []):
+            rows.append(
+                {
+                    "id": message["id"],
+                    "thread_id": thread["id"],
+                    "from": message.get("sender", thread["sender"]),
+                    "to": message.get("recipients", thread["recipients"]),
+                    "subject": thread.get("subject", ""),
+                    "body": message.get("body", ""),
+                    "folder": folder,
+                    "sent_at": thread.get("date", ""),
+                }
+            )
+    return rows
+
+
 def _normalize_message(message: dict[str, Any]) -> dict[str, Any]:
     return {"id": str(message["id"]), "thread_id": str(message["thread_id"]), "from": str(message["from"]), "to": [str(value) for value in message.get("to", [])], "subject": str(message.get("subject", "")), "body": str(message.get("body", "")), "folder": str(message.get("folder", "inbox")), "sent_at": str(message.get("sent_at", ""))}
 
 
 def _normalize_event(event: dict[str, Any]) -> dict[str, Any]:
-    return {"id": str(event["id"]), "title": str(event["title"]), "start": str(event["start"]), "end": str(event["end"]), "attendees": [str(value) for value in event.get("attendees", [])], "description": str(event.get("description", "")), "status": str(event.get("status", "confirmed")), "comments": [{"author": str(row.get("author", "unknown")), "body": str(row["body"])} for row in event.get("comments", [])]}
+    attendees = [
+        str(value.get("email", "")) if isinstance(value, dict) else str(value)
+        for value in event.get("attendees", [])
+    ]
+    return {"id": str(event["id"]), "title": str(event["title"]), "start": str(event["start"]), "end": str(event["end"]), "attendees": attendees, "description": str(event.get("description", "")), "status": str(event.get("status", "confirmed")), "comments": [{"author": str(row.get("author", "unknown")), "body": str(row["body"])} for row in event.get("comments", [])]}
 
 
 def _next_id(rows: dict[str, Any], prefix: str) -> int:

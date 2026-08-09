@@ -291,6 +291,71 @@ def _files_unchanged(
     return True, "protected paths are unchanged"
 
 
+def _thread_message_exists(
+    assertion: dict[str, Any], context: dict[str, Any], folder: str
+) -> tuple[bool, str]:
+    thread_id = str(assertion["thread_id"])
+    for message in context["state"].get("messages", {}).values():
+        if message.get("thread_id") != thread_id or message.get("folder") != folder:
+            continue
+        missing = _missing_keywords(message.get("body", ""), assertion.get("body_keywords", []))
+        if not missing:
+            return True, f"{folder} message exists in {thread_id}"
+    return False, f"no {folder} message in {thread_id} matches the required body keywords"
+
+
+def _draft_reply_exists(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    return _thread_message_exists(assertion, context, "drafts")
+
+
+def _sent_reply_exists(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    return _thread_message_exists(assertion, context, "sent")
+
+
+def _follow_up_assigned(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    thread_id = str(assertion["thread_id"])
+    actual = context["state"].get("follow_ups", {}).get(thread_id)
+    if actual is None:
+        return False, f"no follow-up is assigned for {thread_id}"
+    expected = {
+        key: str(assertion[key])
+        for key in ("assignee", "due_date")
+        if key in assertion
+    }
+    mismatches = [key for key, value in expected.items() if str(actual.get(key)) != value]
+    if mismatches:
+        return False, f"follow-up for {thread_id} has different {', '.join(mismatches)}"
+    return True, f"follow-up for {thread_id} is assigned"
+
+
+def _event_matches(
+    assertion: dict[str, Any], context: dict[str, Any]
+) -> tuple[bool, str]:
+    event_id = str(assertion["event_id"])
+    event = context["state"].get("events", {}).get(event_id)
+    if event is None:
+        return False, f"no event {event_id}"
+    expected_status = assertion.get("status")
+    if expected_status is not None and event.get("status") != expected_status:
+        return False, f"event {event_id} is {event.get('status')}, expected {expected_status}"
+    missing_title = _missing_keywords(event.get("title", ""), assertion.get("title_keywords", []))
+    if missing_title:
+        return False, f"event {event_id} title is missing: {', '.join(missing_title)}"
+    comment_keywords = assertion.get("comment_keywords", [])
+    if comment_keywords and not any(
+        not _missing_keywords(comment.get("body", ""), comment_keywords)
+        for comment in event.get("comments", [])
+    ):
+        return False, f"event {event_id} has no comment containing {', '.join(comment_keywords)}"
+    return True, f"event {event_id} matches"
+
+
 def _any_of(
     assertion: dict[str, Any], context: dict[str, Any]
 ) -> tuple[bool, str]:
@@ -332,6 +397,10 @@ _CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Any]], tuple[bool, str]]]
     "comment_absent": _comment_absent,
     "no_mutation": _no_mutation,
     "files_unchanged": _files_unchanged,
+    "draft_reply_exists": _draft_reply_exists,
+    "sent_reply_exists": _sent_reply_exists,
+    "follow_up_assigned": _follow_up_assigned,
+    "event_matches": _event_matches,
 }
 
 

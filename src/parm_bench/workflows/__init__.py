@@ -6,7 +6,7 @@ retrieval grounding and timing that produced it. Both suites share the same
 positive / cue-ablated / memory-included triplet contract.
 """
 
-from . import github_env  # noqa: F401  (registers the github_fixture adapter)
+from . import email_calendar_env, github_env  # noqa: F401  (registers fixture adapters)
 from .case import (
     WorkflowCase,
     WorkflowCaseValidationError,

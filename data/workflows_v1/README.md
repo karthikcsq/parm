@@ -103,6 +103,21 @@ and 5 January, contractual. The pull request is titled as a generic export
 ordering fix in both variants; only its body and changed files say whose code
 it is.
 
+### `parm-workflow-github-canary-rollback` (tier-100)
+
+Two ready pull requests are queued for a routine release decision.
+
+| Variant | Pull request #67 widens | Correct outcome |
+| --- | --- | --- |
+| positive | Ashcroft University's SSO beta for their August release | Hold #67 with a reason; merge #68 |
+| cue-ablated | the shared internal beta path | Merge #67 and #68 |
+
+Commitment: Ashcroft will not take a version bump mid-term, so an August
+customer rollout that goes wrong leaves them on it until January. The generic
+PR title only becomes customer-specific after `get_pull_request` exposes its
+body and changed file; the goal never names the customer, SSO, canary, or
+semester.
+
 ## Upstream attribution
 
 The repository shape, issue and pull-request numbering, and the final-state

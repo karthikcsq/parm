@@ -39,6 +39,56 @@ class ScenarioSetTest(unittest.TestCase):
     def test_all_scenarios_validate(self) -> None:
         validate_workflow_cases(load_workflow_cases(DATASET))
 
+    def test_rollback_canary_triplet_keeps_its_late_cue_and_symmetric_fixture(self) -> None:
+        variants = _cases()["parm-workflow-github-canary-rollback"]
+        positive = variants["positive"]
+        ablated = variants["cue-ablated"]
+        included = variants["memory-included"]
+        self.assertEqual(
+            positive.data["cue"]["location"],
+            {"tool": "get_pull_request", "arguments": {"pull_number": 67}},
+        )
+        self.assertTrue(positive.data["cue"]["present"])
+        self.assertFalse(ablated.data["cue"]["present"])
+        self.assertEqual(
+            positive.data["environment"]["fixture_path"], included.data["environment"]["fixture_path"]
+        )
+        self.assertNotEqual(
+            positive.data["environment"]["fixture_path"], ablated.data["environment"]["fixture_path"]
+        )
+        self.assertEqual(positive.data["memory"]["gold_source_ids"], ["notes/customer-constraints-ashcroft"])
+        self.assertIn("Ashcroft University SSO beta", positive.data["cue"]["text"])
+        self.assertNotIn(positive.data["cue"]["text"].casefold(), positive.goal.casefold())
+        self.assertEqual(
+            ablated.data["decisive_action"]["matchers"],
+            positive.data["decisive_action"]["matchers"],
+        )
+
+    def test_rollback_canary_assertions_distinguish_hold_from_shared_rollout(self) -> None:
+        variants = _cases()["parm-workflow-github-canary-rollback"]
+        expected_calls = {
+            "positive": [
+                ("add_issue_comment", {"issue_number": 67, "body": "Hold Ashcroft's canary until the semester window."}),
+                ("merge_pull_request", {"pull_number": 68}),
+            ],
+            "cue-ablated": [
+                ("merge_pull_request", {"pull_number": 67}),
+                ("merge_pull_request", {"pull_number": 68}),
+            ],
+        }
+        for variant, calls in expected_calls.items():
+            with self.subTest(variant=variant):
+                environment = variants[variant].build_environment()
+                for tool_name, arguments in calls:
+                    self.assertTrue(environment.invoke(tool_name, arguments).ok)
+                rows = evaluate_assertions(
+                    variants[variant].data["assertions"],
+                    state=environment.state(),
+                    mutations=environment.mutations(),
+                    trajectory=environment.trajectory,
+                )
+                self.assertTrue(all(row["passed"] for row in rows), rows)
+
     def test_every_gold_record_lives_in_the_declared_tier(self) -> None:
         tiers = load_tiers(CORPUS)
         for case in load_workflow_cases(DATASET):

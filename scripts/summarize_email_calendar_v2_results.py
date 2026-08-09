@@ -76,14 +76,28 @@ def read_runs(root: Path) -> dict[str, list[dict[str, Any]]]:
     return runs
 
 
+def merge_runs(*run_sets: dict[str, list[dict[str, Any]]]) -> dict[str, list[dict[str, Any]]]:
+    """Combine separately cached condition roots without dropping either condition."""
+    merged: dict[str, list[dict[str, Any]]] = {}
+    for run_set in run_sets:
+        for condition, samples in run_set.items():
+            merged.setdefault(condition, []).extend(samples)
+    return merged
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("results", help="directory containing <condition>.sample*.metrics.json")
+    parser.add_argument("results", nargs="?", help="directory containing <condition>.sample*.metrics.json")
     parser.add_argument("--baseline", default="no_memory")
     parser.add_argument("--parm", default="parm")
+    parser.add_argument("--baseline-results", help="separate directory containing baseline metrics")
+    parser.add_argument("--parm-results", help="separate directory containing PARM metrics")
     parser.add_argument("--out", help="optional JSON output path; otherwise print JSON")
     args = parser.parse_args()
-    report = build_report(read_runs(Path(args.results)), baseline=args.baseline, parm=args.parm)
+    roots = [Path(root) for root in (args.results, args.baseline_results, args.parm_results) if root]
+    if not roots:
+        parser.error("provide results or one of --baseline-results/--parm-results")
+    report = build_report(merge_runs(*(read_runs(root) for root in roots)), baseline=args.baseline, parm=args.parm)
     rendered = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.out:
         Path(args.out).write_text(rendered, encoding="utf-8")

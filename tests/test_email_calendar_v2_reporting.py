@@ -59,6 +59,17 @@ class EmailCalendarV2ReportingTest(unittest.TestCase):
         self.assertIn("fresh independent samples", report["interpretation"])
         self.assertIn("preregistered threshold", report["interpretation"])
 
+    def test_merge_run_roots_preserves_both_conditions(self) -> None:
+        module = load_module()
+        no_memory = {"no_memory": [{"rows": [{"base_case_id": "atlas", "variant": "positive", "decisive_success": False}]}]}
+        parm = {"parm": [{"rows": [{"base_case_id": "atlas", "variant": "positive", "decisive_success": True}]}]}
+
+        merged = module.merge_runs(no_memory, parm)
+
+        self.assertEqual(set(merged), {"no_memory", "parm"})
+        report = module.build_report(merged)
+        self.assertEqual(report["aggregate"]["parm_minus_no_memory_positive"], 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

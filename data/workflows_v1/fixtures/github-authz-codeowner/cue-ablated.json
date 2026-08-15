@@ -1,0 +1,114 @@
+{
+  "adapter": "github_fixture",
+  "repository": "mcpmark-source/claude-code",
+  "default_branch": "main",
+  "actor": "agent",
+  "collaborators": [
+    "priya",
+    "dan",
+    "mei",
+    "sam",
+    "tomas"
+  ],
+  "branches": {
+    "main": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.79\n- Maintenance release in progress.\n",
+      "src/search/query.ts": "export function normalizeQuery(value: string): string {\n  return value.trim();\n}\n",
+      "src/auth/saml/group-role-mapping.ts": "export function roleForGroup(group: string): string {\n  return group === 'engineering' ? 'editor' : 'viewer';\n}\n",
+      "src/cli/role-help.ts": "export const roleHelp = 'Role mappings are managed by your administrator.';\n",
+      "src/session/timeout.ts": "export const DEFAULT_IDLE_TIMEOUT_MINUTES = 30;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.79\"\n}\n"
+    },
+    "fix/query-trim": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.79\n- Maintenance release in progress.\n",
+      "src/search/query.ts": "export function normalizeQuery(value: string): string {\n  return value.trim().replace(/\\s+/g, ' ');\n}\n",
+      "src/auth/saml/group-role-mapping.ts": "export function roleForGroup(group: string): string {\n  return group === 'engineering' ? 'editor' : 'viewer';\n}\n",
+      "src/cli/role-help.ts": "export const roleHelp = 'Role mappings are managed by your administrator.';\n",
+      "src/session/timeout.ts": "export const DEFAULT_IDLE_TIMEOUT_MINUTES = 30;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.79\"\n}\n"
+    },
+    "docs/support-role-help": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.79\n- Maintenance release in progress.\n",
+      "src/search/query.ts": "export function normalizeQuery(value: string): string {\n  return value.trim();\n}\n",
+      "src/auth/saml/group-role-mapping.ts": "export function roleForGroup(group: string): string {\n  return group === 'engineering' ? 'editor' : 'viewer';\n}\n",
+      "src/cli/role-help.ts": "export const roleHelp = 'Support users can view their assigned queues without editing configuration.';\n",
+      "src/session/timeout.ts": "export const DEFAULT_IDLE_TIMEOUT_MINUTES = 30;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.79\"\n}\n"
+    },
+    "fix/session-idle-timeout": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.79\n- Maintenance release in progress.\n",
+      "src/search/query.ts": "export function normalizeQuery(value: string): string {\n  return value.trim();\n}\n",
+      "src/auth/saml/group-role-mapping.ts": "export function roleForGroup(group: string): string {\n  return group === 'engineering' ? 'editor' : 'viewer';\n}\n",
+      "src/cli/role-help.ts": "export const roleHelp = 'Role mappings are managed by your administrator.';\n",
+      "src/session/timeout.ts": "export const DEFAULT_IDLE_TIMEOUT_MINUTES = 20;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.79\"\n}\n"
+    }
+  },
+  "issues": [],
+  "pull_requests": [
+    {
+      "number": 82,
+      "title": "Normalize copied search queries",
+      "state": "open",
+      "head": "fix/query-trim",
+      "base": "main",
+      "author": "mei",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/search/query.ts": "export function normalizeQuery(value: string): string {\n  return value.trim().replace(/\\s+/g, ' ');\n}\n"
+      },
+      "body": "## Summary\n\nCollapse accidental whitespace in pasted searches.\n\n## Notes\n\nSmall contained fix. Reviewed by Priya, checks green.",
+      "comments": [
+        {
+          "author": "priya",
+          "body": "Looks good."
+        }
+      ]
+    },
+    {
+      "number": 83,
+      "title": "Add support observer mapping",
+      "state": "open",
+      "head": "docs/support-role-help",
+      "base": "main",
+      "author": "mei",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/cli/role-help.ts": "export const roleHelp = 'Support users can view their assigned queues without editing configuration.';\n"
+      },
+      "body": "## Summary\n\nClarify the CLI help text for administrators explaining the existing support observer role.\n\n## Changes\n\n- Updates the wording in `src/cli/role-help.ts`; no permissions or mappings change.\n\n## Notes\n\nDocs-only command output cleanup. Checks green.",
+      "comments": [
+        {
+          "author": "priya",
+          "body": "The tests read clearly and checks are green."
+        }
+      ]
+    },
+    {
+      "number": 84,
+      "title": "Reduce idle timeout after reconnect",
+      "state": "open",
+      "head": "fix/session-idle-timeout",
+      "base": "main",
+      "author": "sam",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/session/timeout.ts": "export const DEFAULT_IDLE_TIMEOUT_MINUTES = 20;\n"
+      },
+      "body": "## Summary\n\nReconnects should not restore a stale idle timer.\n\n## Notes\n\nCovered by the session timeout tests. Reviewed by Tomas, checks green.",
+      "comments": [
+        {
+          "author": "tomas",
+          "body": "Ready to merge."
+        }
+      ]
+    }
+  ]
+}

@@ -115,19 +115,19 @@ silently make a new nondeterministic response-model call. PARM still embeds
 runtime cue queries, so the replay requires `OPENAI_API_KEY` unless query
 embeddings are separately cached.
 
-The PersonaMem semantic-pair development path adds a frozen admission cache:
+The semantic-pair path adds a frozen admission cache. It is the workflow
+default, so the replay that exercises it is a workflow run:
 
 ```powershell
-parm-bench run data\benchmark_personamem_mixed_v0 `
-  --baseline parm `
-  --retrieval-index data\retrieval-indexes\personamem-v2-train-v0 `
-  --parm-retriever semantic-judge `
-  --parm-admission-cache data\retrieval-experiments\personamem-mixed-v0\admission-judge-v2-frozen-cache `
+& $python -m parm_bench.cli workflow run data\workflows_v1 `
+  --policy parm `
+  --retrieval-index data\retrieval-indexes\workflow-eng-lead-v1-100 `
+  --parm-admission-cache data\workflow-caches\parm-admission-tier-100 `
   --parm-admission-policy frozen `
-  --response-cache data\response-caches\personamem-mixed-v0-semantic-parm `
-  --response-policy frozen `
+  --trajectory-cache data\workflow-caches\trajectories-gpt5mini `
+  --trajectory-policy frozen `
   --model gpt-5-mini `
-  --out data\retrieval-experiments\personamem-mixed-v0\semantic-parm-replay.jsonl
+  --out data\benchmark-results\workflows-v1-replay.jsonl
 ```
 
 That cache was frozen under rubric `parm_pair_admission_v2`. The current rubric
@@ -185,6 +185,126 @@ parm-bench run data\benchmark_v1 `
   --model gpt-5-mini `
   --out data\benchmark-results\prompted-memory-tool-replay.jsonl
 ```
+
+## Run PARMBench Workflows
+
+The workflow suite has its own subcommands and its own dataset. It shares the
+interpreter, the `.env`, and the retrieval index format.
+
+```powershell
+parm-bench workflow validate data\workflows_v1
+parm-bench workflow inspect data\workflows_v1 `
+  --case parm-workflow-github-telemetry-hotfix-positive
+```
+
+Run one condition. Every case rebuilds its environment from the tracked
+fixture, so `--workers` is safe:
+
+```powershell
+parm-bench workflow run data\workflows_v1 `
+  --policy parm `
+  --retrieval-index data\retrieval-indexes\workflow-eng-lead-v1 `
+  --parm-admission-cache data\workflow-caches\parm-admission-v1 `
+  --trajectory-cache data\workflow-caches\trajectories-gpt5mini `
+  --model gpt-5-mini `
+  --workers 3 `
+  --out data\benchmark-results\workflows-v1\parm.jsonl
+
+parm-bench workflow score data\benchmark-results\workflows-v1\parm.jsonl `
+  --gold data\workflows_v1 `
+  --out data\benchmark-results\workflows-v1\parm.metrics.json
+```
+
+`--trajectory-cache` freezes each agent turn keyed by the whole conversation so
+far, which is what makes a multi-step comparison replayable. PARM admission
+entries are keyed by the complete judge input (prompt, observation, candidate
+pairs, model, and rubric), so a change to candidate generation intentionally
+requires a new admission cache. Add `--trajectory-policy frozen` to forbid new
+live calls; a miss is then an error.
+
+The whole ladder, one condition after another:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_workflows_v1_matrix.ps1
+& 'C:\Users\karth\anaconda3\python.exe' scripts\summarize_workflows_v1_results.py
+```
+
+PARM defaults to `--parm-retriever semantic-judge` here. The workflow corpora
+are ordinary personal histories with no link graph and no review/reflection
+filename convention, which is the shape the semantic path exists for. Pass
+`--parm-retriever convergence` to run the deterministic waterfall instead.
+
+Rebuild the dataset and its index after editing the corpus:
+
+```powershell
+$env:PYTHONPATH = 'src'
+& 'C:\Users\karth\anaconda3\python.exe' scripts\build_workflows_v1_cases.py
+Remove-Item -Recurse -Force data\retrieval-indexes\workflow-eng-lead-v1
+& 'C:\Users\karth\anaconda3\python.exe' scripts\build_workflows_v1_index.py
+```
+
+Then check that no goal can reach its own gold memory:
+
+```powershell
+& 'C:\Users\karth\anaconda3\python.exe' scripts\evaluate_workflows_v1_fairness.py
+```
+
+For another workflow environment, pass both the dataset and its frozen index;
+`--index` takes precedence over the legacy tier mapping. This check embeds the
+goals, so it needs `OPENAI_API_KEY`; the structural workflow tests do not.
+
+```powershell
+& 'C:\Users\karth\anaconda3\python.exe' scripts\evaluate_workflows_v1_fairness.py `
+  --dataset data\workflows_email_calendar_v1 `
+  --index data\retrieval-indexes\ops-lead-email-calendar-v1
+```
+
+Keep first-pass outputs and caches in environment-specific namespaces. Start a
+new namespace whenever the dataset, index, model, or prompt changes; do not
+reuse a cache from GitHub workflows for Email + Calendar. The v1 runner keeps
+its historic defaults, but accepts explicit values for a new environment:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_workflows_v1_matrix.ps1 `
+  -Dataset data\workflows_email_calendar_v1 `
+  -Index data\retrieval-indexes\ops-lead-email-calendar-v1 `
+  -Results data\benchmark-results\workflows-email-calendar-v1-first-pass `
+  -Caches data\workflow-caches `
+  -CacheNamespace email-calendar-v1-first-pass
+& 'C:\Users\karth\anaconda3\python.exe' scripts\summarize_workflows_v1_results.py `
+  --results data\benchmark-results\workflows-email-calendar-v1-first-pass `
+  --dataset data/workflows_email_calendar_v1
+```
+
+For a genuinely fresh run, use a new, empty `-CacheNamespace` and result root
+rather than deleting a replay cache that may be needed to reproduce an older
+report.
+
+### Natural Email + Calendar v2 rates
+
+The v2 natural pilot measures target-bound environmental state, not reply prose
+or one exact normal action. After scoring independently sampled workflow runs,
+render its per-triplet and aggregate positive, cue-ablated control, and
+memory-included oracle rates with:
+
+```powershell
+$env:PYTHONPATH = 'src'
+python scripts\summarize_email_calendar_v2_results.py `
+  data\benchmark-results\workflows-email-calendar-v2-diagnostic
+```
+
+The report includes `cue_triggered_lift` (positive minus control) and, when
+both conditions are present, `parm_minus_no_memory_positive` plus the
+PARM-minus-no-memory cue-lift difference.  These are rates over samples; do
+not impose a fixed `3/3` gate.  Any claim about a retrieval effect requires
+fresh independent samples and an explicit threshold preregistered before the
+comparison.
+
+Run this after any edit to a goal or a corpus, before spending a run. If
+prompt-only retrieval finds a gold source from the goal alone, the scenario is
+no longer testing late-cued retrieval and input RAG will win for the wrong
+reason. Two things trip it: a corpus small enough that top-five covers much of
+it, and a goal written in the memory's own vocabulary.
 
 ## Inspect retrieval in the browser
 

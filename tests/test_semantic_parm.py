@@ -25,6 +25,7 @@ from parm_bench.retrieval import (
     SentenceRecord,
 )
 from parm_bench.semantic_parm import (
+    AdmissionCacheMissError,
     AdmissionCachePolicy,
     CachedOpenAIAdmissionJudge,
     PARM_SEMANTIC_JUDGE_INSTRUCTIONS,
@@ -212,16 +213,27 @@ class AdmissionRubricTests(unittest.TestCase):
             with self.subTest(instructions=instructions[:40]):
                 self.assertEqual(judge_leakage_violations(instructions), [])
 
-    def test_rubric_version_keys_the_admission_cache(self) -> None:
+    def test_complete_judge_input_keys_the_admission_cache(self) -> None:
         self.assertEqual(PARM_SEMANTIC_JUDGE_RUBRIC, "parm_pair_admission_v3")
+        candidates = [
+            {
+                "candidate_id": "C01",
+                "region_id": "region-1",
+                "region_text": "Visible salsa workshop.",
+                "page_id": "corpus:p1",
+                "memory_text": "User: I cook salsa every weekend.",
+            }
+        ]
         expected = hashlib.sha256(
             json.dumps(
                 {
                     "model": PARM_SEMANTIC_JUDGE_MODEL,
                     "rubric_version": "parm_pair_admission_v3",
+                    "instructions": PARM_SEMANTIC_JUDGE_INSTRUCTIONS,
                     "cache_namespace": "fixture-namespace",
                     "prompt": "Choose one.",
                     "observation_text": "A long observation.",
+                    "candidates": candidates,
                 },
                 ensure_ascii=False,
                 sort_keys=True,
@@ -231,6 +243,7 @@ class AdmissionRubricTests(unittest.TestCase):
             semantic_admission_cache_key(
                 "Choose one.",
                 "A long observation.",
+                candidates,
                 cache_namespace="fixture-namespace",
             ),
             expected,
@@ -238,7 +251,7 @@ class AdmissionRubricTests(unittest.TestCase):
 
 
 class AdmissionJudgeCacheTests(unittest.TestCase):
-    def test_populate_then_frozen_replay(self) -> None:
+    def test_frozen_replay_rejects_a_changed_candidate_set(self) -> None:
         response = SimpleNamespace(
             output_text=(
                 '{"admit":true,"candidate_id":"C01",'
@@ -279,22 +292,21 @@ class AdmissionJudgeCacheTests(unittest.TestCase):
                 cache_namespace="fixture-namespace",
                 client=SimpleNamespace(),
             )
-            replay = frozen.judge(
-                prompt="Choose one.",
-                observation_text="A long observation.",
-                candidates=[
-                    {
-                        "candidate_id": "C99",
-                        "region_text": "A slightly different candidate set.",
-                        "memory_text": "A different ranking replay.",
-                        "page_id": "corpus:p2",
-                        "region_id": "region-2",
-                    }
-                ],
-            )
-            self.assertEqual(first, replay)
-            self.assertEqual(first["candidate_id"], "C01")
-            self.assertIsNotNone(frozen.cache_hash)
+            with self.assertRaises(AdmissionCacheMissError):
+                frozen.judge(
+                    prompt="Choose one.",
+                    observation_text="A long observation.",
+                    candidates=[
+                        {
+                            "candidate_id": "C99",
+                            "region_text": "A slightly different candidate set.",
+                            "memory_text": "A different ranking replay.",
+                            "page_id": "corpus:p2",
+                            "region_id": "region-2",
+                        }
+                    ],
+                )
+            self.assertIsNone(frozen.cache_hash)
 
 
 def _index() -> RetrievalIndex:

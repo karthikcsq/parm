@@ -1,48 +1,45 @@
 # PARM Roadmap
 
-This page contains unfinished work only. Completed experiment history belongs
-in the result reports and decision log.
+This page lists the work that will make PARM's evidence broader, stronger, and more useful. Completed experiment history lives in the result reports and decision log.
 
-## Preserve the current evidence
+## 1. Protect the evidence already earned
 
-- Keep the `*-v2-gpt-5-mini` artifacts as the immutable first expansion pass.
-- Treat all revised-fixture and post-analysis runs as development results.
-- Keep the no-memory fixture-fairness run as the floor for the repaired 54-case
-  dataset.
-- Version retrieval conditions, judgment prompts, response caches, and result
-  namespaces together.
+- Keep the **157-scenario / 471-case / 140-persona** PARMBench v1 calibration batch frozen as an auditable, retrieval-agnostic evaluation substrate.
+- Preserve all first-pass and development result namespaces. Revised fixtures and post-analysis runs remain labeled as development evidence.
+- Version retrieval policies, judgment prompts, source manifests, caches, model settings, and result artifacts together.
+- Keep deterministic causal scoring separate from any future model-graded natural-response evaluation.
 
-## Improve PARM without hiding failure modes
+## 2. Turn the calibration batch into decisive comparative evidence
 
-- Replace or tighten the semantic anchored-singleton path. The current
-  expansion shows that a generic review note can select the same secondary
-  listing in both a positive and its cue-ablated control.
-- Develop a contrastive dense region-to-memory channel for semantic cues that
-  BM25 cannot express, especially relationship, hiring, and proactive-priority
-  cases.
-- Revisit control construction when another surviving listing still has a
-  legitimate relationship to the same memory, as in the human-factors case.
-- Calibrate any new threshold on development cases and score it once on a new
-  held-out batch.
-- Keep retrieval admission metrics separate from downstream choice metrics.
+- Run a preregistered, sealed comparison on the frozen PARMBench v1 batch across prompt-only retrieval, broad output retrieval, agent-initiated retrieval, and selective output-conditioned retrieval.
+- Report the full causal scorecard: positive lift, cue-ablated restraint, ceiling actionability, gold and spurious admission, source support, privacy restraint, and calibration.
+- Add at least one independent model family and preserve per-model result sidecars rather than averaging away disagreement.
+- Keep candidate generation, admission, and downstream action metrics separate so a system cannot claim success merely for retrieving a relevant memory.
 
-## Add external validity
+## 3. Strengthen selective retrieval without tuning away failure modes
 
-- Add corpus-scoped adapters and index isolation for multi-person datasets.
-- Calibrate the construction contract on at least 100 audited base scenarios,
-  then freeze the generation and acceptance procedure.
-- Publish a sealed, persona-disjoint release of at least 500 independent
-  audited base scenarios across at least 100 personas.
-- Build 50 to 100 paired end-to-end cases from LongMemEval-V2 web and
-  enterprise trajectories.
-- Measure task success, causal memory lift, false intervention, faithfulness,
-  privacy restraint, and calibration.
-- Keep deterministic PARMBench as the mechanism and regression gate.
-- Add an LLM judge only after measuring agreement with human reviewers and
-  freezing the judge protocol.
+- Develop a contrastive dense region-to-memory channel for semantic cues that lexical methods cannot express, especially relationship, hiring, and proactive-priority cases.
+- Revisit controls when a remaining visible listing still has a legitimate relationship to the same memory.
+- Calibrate any new threshold on development material and evaluate it exactly once on a newly sealed batch.
+- Continue publishing misses and false interventions alongside wins. The cue-ablated control is the mechanism that keeps “more memory” from masquerading as better memory.
 
-See [Real-World Evaluation Strategy](real-world-evaluation.md) for the
-recommended design and [How to Construct a PARMBench Scenario](benchmark-construction.md)
-for the canonical construction contract. The
-[larger dataset survey](dataset-candidates.md) explains the source selection,
-conversion rules, and retrieval-index changes.
+## 4. Scale executable workflow evaluation
+
+PARMBench Workflows already validates multi-step agent trajectories with final-state scoring, timely-admission checks, and causal controls. The next step is breadth, not cosmetic tuning:
+
+- Add independent workflow families with their own environment adapters and certify their memory-included ceilings before comparing retrieval policies.
+- Extend beyond the current GitHub-like and email/calendar environments to additional task families such as expense handling, legal review, and other source-backed operations.
+- Run repeated trajectories per condition and add a second model family so variance and model-specific behavior are visible.
+- Keep reporting the gap between *memory retrieved* and *memory acted on*; both are required for an agent-memory system to be useful.
+- Decide how trajectory-level admission budgets, broad-RAG baselines, and context compaction should be modeled before increasing corpus scale.
+
+## 5. Establish external validity
+
+- Build 50–100 paired end-to-end cases from corpus-scoped web and enterprise trajectories, beginning with LongMemEval-V2-compatible source material where licensing and provenance permit.
+- Measure task success, causal memory lift, false intervention, faithfulness, privacy restraint, and user-calibrated helpfulness.
+- Add a natural-response LLM judge only after measuring agreement with human reviewers and freezing the judge protocol.
+- Keep deterministic PARMBench as the regression and mechanism gate even as richer end-to-end evaluation is added.
+
+## Guiding principle
+
+PARM's goal is not to make agents retrieve more personal memory. It is to make memory intervention **causal, selective, timely, inspectable, and safe enough to improve real decisions**.

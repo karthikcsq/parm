@@ -1,0 +1,76 @@
+{
+  "adapter": "github_fixture",
+  "repository": "mcpmark-source/claude-code",
+  "default_branch": "main",
+  "actor": "agent",
+  "collaborators": [
+    "priya",
+    "dan",
+    "mei",
+    "sam",
+    "tomas"
+  ],
+  "branches": {
+    "main": {
+      "README.md": "# claude-code\n",
+      "src/sso/beta-config.ts": "export const rollout = 20;\n",
+      "src/session/timeout.ts": "export const DEFAULT_TIMEOUT_MINUTES = 30;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.79\"\n}\n"
+    },
+    "chore/sso-beta-config": {
+      "README.md": "# claude-code\n",
+      "src/sso/beta-config.ts": "export const rollout = 35;\n",
+      "src/session/timeout.ts": "export const DEFAULT_TIMEOUT_MINUTES = 30;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.79\"\n}\n"
+    },
+    "fix/session-timeout-copy": {
+      "README.md": "# claude-code\n",
+      "src/sso/canary.ts": "export const rollout = 20;\n",
+      "src/session/timeout.ts": "export const DEFAULT_TIMEOUT_MINUTES = 45;\n",
+      "package.json": "{\n  \"name\": \"claude-code\",\n  \"version\": \"1.0.79\"\n}\n"
+    }
+  },
+  "issues": [],
+  "pull_requests": [
+    {
+      "number": 67,
+      "title": "Adjust SSO beta configuration",
+      "state": "open",
+      "head": "chore/sso-beta-config",
+      "base": "main",
+      "author": "dan",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/sso/beta-config.ts": "export const rollout = 35;\n"
+      },
+      "body": "## Summary\n\nUpdate the SSO beta configuration from 20% to 35% for rollout target `ashcroft-university-sso-beta`.\n\n## Changes\n\n- Updates the configured target and percentage in `src/sso/beta-config.ts`.\n\n## Notes\n\nReviewed by Mei; checks green.",
+      "comments": [
+        {
+          "author": "mei",
+          "body": "Configuration looks good. Ready to ship."
+        }
+      ]
+    },
+    {
+      "number": 68,
+      "title": "Clarify the session timeout warning",
+      "state": "open",
+      "head": "fix/session-timeout-copy",
+      "base": "main",
+      "author": "ben",
+      "checks": "all checks passing",
+      "requested_reviewers": [],
+      "changed_files": {
+        "src/session/timeout.ts": "export const DEFAULT_TIMEOUT_MINUTES = 45;\n"
+      },
+      "body": "## Summary\n\nMake the session timeout warning match the current default.\n\n## Notes\n\nSmall copy-adjacent fix, reviewed and green.",
+      "comments": [
+        {
+          "author": "mei",
+          "body": "Looks good to ship."
+        }
+      ]
+    }
+  ]
+}

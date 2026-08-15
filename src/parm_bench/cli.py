@@ -75,6 +75,29 @@ from .semantic_parm import (
     semantic_admission_cache_namespace,
 )
 from .workbench import serve_workbench
+from .workflows.agent import (
+    MAX_TRAJECTORY_STEPS,
+    CachingWorkflowModel,
+    OpenAIWorkflowModel,
+    WorkflowCacheMissError,
+)
+from .workflows.case import (
+    VARIANTS as WORKFLOW_VARIANTS,
+    WorkflowCaseValidationError,
+    load_workflow_cases,
+    validate_workflow_cases,
+)
+from .workflows.environment import EnvironmentNotImplementedError
+from .workflows.policies import (
+    MemoryPolicyNotImplementedError,
+    available_policies,
+)
+from .workflows.runner import (
+    assert_gold_reachable,
+    build_retrieval_resource,
+    run_workflow_cases,
+)
+from .workflows.scoring import score_workflow_predictions
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -164,6 +187,81 @@ def main(argv: list[str] | None = None) -> int:
     score.add_argument("--gold", required=True)
     score.add_argument("--out")
 
+    workflow = commands.add_parser(
+        "workflow", help="PARMBench Workflows: executable multi-step agent tasks"
+    )
+    workflow_commands = workflow.add_subparsers(
+        dest="workflow_command", required=True
+    )
+
+    workflow_validate = workflow_commands.add_parser("validate")
+    workflow_validate.add_argument("dataset_dir")
+
+    workflow_inspect = workflow_commands.add_parser("inspect")
+    workflow_inspect.add_argument("dataset_dir")
+    workflow_inspect.add_argument("--case", dest="case_id")
+
+    workflow_run = workflow_commands.add_parser("run")
+    workflow_run.add_argument("dataset_dir")
+    workflow_run.add_argument(
+        "--policy",
+        required=True,
+        choices=tuple(available_policies()),
+        help="which memory policy the agent runs under",
+    )
+    workflow_run.add_argument("--retrieval-index")
+    workflow_run.add_argument(
+        "--retrieval-mode", choices=tuple(mode.value for mode in RetrievalMode)
+    )
+    workflow_run.add_argument("--retrieval-limit", type=_positive_int, default=5)
+    workflow_run.add_argument(
+        "--parm-retriever",
+        choices=("semantic-judge", "convergence"),
+        default="semantic-judge",
+    )
+    workflow_run.add_argument("--parm-admission-cache")
+    workflow_run.add_argument(
+        "--parm-admission-policy",
+        choices=tuple(policy.value for policy in AdmissionCachePolicy),
+        default=AdmissionCachePolicy.POPULATE.value,
+    )
+    workflow_run.add_argument("--trajectory-cache")
+    workflow_run.add_argument(
+        "--trajectory-policy", choices=("frozen", "populate"), default="populate"
+    )
+    workflow_run.add_argument(
+        "--variant",
+        action="append",
+        dest="variants",
+        choices=tuple(sorted(WORKFLOW_VARIANTS)),
+    )
+    workflow_run.add_argument("--model")
+    workflow_run.add_argument(
+        "--sample",
+        type=int,
+        default=0,
+        help=(
+            "independent trajectory index for the same condition; mixed into "
+            "the trajectory cache key so repeated samples do not replay each "
+            "other. Sample 0 replays trajectories cached before sampling"
+        ),
+    )
+    workflow_run.add_argument(
+        "--max-steps", type=_positive_int, default=MAX_TRAJECTORY_STEPS
+    )
+    workflow_run.add_argument(
+        "--workers",
+        type=_positive_int,
+        default=1,
+        help="run cases concurrently; each case owns a freshly reset environment",
+    )
+    workflow_run.add_argument("--out", required=True)
+
+    workflow_score = workflow_commands.add_parser("score")
+    workflow_score.add_argument("results_jsonl")
+    workflow_score.add_argument("--gold", required=True)
+    workflow_score.add_argument("--out")
+
     workbench = commands.add_parser("serve-workbench")
     workbench.add_argument("--retrieval-index", required=True)
     workbench.add_argument("--dataset", default="data/benchmark_v1")
@@ -235,6 +333,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         if args.command == "score":
             return _score(args.results_jsonl, args.gold, args.out)
+        if args.command == "workflow":
+            return _workflow(args)
         if args.command == "serve-workbench":
             serve_workbench(
                 retrieval_index=args.retrieval_index,
@@ -247,14 +347,19 @@ def main(argv: list[str] | None = None) -> int:
                 open_browser=not args.no_open,
             )
             return 0
-    except DatasetValidationError as exc:
+    except (DatasetValidationError, WorkflowCaseValidationError) as exc:
         for issue in exc.issues:
             print(issue, file=sys.stderr)
         return 1
-    except BaselineNotImplementedError as exc:
+    except (
+        BaselineNotImplementedError,
+        MemoryPolicyNotImplementedError,
+        EnvironmentNotImplementedError,
+    ) as exc:
         print(str(exc), file=sys.stderr)
         return 2
     except (
+        WorkflowCacheMissError,
         ExpansionCacheMissError,
         AdmissionCacheMissError,
         ResponseCacheMissError,
@@ -480,6 +585,124 @@ def _truncated_row(
             "admitted_perturbations": {},
         },
     }
+
+
+def _workflow(args: argparse.Namespace) -> int:
+    if args.workflow_command == "validate":
+        cases = load_workflow_cases(args.dataset_dir)
+        validate_workflow_cases(cases)
+        print(f"Validated {len(cases)} workflow cases")
+        return 0
+    if args.workflow_command == "inspect":
+        cases = load_workflow_cases(args.dataset_dir)
+        validate_workflow_cases(cases)
+        case = next(
+            (
+                item
+                for item in cases
+                if args.case_id is None or item.case_id == args.case_id
+            ),
+            None,
+        )
+        if case is None:
+            print(f"Case not found: {args.case_id}", file=sys.stderr)
+            return 1
+        print(json.dumps(case.data, indent=2, sort_keys=True))
+        return 0
+    if args.workflow_command == "score":
+        cases = load_workflow_cases(args.gold)
+        validate_workflow_cases(cases)
+        predictions = _load_jsonl(Path(args.results_jsonl))
+        metrics = score_workflow_predictions(cases, predictions)
+        payload = json.dumps(metrics, indent=2, sort_keys=True)
+        if args.out:
+            path = Path(args.out)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(payload + "\n", encoding="utf-8")
+            print(f"Wrote metrics to {path}")
+        else:
+            print(payload)
+        return 0
+    return _workflow_run(args)
+
+
+def _workflow_run(args: argparse.Namespace) -> int:
+    cases = load_workflow_cases(args.dataset_dir)
+    validate_workflow_cases(cases)
+    if args.variants:
+        wanted = set(args.variants)
+        cases = [case for case in cases if case.variant in wanted]
+        if not cases:
+            raise ValueError(
+                "no workflow cases match the requested --variant filter: "
+                + ", ".join(sorted(wanted))
+            )
+    if args.trajectory_policy != "populate" and not args.trajectory_cache:
+        raise ValueError("--trajectory-policy requires --trajectory-cache")
+    retrieval_resource = build_retrieval_resource(
+        args.policy,
+        retrieval_index=args.retrieval_index,
+        retrieval_mode=args.retrieval_mode,
+        parm_retriever=args.parm_retriever,
+        parm_admission_cache=args.parm_admission_cache,
+        parm_admission_policy=args.parm_admission_policy,
+    )
+    assert_gold_reachable(cases, retrieval_resource)
+    model: Any = OpenAIWorkflowModel(_resolve_model(args.model))
+    if args.trajectory_cache:
+        model = CachingWorkflowModel(
+            model, args.trajectory_cache, args.trajectory_policy, args.sample
+        )
+    elif args.sample:
+        raise ValueError("--sample requires --trajectory-cache")
+    rows = run_workflow_cases(
+        cases,
+        policy_name=args.policy,
+        model=model,
+        retrieval_resource=retrieval_resource,
+        retrieval_limit=args.retrieval_limit,
+        max_steps=args.max_steps,
+        workers=args.workers,
+    )
+    path = Path(args.out)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+        newline="\n",
+    )
+    configuration = {
+        "suite": "parmbench-workflows",
+        "policy": args.policy,
+        "variants": sorted(set(args.variants)) if args.variants else None,
+        "retrieval_index": args.retrieval_index,
+        "retrieval_mode": args.retrieval_mode,
+        "retrieval_limit": args.retrieval_limit,
+        "requested_model": model.model_name,
+        "sample": args.sample,
+        "max_steps": args.max_steps,
+        "workers": args.workers,
+        "trajectory_cache_hash": (
+            model.cache_hash if isinstance(model, CachingWorkflowModel) else None
+        ),
+        "environment_adapters": sorted(
+            {case.data["environment"]["adapter"] for case in cases}
+        ),
+        "upstream": sorted(
+            {
+                json.dumps(case.data["environment"]["upstream"], sort_keys=True)
+                for case in cases
+            }
+        ),
+        "dependency_versions": _dependency_versions(),
+    }
+    path.with_suffix(".config.json").write_text(
+        json.dumps(configuration, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(f"Wrote {len(rows)} workflow predictions to {path}")
+    return 0
 
 
 def _resolve_model(cli_model: str | None) -> str:

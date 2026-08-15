@@ -1,0 +1,406 @@
+{
+  "corpus_id": "workflow-eng-lead-v1",
+  "dataset_revision": "parmbench-workflows-v1-pilot",
+  "sources": [
+    {
+      "path": "emails/abandoned-vendor-migration.md",
+      "sha256": "6918f000c6a66c269d4be5b15141926362c9ecbd85977d0d38a8177cc40d058c"
+    },
+    {
+      "path": "emails/analytics-dashboard-request.md",
+      "sha256": "2c8b6f313298e409d8c7e0256ad5de8d0daec85e20846fc49e269df2f4c194d8"
+    },
+    {
+      "path": "emails/backlog-bankruptcy-proposal.md",
+      "sha256": "e2fac1422563e2250f0256a766ecef6ef366fa554092fbab87fb2d76545653bd"
+    },
+    {
+      "path": "emails/ben-onboarding-plan.md",
+      "sha256": "dbd13c317494ad2c4d3c3fea34b40331dce2e550073048d572681ba7bb93dc83"
+    },
+    {
+      "path": "emails/billing-migration-freeze.md",
+      "sha256": "7189d65f920c2cafaa4e784ccbf1fd161613f9df24275f24c0d0106b2c9666c5"
+    },
+    {
+      "path": "emails/calderon-bank-security-review.md",
+      "sha256": "a72fa1d684902f1d0e6149abf6a9f55fb6c99b9356b1c1b64b2773483f1a27b3"
+    },
+    {
+      "path": "emails/customer-escalation-triage.md",
+      "sha256": "57ffa1f22eff74ea9805e2f6202be9c06817b5d0f106e1a712dabb488817cf0f"
+    },
+    {
+      "path": "emails/data-retention-question.md",
+      "sha256": "b5aea313ba3b4bbf844d21eb9139bbc8209fb53b524b49c7552bb6be32abe7ad"
+    },
+    {
+      "path": "emails/dpa-renewal-thread.md",
+      "sha256": "980d80dd3a583d81b710e40c74b7e9de853f7f6b4b450c4463c3e306c1fdd1b6"
+    },
+    {
+      "path": "emails/mei-promotion-case.md",
+      "sha256": "8d71a238b5cf7f09b7c7da4b2f4def3622d12fca1322977192ef27ed273fdc85"
+    },
+    {
+      "path": "emails/mobile-beta-feedback.md",
+      "sha256": "8421324b97107ac38f702d7813903b5613411a1a7bdef3f01a0580658ea019dc"
+    },
+    {
+      "path": "emails/northwind-quarterly-review.md",
+      "sha256": "c5d70de4c3603641531296c0346354305fbf8688013c2fcfda0760adeb72e3f6"
+    },
+    {
+      "path": "emails/oncall-handover.md",
+      "sha256": "967ab7c7427341ae429c78e59410200676ca1ec170546215f2129e5e39f675f8"
+    },
+    {
+      "path": "emails/oncall-handover-2026-04-10.md",
+      "sha256": "efda392cdc5156267eeeb4e26b4628a155b062f04823bbc1c9068684b74eb1e5"
+    },
+    {
+      "path": "emails/oncall-handover-2026-05-15.md",
+      "sha256": "662b897b544d2843133f74dd8fcce899c84cb2c46097fc52a75d6cc9a5ada039"
+    },
+    {
+      "path": "emails/platform-migration-status.md",
+      "sha256": "bdc11a90794a52cfb09a72bf81a8d95693df15be37d73375d3eb503a58d1397f"
+    },
+    {
+      "path": "emails/privacy-review-scheduling.md",
+      "sha256": "3f2dc99360ac0b982f57e4bc98facc18098d3c97240b6de22cdb11ad873538a8"
+    },
+    {
+      "path": "emails/security-questionnaire-followup.md",
+      "sha256": "e9cfb4f0731cb6efb8d1ea32a4fdeff911c59a5ad2c0eefa34f65d8c3ee6b31d"
+    },
+    {
+      "path": "emails/sso-rollout-status.md",
+      "sha256": "7e763ad9c17354a9e3e2318f8a4f16f0733eeab78e4e6201285493e75879be52"
+    },
+    {
+      "path": "emails/statsig-evaluation-thread.md",
+      "sha256": "68c70eba385a1375d5d798c62b8a43f574222cff2c58fb9fc9b84b7b1bfa9f8a"
+    },
+    {
+      "path": "emails/transcript-buffer-design.md",
+      "sha256": "23fe404ad2817f0bb439bc839b15b570acff4e085a0d60581287d2454474b357"
+    },
+    {
+      "path": "emails/v1070-release-retro.md",
+      "sha256": "aa86b2983d92b307db6c7178129262fc249fcc1ee541f01b0ba8fb1d24e86f97"
+    },
+    {
+      "path": "emails/vireo-labs-integration.md",
+      "sha256": "6e68b3bb05863ab3165761623b53330ca3e62684bc29aa0ec0b3b6d1d9293ee2"
+    },
+    {
+      "path": "notes/auth-token-refresh-bug.md",
+      "sha256": "159f7d387b96844689642967977195b83883ff736e928e0f3523e0f50e4b0033"
+    },
+    {
+      "path": "notes/backlog-grooming-2026-05.md",
+      "sha256": "20b0c0b20f585bab7ae8723d87d2f0f1dd8e383789f433ef09cf8caf14545822"
+    },
+    {
+      "path": "notes/billing-proration-decision.md",
+      "sha256": "2e9e05b46aaf432e5d0baf437a6926c403295780e691055cb6c79e7b5fa320ad"
+    },
+    {
+      "path": "notes/ci-flakiness-log.md",
+      "sha256": "defc52a61c670a1ff29e1c9f433490ed3d053caacebf5e457905607d57f2cb72"
+    },
+    {
+      "path": "notes/cli-startup-latency.md",
+      "sha256": "1345420f7585eb8d646dfc3ac85e46ccaf295fbe117c24dfdefbc92b786ef916"
+    },
+    {
+      "path": "notes/code-owners-policy.md",
+      "sha256": "b997f3961e4802ec38b632aa8dfc65bfe8dea1e034912e9d9b49a7ea91acc453"
+    },
+    {
+      "path": "notes/config-file-format-decision.md",
+      "sha256": "c0040a9e2eb74d19dcacdb5dc3c5a314d47cf94220e5ef2a14f3966f3f7347b5"
+    },
+    {
+      "path": "notes/consent-banner-decision.md",
+      "sha256": "186f8f158eadde983750870294b673faccc9fde7477b2e31e0c091bfaf736fe0"
+    },
+    {
+      "path": "notes/context-compaction-experiments.md",
+      "sha256": "03052787d45934125ed20ef5975198e9765a6cc209a9dee6ad66da2a2a611d95"
+    },
+    {
+      "path": "notes/context-window-budget.md",
+      "sha256": "48bf50b6b9141c760c0e72694e705e56facd03c0c1603e9095e693afd362ef9e"
+    },
+    {
+      "path": "notes/crash-reporting-vendor-comparison.md",
+      "sha256": "42368224d10eeb7488d075211afcb813723be752d30fdeebd78f231762e21257"
+    },
+    {
+      "path": "notes/customer-constraints-ashcroft.md",
+      "sha256": "8fb931703833c11989d85ed14bfb137d1af3015c3a8fc45dc9fa61f73bc84dee"
+    },
+    {
+      "path": "notes/customer-constraints-trellis.md",
+      "sha256": "e9c43ff6ab1a18f8f56842a4341f0230b0c89f687b19c56948c92aa5b96cc0a2"
+    },
+    {
+      "path": "notes/dependency-audit-cadence.md",
+      "sha256": "ad6ac8b4d34b79848d8a6882d9e5d46d7802e467166d5307ecf8d89f2251c660"
+    },
+    {
+      "path": "notes/dependency-upgrade-policy.md",
+      "sha256": "5dddc4649d42ada22ae26569b7368d91bc57381630799d44e8f2aef37de49f2b"
+    },
+    {
+      "path": "notes/docs-site-migration.md",
+      "sha256": "dddcca0782c6678c502e162139fc6416cebec3fc28c25ff6eb628b7297f22496"
+    },
+    {
+      "path": "notes/docs-structure.md",
+      "sha256": "11e7546aa158053572eacc355b2eae0490b4e17633412d65bec18c7a1b38a2f5"
+    },
+    {
+      "path": "notes/documentation-standards.md",
+      "sha256": "e859021fd821088611d523bb9932913d75cc6a43c8b2af42ad5926b5075acd6b"
+    },
+    {
+      "path": "notes/draft-merge-queue-adoption.md",
+      "sha256": "db9b73cefa43cc348ba60aa1562a3f11886ad064427f05957ecced22a94e8370"
+    },
+    {
+      "path": "notes/enterprise-support-sla.md",
+      "sha256": "077c3da119ef48eedd14f6c00d0af3c63f4156651538ddee8da34547cce53830"
+    },
+    {
+      "path": "notes/event-naming-conventions.md",
+      "sha256": "e33e2cdae6f7dcfeb96edc0cd892b50badf5416c0987a871a2b21db379a96355"
+    },
+    {
+      "path": "notes/feature-flag-hygiene.md",
+      "sha256": "2a52acc9ccc3d55fc094e08689150ba76172983780f6dc7d2353ecc776794af1"
+    },
+    {
+      "path": "notes/heap-profiling-session.md",
+      "sha256": "2602e3281f77369a5ead527fa7e932c4eaa8b5769e808e25fbe1d452be6bfefc"
+    },
+    {
+      "path": "notes/hiring-loop-debrief-infra.md",
+      "sha256": "818056e02dbd37bd2fd4a3683c28cfe9aa40e8fe82e24d8d6232e1fc3a9d36f8"
+    },
+    {
+      "path": "notes/hotfix-2026-03-11-retro.md",
+      "sha256": "7853622b08cb2716cd214290b841a0c5dc250de9e1f351496b576ac12053f45a"
+    },
+    {
+      "path": "notes/hotfix-conventions.md",
+      "sha256": "084688733a0aa6cb6fa0c444384ad67bc2382102555a42ab2cfb325afc120082"
+    },
+    {
+      "path": "notes/hotfix-vs-patch-release.md",
+      "sha256": "7649f265e9edca6264d86a655957cb62836ed049018fe531a75b5059bf8ea578"
+    },
+    {
+      "path": "notes/imported-agent-playbook.md",
+      "sha256": "a5256f8e0187fc2d152661d14c3fbab6ddf744ec0b93a8394d7f1ebdedb21a6e"
+    },
+    {
+      "path": "notes/imported-release-automation-guide.md",
+      "sha256": "43b37e4524ce4a0c2504841791432a6f14e7ee66256caa11100b0753a4b57826"
+    },
+    {
+      "path": "notes/incident-2026-03-02-postmortem.md",
+      "sha256": "8975714b53498febb4360b6a8c28027bfd2d3b2ad80ca4d2a9ecc697fd6e94a5"
+    },
+    {
+      "path": "notes/incident-2026-04-22-postmortem.md",
+      "sha256": "26e3638ed8bdbe9a540e133a073d0f78975df651351bbb58b9abab8551030279"
+    },
+    {
+      "path": "notes/incident-2026-05-19-postmortem.md",
+      "sha256": "e9ea05377b7680ccf6568e7ed2a36bf37cd2b158294ac6332b90db0a543a2cb4"
+    },
+    {
+      "path": "notes/incident-comms-checklist.md",
+      "sha256": "39da63d55728c53dd816cba7bb056df2d5084245d68b4ed38c216ea4c93b2197"
+    },
+    {
+      "path": "notes/incident-severity-definitions.md",
+      "sha256": "504a7d7c2cfd09d57e02722c9ddeb886eee3aa61803483dc5cf317aec1e64ec4"
+    },
+    {
+      "path": "notes/issue-triage-rules.md",
+      "sha256": "15b55844aaefefb07bb4b36d034522e6431cce1fb9e35f38c6ab6c4269a3406d"
+    },
+    {
+      "path": "notes/meeting-cadence.md",
+      "sha256": "84e86aa4f435cb066e1cf00c0ca3d35b9967ad9838e6eeb86ea8e6440dea07e5"
+    },
+    {
+      "path": "notes/memory-leak-false-alarm.md",
+      "sha256": "08a642e1aed373f547a66a2ea02a7cda7b89a084b801994df5eb35ec543a8c6c"
+    },
+    {
+      "path": "notes/memory-regression-triage.md",
+      "sha256": "bd2b75541d7fc732e0f1453add630033d161c52b3790b55206965105e957a6a1"
+    },
+    {
+      "path": "notes/merge-conflict-policy.md",
+      "sha256": "fea12644b6c6d7806c747d32e6d508933336b4a8bafbb577243b774368d266de"
+    },
+    {
+      "path": "notes/merge-queue-evaluation.md",
+      "sha256": "e0a1277ebf7caf61d33e8eff6efcfd3d17f13bda797720e922eaec9ce813e71c"
+    },
+    {
+      "path": "notes/metrics-dashboard-access.md",
+      "sha256": "11c1b407236e2c193c8a85ac9cb58023b50f47bd6cd2dce580488588ab7a8d9c"
+    },
+    {
+      "path": "notes/mobile-companion-scoping.md",
+      "sha256": "1b8980aac1261c22013df933412914a541a7edb365142c4fd9d2a828daed0686"
+    },
+    {
+      "path": "notes/offline-mode-feasibility.md",
+      "sha256": "bf6e42a9aa83e424464f8a3db55bda971ea0142dff14a42d0aa078f18bfb6395"
+    },
+    {
+      "path": "notes/old-issue-labels-scheme.md",
+      "sha256": "5428fa015f9601413b833751d0c930502b80f7a650b3149c766b9ef5346d789c"
+    },
+    {
+      "path": "notes/one-on-one-notes-ben.md",
+      "sha256": "1a330a3e729331c515c78a7bbd6bab39db152de29038696fcd33b49d7a590fae"
+    },
+    {
+      "path": "notes/one-on-one-notes-dan.md",
+      "sha256": "548038c8b7ad5c2385cabab56ac557e103f14d8e425c4df3f5332f5402aec40e"
+    },
+    {
+      "path": "notes/one-on-one-notes-mei.md",
+      "sha256": "c4e0687bf7de149c8f5c8d4cd176a33d189b4d4effacf3872b8cc18bf2bb235e"
+    },
+    {
+      "path": "notes/one-on-one-notes-sam.md",
+      "sha256": "5bb16f3debba04a41ac5ebc5d5409caa7b18c14640378febd2c0590fe2f6e5ba"
+    },
+    {
+      "path": "notes/opt-out-implementation.md",
+      "sha256": "c145775051e9f903678e14a5b3cf31296cab44cf25ad655b62d7c46eb7556f16"
+    },
+    {
+      "path": "notes/pager-noise-review.md",
+      "sha256": "a802fb20b1a78dc62caafcc9575a0bab66f779443d2735fefca3475f59d4989d"
+    },
+    {
+      "path": "notes/perf-cycle-calibration.md",
+      "sha256": "b96f4e85ea659fb4f0c79179b3261c740320cda23bdd87f776e3e12c695dda1c"
+    },
+    {
+      "path": "notes/pii-scrubbing-rules.md",
+      "sha256": "00bb2844ff700afdfdae8ceed161ef2b725698e56423cdca9dfacf8d8987e68e"
+    },
+    {
+      "path": "notes/plugin-api-versioning.md",
+      "sha256": "dcd12d0564d942a2b59caa498c613bb0fd1b1893c3f4db2bb4e4585ddb30e47e"
+    },
+    {
+      "path": "notes/postmortem-template.md",
+      "sha256": "6fbf4a4c125ebbbdfcae97acf127f81349c4b952ac678233d812fd60ff101756"
+    },
+    {
+      "path": "notes/pr-description-template.md",
+      "sha256": "15db1cf43cb651b550196e6ad4698a097c2c3ac0215eea45464ca51bd9e30cd9"
+    },
+    {
+      "path": "notes/regression-suite-gaps.md",
+      "sha256": "35a4252044d888e0b0cace01ebd38a26d4aec8ce033602a5a219da305a873919"
+    },
+    {
+      "path": "notes/release-checklist.md",
+      "sha256": "645ee9f180e1d24337f27cfd6e4705a4a4908134c2e71aec182c10a18624021e"
+    },
+    {
+      "path": "notes/release-notes-v1069.md",
+      "sha256": "42b11b33c95c5ad44baf572a0807d5e9e64deb3800b17b76ede2ab8e07fc721d"
+    },
+    {
+      "path": "notes/release-notes-v1070.md",
+      "sha256": "762d59bafdc955ce67bc6ae5c76dd83f1118e35b7254e3497e98c780b70d9d79"
+    },
+    {
+      "path": "notes/release-notes-v1071.md",
+      "sha256": "78052e34b70d758cd742e0a223d46d76ea2ccb92a29237fe88d8bedb61f1a441"
+    },
+    {
+      "path": "notes/review-preferences.md",
+      "sha256": "46c11fcc6c47b1255511c6179ad076185e6efa5b2fc92e15dec99c47bacd0704"
+    },
+    {
+      "path": "notes/search-index-rebuild-plan.md",
+      "sha256": "dc192348a51c715b4b0597943678e44d010fc720ca7f9b44fad34dfb2022c916"
+    },
+    {
+      "path": "notes/search-relevance-eval.md",
+      "sha256": "87c5f76f613b3f80a46fab393107f60b82f77a957be994a68a2033f889c7dad3"
+    },
+    {
+      "path": "notes/session-memory-glossary.md",
+      "sha256": "50034f0156b41d1054290619595eb4ec5d0274e027fd430d062368c3892aa788"
+    },
+    {
+      "path": "notes/superseded-branching-model.md",
+      "sha256": "9ea5b764e22ec71f78589780d4e23076712bfc42717368bce6e01debd7c2e48a"
+    },
+    {
+      "path": "notes/superseded-release-cadence.md",
+      "sha256": "6555295703e45623061e9946356a3d1fc5923fc796ce39411276c786ab441762"
+    },
+    {
+      "path": "notes/superseded-testing-pyramid.md",
+      "sha256": "a0fa65e795cdde4818cedb5928c8abeba8188ac5288ea1c080bbb4a781c5c6df"
+    },
+    {
+      "path": "notes/team-oncall-rotation-change.md",
+      "sha256": "920042d9dca1430bcfd3373b896f815abfdf78d9ce3866f9ea0cc8ef1ff959da"
+    },
+    {
+      "path": "notes/telemetry-hold-lifted-draft.md",
+      "sha256": "74e645ea1e656b5add7ef7a9d937acff9af70cbfde51cdfdcf1fab04c01558d9"
+    },
+    {
+      "path": "notes/telemetry-privacy-hold.md",
+      "sha256": "81dbcc3a66284b97a940cfd51cba87b23577b69e1963707daef7d573aa9d42c3"
+    },
+    {
+      "path": "notes/testing-expectations.md",
+      "sha256": "d6898c58d11be203bfbf83f6ca6e760fc91c3e3c5efcc84f1de06d56db941f16"
+    },
+    {
+      "path": "notes/third-party-sdk-inventory.md",
+      "sha256": "f37cd42e8b4b0c65c7daa8aa9e487eafb158a2b6ce373ad9decf42adf25efc70"
+    },
+    {
+      "path": "notes/triage-rotation-notes.md",
+      "sha256": "3d5884edec879105c0842b7246f6fb2bffb075924b0a7124da99f9e5380ed4f4"
+    },
+    {
+      "path": "notes/vendor-onboarding-brief.md",
+      "sha256": "7617c017a8744c47d6edf3df47852a485e7fc2dc3882fc74659f94dbac560efd"
+    },
+    {
+      "path": "notes/vendor-security-boilerplate.md",
+      "sha256": "57e30d0ced40695fc3010b76d7f889c86e47b68abed3612810550b05e5b0e663"
+    },
+    {
+      "path": "notes/weekly-planning-2026-06-01.md",
+      "sha256": "ffa26b7f5f52b2c1668f2e015b3bf92001103e46d6f3d26af144bc1968c8182f"
+    },
+    {
+      "path": "notes/windows-startup-investigation.md",
+      "sha256": "50f6e2cf3ffaf26f38b390b59c2dbfb6ffd85798c3c1cb08c1e1836ca39d2376"
+    }
+  ]
+}

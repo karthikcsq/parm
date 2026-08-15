@@ -11,6 +11,14 @@ The survey was checked against Hugging Face dataset cards and schemas on
 dialogue, agent trajectories, tool use, task-oriented dialogue, recommendation,
 email, and calendar-like data.
 
+> **Status, 2026-08-03.** PersonaMem-v2 was built out and then dropped. The
+> converted benchmarks, indexes, caches, and results have been removed from the
+> repository, and the project is not returning to it. The evaluation it was
+> meant to carry now runs on PARMBench Workflows over a hand-authored corpus.
+> The assessment below is kept as the survey it was: it records why the source
+> looked right, which is worth having if the question is ever reopened. Read
+> the recommendation as historical.
+
 ## Recommendation
 
 Use two sources for different parts of the next evaluation:

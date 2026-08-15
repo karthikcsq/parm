@@ -51,6 +51,13 @@ def write_corpus_retrieval_index(
             {
                 "corpus_id": record.corpus_id,
                 "page_id": page_id,
+                # A legacy provenance tag from the dataset this builder was
+                # first written for. It is dead as a name and kept as a value:
+                # it is hashed into every index this builder has produced, so
+                # renaming it would rebuild the frozen workflow indexes, re-key
+                # the admission caches that derive their namespace from the
+                # index hash, and invalidate published results, in exchange for
+                # a tidier string nothing reads.
                 "source_id": "personamem-v2",
                 "slug": record.source_id,
                 "title": record.title,

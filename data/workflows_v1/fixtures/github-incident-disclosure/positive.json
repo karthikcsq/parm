@@ -1,0 +1,39 @@
+{
+  "adapter": "github_fixture",
+  "repository": "mcpmark-source/claude-code",
+  "default_branch": "main",
+  "actor": "agent",
+  "collaborators": ["priya", "dan", "mei", "sam", "aditi"],
+  "branches": {
+    "main": {
+      "README.md": "# claude-code\n\nAn agentic coding tool that lives in your terminal.\n",
+      "CHANGELOG.md": "# Changelog\n\n## v1.0.71\n- Faster workspace indexing on cold start.\n"
+    }
+  },
+  "issues": [
+    {
+      "number": 80,
+      "title": "Follow up on the retry spike",
+      "state": "open",
+      "labels": ["operations"],
+      "author": "mei",
+      "body": "The retry spike from Tuesday is back at baseline. This follow-up can be closed.",
+      "comments": [
+        {
+          "author": "mei",
+          "body": "Dashboard and alert threshold were checked after the deploy; no further action remains."
+        }
+      ]
+    },
+    {
+      "number": 81,
+      "title": "Document the cache-delay follow-up",
+      "state": "open",
+      "labels": ["operations"],
+      "author": "dan",
+      "body": "The cache delay is fixed and the technical analysis is attached. The remaining next step is a customer-facing draft explaining the delay and resolution.",
+      "comments": []
+    }
+  ],
+  "pull_requests": []
+}

@@ -92,7 +92,7 @@ or broad product usefulness.
 | H1: output-cued retrieval recovers memories missed by prompt-only retrieval | PARM V5 scores 14/18 positives; enhanced input RAG scores 6/18 | Supported on controlled development cases |
 | H2: selective admission beats whole-output and all-entity retrieval on precision | PARM admission precision is 71.43%; broad RAG conditions range from 1.11% to 2.69% | Supported on controlled development cases |
 | H3: the right memory improves decisions while cue removal suppresses intervention | PARM scores 30/36 positive/control decisions and 16/18 controls | Supported, with two remaining false interventions |
-| H4: asynchronous monitoring improves decisions without blocking retrieval latency | The current runner evaluates retrieval and response quality, not live injection timing | Unevaluated |
+| H4: asynchronous monitoring improves decisions without blocking retrieval latency | PARMBench Workflows records when the cue appeared, when memory was admitted, and when the governed action happened, and scores admission that arrives after the action as a failure. The pilot's PARM positive admits on the cue observation and acts five steps later. Latency itself is still not measured | Timing is now evaluated; latency is not |
 | H5: private memory can guide a decision without unnecessary disclosure | Deterministic sensitive-term checks report no privacy exposure in the published run | Partially supported by a narrow check |
 
 The [frozen expansion first pass](results/benchmark-expansion-first-pass.md)
@@ -113,6 +113,13 @@ personal-agent tasks, users, corpora, and model families. The Amara corpus is
 fictional, the outputs are generated catalogs, and V5 uses the expansion as
 development data. The next external-validity step is described in
 [Real-World Evaluation](real-world-evaluation.md).
+
+PARMBench Workflows begins to close the "generated catalogs" gap by scoring the
+environment an agent leaves behind after a real tool trajectory. It is one
+scenario at one sample per condition, so it demonstrates that the mechanism
+survives contact with a multi-step task; it does not yet measure how often.
+Its first-pass numbers are in the
+[workflows first pass](results/workflows-v1-first-pass.md).
 
 ## Evaluation principles
 

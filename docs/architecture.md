@@ -51,12 +51,9 @@ policy so the benchmark can compare mechanisms over the same memory substrate.
 `data/benchmark_v1/cases.jsonl` contains 54 cases: 18 scenarios, each with
 three variants.
 
-`data/benchmark_personamem_v0/cases.jsonl` is a separate development
-benchmark with 90 cases over 30 persona-disjoint PersonaMem-v2 corpora. It
-uses the same triplet contract. A dataset manifest links each case to its
-corpus, bounded upstream source, normalized record, construction decision,
-and passing no-memory fairness artifact. The frozen Amara cases and index are
-not inputs to this benchmark.
+`data/workflows_v1/cases.jsonl` is the executable workflow suite: three
+scenarios over one engineering-lead corpus, scored on the environment an agent
+leaves behind rather than on a single label. It uses the same triplet contract.
 
 | Variant | Observation | Expected behavior |
 | --- | --- | --- |
@@ -191,9 +188,10 @@ the retrieval scores.
 
 ## Semantic-pair admission development path
 
-PersonaMem histories do not have the link graph or review/reflection filename
-conventions that make the deterministic waterfall effective on Amara. The
-development semantic path keeps corpus isolation and the frozen raw index but
+Ordinary personal histories do not have the link graph or review/reflection
+filename conventions that make the deterministic waterfall effective on Amara.
+The workflow corpus is one such history, which is why the semantic path is the
+workflow default. It keeps corpus isolation and the frozen raw index but
 changes candidate generation and admission. Its canonical replay waterfall is:
 
 ```mermaid
@@ -250,9 +248,10 @@ Canonical runs depend on tracked, hashed artifacts:
 | Artifact | Purpose |
 | --- | --- |
 | `data/retrieval-indexes/amara-life-v1` | Neutral pages, chunks, sentences, links, and embeddings |
-| `data/retrieval-indexes/personamem-v2-train-v0` | Schema-v3 index whose pages, chunks, sentences, and retrieval requests carry a persona corpus scope |
+| `data/retrieval-indexes/workflow-eng-lead-v1[-100]` | Schema-v3 workflow corpus indexes, one per declared scale tier |
 | `data/expansion-caches/...` | Frozen enhanced-mode query alternatives |
-| `data/retrieval-experiments/.../admission-judge-*-cache` | Frozen semantic-pair admission decisions for development runs |
+| `data/workflow-caches/parm-admission-*` | Frozen semantic-pair admission decisions, namespaced per retrieval index |
+| `data/workflow-caches/trajectories-*` | Replayable agent turns keyed by the full request |
 | `data/response-caches/...` | Reusable response-model calls keyed by the full request |
 | `data/benchmark-results/*.jsonl` | One prediction and trace per case |
 | `data/benchmark-results/*.config.json` | Exact condition, model, constants, and artifact hashes |
@@ -260,6 +259,83 @@ Canonical runs depend on tracked, hashed artifacts:
 
 The CLI loads GBrain only while intentionally rebuilding the index. A canonical
 benchmark run reads the frozen artifact directly.
+
+## PARMBench Workflows
+
+The deterministic suite compresses a trajectory into one observation and one
+label. That makes it exact and cheap, and it is also its ceiling: it cannot
+show whether late-cued memory changes what an agent *does* when it has tools
+and several turns to use them.
+
+PARMBench Workflows is the executable second suite. The agent gets an ordinary
+goal and a seeded tool environment, works through a real trajectory, and is
+scored on the environment it leaves behind. The triplet contract is unchanged:
+every scenario has a positive, a cue-ablated twin, and a memory-included
+ceiling.
+
+```mermaid
+flowchart TB
+    A["Ordinary user goal"] --> B["Agent turn"]
+    B --> C{"Tool call or<br/>final summary?"}
+    C -->|tool call| D["Environment adapter<br/>seeded from a tracked fixture"]
+    D --> E["Tool observation<br/>step index recorded"]
+    E --> F["Memory policy<br/>offered the observation"]
+    F -->|admits nothing| B
+    F -->|admits memory| G["Memory handoff<br/>triggering region plus evidence"]
+    G --> B
+    C -->|final summary| H["Final environment state"]
+    D --> H
+    H --> I["Assertion engine<br/>decisive, workflow, restraint"]
+    E --> J["Timing record<br/>cue, admission, decisive action"]
+    F --> J
+    I --> K["Prediction JSONL"]
+    J --> K
+    K --> L["Deterministic workflow scorer"]
+```
+
+The memory policy is a sidecar, not a step in the agent's plan. It is offered
+every observation as it becomes visible and its admissions reach the agent
+before the next turn. That models parallel retrieval optimistically and it
+models it *identically* for every output-triggered condition, so a difference
+between them is a difference in admission, not in plumbing.
+
+### Environment adapters
+
+An adapter owns the tool surface, the state, and the mutation log. The pilot
+adapter is `github_fixture`: issues, pull requests, branches, files, comments,
+and reviewers, driven by fifteen GitHub-shaped tools.
+
+Every case rebuilds its environment from a tracked JSON fixture, so a positive
+and its cue-ablated twin never share mutable state and cases can run
+concurrently. Nothing reaches a live account.
+
+The pilot fixture derives its repository shape and its verification style from
+an MCPMark task under Apache-2.0, pinned by revision in every case. MCPMark's
+own GitHub service duplicates a seed repository into a real private org over
+the REST API, which needs credentials, mutates account-visible state, and
+cannot give paired variants independent resets inside one parallel run. What
+the local adapter gives up in exchange is real pagination, rate limits, and API
+error taxonomies. A `mcpmark_live` adapter can register under the same protocol
+when running against a real org is worth that cost.
+
+### What the workflow scorer reads
+
+Three independent records, so a regression is attributable:
+
+| Record | Question |
+| --- | --- |
+| Final environment state | Did the agent do the right thing? |
+| Retrieval trace | Was the right memory admitted, and only it? |
+| Step log | Did the memory arrive after the cue and before the action it governs? |
+
+Assertions carry a role. `decisive` assertions are the outcome memory is
+supposed to change and they differ between the positive and its control, which
+validation enforces. `workflow` assertions measure ordinary task competence and
+are shared. `restraint` assertions catch collateral damage and false
+intervention. Scoring them separately keeps a system from looking good on the
+decision because it completed more boilerplate.
+
+There is no LLM judge anywhere in this scorer.
 
 ## Module map
 
@@ -274,6 +350,14 @@ benchmark run reads the frozen artifact directly.
 | `cli.py` | Validate experiment axes, run cases, write config sidecars, and score results |
 | `workbench.py` and `web/` | Local browser inspection of cases, traces, and responses |
 | `retrieval_export.py` | Freeze neutral GBrain data into the validated index format |
+| `workflows/case.py` | Load and validate workflow cases against the triplet contract |
+| `workflows/environment.py` | Adapter protocol, tool specs, and the shared step log |
+| `workflows/github_env.py` | The isolated GitHub-shaped environment |
+| `workflows/agent.py` | Tool-calling trajectory turns, memory handoff, and replay cache |
+| `workflows/policies.py` | When a system may search memory and what it may see |
+| `workflows/verify.py` | Declarative final-state assertion kinds |
+| `workflows/runner.py` | Build the retrieval resource, run a case, verify the result |
+| `workflows/scoring.py` | Decision, admission, timing, and restraint metrics |
 
 ## Design trade-offs
 

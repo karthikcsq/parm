@@ -69,9 +69,8 @@ response quality, or flag cases for human review. It is never the primary
 correctness oracle, and no proprietary judge decides a published PARMBench
 score.
 
-Metrics are also reported by evaluation split and corpus. In the PersonaMem-v2
-development benchmark, each corpus is one persona, so the corpus breakdown is
-the per-persona view.
+Metrics are also reported by evaluation split and corpus. Where a benchmark
+puts one persona per corpus, the corpus breakdown is the per-persona view.
 
 ## Failure taxonomy
 
@@ -86,6 +85,71 @@ the per-persona view.
 - `privacy_overexposure`
 - `choice_not_identifiable`
 - `scorer_gold_mismatch`
+
+## PARMBench Workflows
+
+The workflow suite keeps this contract and changes the unit of evaluation:
+
+```text
+ordinary goal -> agent trajectory over real tools -> final environment state
+```
+
+The positive variant hides the decisive cue inside one tool observation. Its
+cue-ablated twin patches only that observation's source and leaves the rest of
+the environment identical. The memory-included ceiling reuses the positive
+environment and puts the commitment in the goal.
+
+### Correctness
+
+A workflow case declares assertions rather than a choice label. Each assertion
+has a role:
+
+| Role | Meaning |
+| --- | --- |
+| `decisive` | The outcome memory is supposed to change. Must differ between the positive and its control. |
+| `workflow` | Ordinary task competence, shared across variants. |
+| `restraint` | Collateral damage and false intervention. |
+
+A case passes when every `decisive` assertion passes. Workflow and restraint
+assertions are reported separately and never substitute for the decision.
+
+Assertions read the final state, the mutation log, and the step log. They never
+read the agent's prose. A summary that describes the right action while the
+repository shows the wrong one fails.
+
+### Workflow metrics
+
+Alongside the shared admission, poison, staleness, and privacy metrics:
+
+- `correct_memory_conditioned_decision_rate`: every decisive assertion passes.
+- `cue_ablated_false_intervention_rate`: controls whose decisive assertions
+  fail.
+- `cue_ablated_admission_rate`: controls that admitted any memory at all. A
+  system can survive the decision while still failing restraint here, and the
+  two are worth seeing apart.
+- `timely_gold_admission_rate`: positives where a gold source was admitted at
+  or after the step that revealed the cue and no later than the step that took
+  the decision-bearing action.
+- `late_gold_admission_rate`: positives that recalled the memory only after
+  acting on it.
+- `workflow_completion_rate`: mean fraction of workflow assertions passing.
+- `restraint_rate`, `ceiling_decisive_success_rate`.
+
+Timing is a first-class result, not a diagnostic. Memory that arrives after the
+merge is not a slower success; it is a failure that happens to log the right
+source.
+
+### Fairness requirements
+
+Every condition receives the same model, environment adapter, fixture, tool
+surface, corpus, retrieval index, and per-observation retrieval budget. Only
+the memory policy changes.
+
+`input_rag` sees the original goal and nothing else. Output-triggered
+conditions, including PARM, see the same observation stream in the same order.
+Because each condition steers its own trajectory, the streams diverge once the
+agents diverge; that divergence is the effect under test, not a confound to
+remove.
 
 ## Interpretation
 

@@ -21,10 +21,6 @@ from parm_bench.dataset import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "data" / "benchmark_v1"
-PERSONAMEM_DATASET = ROOT / "data" / "benchmark_personamem_v0"
-PERSONAMEM_MIXED_DATASET = (
-    ROOT / "data" / "benchmark_personamem_mixed_v0"
-)
 
 PARMBENCH_PERSONAS = (7, 8)
 PARMBENCH_PROMPT = (
@@ -205,101 +201,6 @@ class DatasetValidationTests(unittest.TestCase):
         self.assertEqual(len({case["base_case_id"] for case in cases}), 18)
         self.assertEqual({case["corpus_id"] for case in cases}, {"amara-life-v1"})
 
-    def test_personamem_development_dataset_is_valid_and_persona_disjoint(
-        self,
-    ) -> None:
-        cases = load_cases(PERSONAMEM_DATASET)
-        validate_cases(cases)
-        self.assertEqual(len(cases), 90)
-        self.assertEqual(len({case["base_case_id"] for case in cases}), 30)
-        self.assertEqual(len({case["corpus_id"] for case in cases}), 30)
-        self.assertTrue(
-            all(
-                case["provenance"]["source_split"] == "train_text"
-                for case in cases
-            )
-        )
-
-    def test_personamem_mixed_dataset_is_valid_without_listing_rows(
-        self,
-    ) -> None:
-        cases = load_cases(PERSONAMEM_MIXED_DATASET)
-        validate_cases(cases)
-        self.assertEqual(len(cases), 90)
-        self.assertEqual(len({case["base_case_id"] for case in cases}), 30)
-        self.assertEqual(len({case["corpus_id"] for case in cases}), 30)
-        self.assertEqual(
-            {
-                case["provenance"]["envelope_style"]
-                for case in cases
-            },
-            {
-                "research_notebook",
-                "forwarded_thread",
-                "meeting_dump",
-                "web_clippings",
-                "working_draft",
-                "mixed_markdown",
-            },
-        )
-        self.assertTrue(
-            all(
-                sum(
-                    line.startswith(LISTING_PREFIXES)
-                    for line in case["observation_text"].splitlines()
-                )
-                < 10
-                for case in cases
-            )
-        )
-        legacy_positive = {
-            case["base_case_id"]: case
-            for case in load_cases(PERSONAMEM_DATASET)
-            if case["variant"] == "positive"
-        }
-        mixed_by_base = {
-            case["base_case_id"]: {
-                variant["variant"]: variant
-                for variant in cases
-                if variant["base_case_id"] == case["base_case_id"]
-            }
-            for case in cases
-        }
-        for base_case_id, variants in mixed_by_base.items():
-            positive = variants["positive"]
-            control = variants["cue-ablated"]
-            target_name = positive["decisions"]["memory_conditioned"]["choice"]
-            legacy_base_case_id = base_case_id.replace(
-                "parm-personamem-mixed-",
-                "parm-personamem-",
-            )
-            legacy_target = legacy_positive[legacy_base_case_id][
-                "decisions"
-            ]["memory_conditioned"]["choice"]
-            self.assertNotEqual(target_name, legacy_target)
-            self.assertEqual(
-                positive["observation_text"].count(target_name), 1
-            )
-            self.assertEqual(
-                control["observation_text"].count(target_name), 1
-            )
-            self.assertIn(
-                "does not describe a specialized",
-                control["observation"]["replacements"][0]["new"],
-            )
-
-    def test_personamem_profile_rejects_hidden_preference_prompt_leakage(
-        self,
-    ) -> None:
-        cases = load_cases(PERSONAMEM_DATASET)
-        broken = copy.deepcopy(cases)
-        positive = next(case for case in broken if case["variant"] == "positive")
-        positive["prompt"] += " Enjoys historical dramas on TV."
-        with self.assertRaises(DatasetValidationError) as context:
-            validate_cases(broken)
-        self.assertIn("preference or query leaks", str(context.exception))
-
-    def test_every_base_case_has_all_three_variants(self) -> None:
         cases = load_cases(DATASET)
         by_base: dict[str, set[str]] = {}
         for case in cases:

@@ -253,58 +253,16 @@ For another workflow environment, pass both the dataset and its frozen index;
 `--index` takes precedence over the legacy tier mapping. This check embeds the
 goals, so it needs `OPENAI_API_KEY`; the structural workflow tests do not.
 
-```powershell
-& 'C:\Users\karth\anaconda3\python.exe' scripts\evaluate_workflows_v1_fairness.py `
-  --dataset data\workflows_email_calendar_v1 `
-  --index data\retrieval-indexes\ops-lead-email-calendar-v1
-```
-
 Keep first-pass outputs and caches in environment-specific namespaces. Start a
-new namespace whenever the dataset, index, model, or prompt changes; do not
-reuse a cache from GitHub workflows for Email + Calendar. The v1 runner keeps
-its historic defaults, but accepts explicit values for a new environment:
+new namespace whenever the dataset, index, model, or prompt changes. For a
+genuinely fresh run, use a new, empty `-CacheNamespace` and result root rather
+than deleting a replay cache that may be needed to reproduce an older report.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_workflows_v1_matrix.ps1 `
-  -Dataset data\workflows_email_calendar_v1 `
-  -Index data\retrieval-indexes\ops-lead-email-calendar-v1 `
-  -Results data\benchmark-results\workflows-email-calendar-v1-first-pass `
-  -Caches data\workflow-caches `
-  -CacheNamespace email-calendar-v1-first-pass
-& 'C:\Users\karth\anaconda3\python.exe' scripts\summarize_workflows_v1_results.py `
-  --results data\benchmark-results\workflows-email-calendar-v1-first-pass `
-  --dataset data/workflows_email_calendar_v1
-```
-
-For a genuinely fresh run, use a new, empty `-CacheNamespace` and result root
-rather than deleting a replay cache that may be needed to reproduce an older
-report.
-
-### Natural Email + Calendar v2 rates
-
-The v2 natural pilot measures target-bound environmental state, not reply prose
-or one exact normal action. After scoring independently sampled workflow runs,
-render its per-triplet and aggregate positive, cue-ablated control, and
-memory-included oracle rates with:
-
-```powershell
-$env:PYTHONPATH = 'src'
-python scripts\summarize_email_calendar_v2_results.py `
-  data\benchmark-results\workflows-email-calendar-v2-diagnostic
-```
-
-The report includes `cue_triggered_lift` (positive minus control) and, when
-both conditions are present, `parm_minus_no_memory_positive` plus the
-PARM-minus-no-memory cue-lift difference.  These are rates over samples; do
-not impose a fixed `3/3` gate.  Any claim about a retrieval effect requires
-fresh independent samples and an explicit threshold preregistered before the
-comparison.
-
-Run this after any edit to a goal or a corpus, before spending a run. If
-prompt-only retrieval finds a gold source from the goal alone, the scenario is
-no longer testing late-cued retrieval and input RAG will win for the wrong
-reason. Two things trip it: a corpus small enough that top-five covers much of
-it, and a goal written in the memory's own vocabulary.
+The former Email + Calendar pilots are not active workflow suites. Their
+construction limits and retirement rationale are preserved in
+[Retired Email + Calendar workflow pilots](history/retired-email-calendar-workflow-pilots.md).
+A replacement must be introduced under a fresh dataset version only after
+source-included ceiling and prompt-only fairness certification.
 
 ## Inspect retrieval in the browser
 

@@ -228,9 +228,19 @@ __marimo__/
 .Codex/
 .hermes/
 
-# Disposable workflow replay caches and retired diagnostics. Canonical frozen
-# artifacts live under their tracked data namespaces; these are local only.
+# Generated evaluation payloads. Git holds source, cases, verifiers, and cited
+# reports; indexes, model traces, and replay caches belong in external artifacts.
+data/benchmark-results/*
+!data/benchmark-results/README.md
 data/workflow-caches/
+data/retrieval-indexes/
+data/response-caches/
+data/construction-caches/
+data/evidence-gate-caches/
+data/expansion-caches/
+data/decision-validity-caches/
+data/selection-predicate-caches/
+data/memory-quality-caches/
 
 # Repo-local gbrain runtime, model cache, corpus, config, and database.
 .gbrain-local/

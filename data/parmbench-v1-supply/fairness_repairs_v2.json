@@ -1,0 +1,720 @@
+{
+  "drops": [
+    {
+      "base_case_id": "parmbench-v1-p104-187-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p106-385-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p112-652-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p143-400-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p150-520-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p16-127-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p162-421-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p162-439-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p162-497-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p164-411-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,control_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p164-561-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p170-118-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option,ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p170-429-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option,ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p173-623-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p175-604-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p178-539-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p181-433-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option,ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p187-410-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p188-238-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p191-186-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,control_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p229-441-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: control_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p231-586-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p246-528-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option,ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p337-608-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p348-189-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p381-603-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p393-66-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p404-372-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p413-275-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p414-327-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control,ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p42-393-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p424-397-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p437-506-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control,ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p441-570-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory"
+    },
+    {
+      "base_case_id": "parmbench-v1-p454-176-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory"
+    },
+    {
+      "base_case_id": "parmbench-v1-p464-635-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p475-552-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory"
+    },
+    {
+      "base_case_id": "parmbench-v1-p476-527-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p481-431-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p489-180-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p489-658-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p490-128-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p491-311-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p497-653-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p498-477-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ordinary_evidence_too_weak_in_control,ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p501-102-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p514-354-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p53-599-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p532-634-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p544-206-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p544-380-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p557-459-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p567-369-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p596-347-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p603-461-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p612-435-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p619-582-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p62-259-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p625-579-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p669-235-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p669-489-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p673-622-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p688-226-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option,ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p691-498-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p704-584-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p706-577-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p719-339-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,control_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p720-427-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p726-49-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p727-419-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p729-321-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: positive_chose_neither_declared_option,ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p732-457-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p739-617-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p757-494-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p768-597-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p774-530-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p784-462-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p786-571-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p789-381-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p791-169-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p803-600-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p808-588-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_chose_neither_declared_option"
+    },
+    {
+      "base_case_id": "parmbench-v1-p83-446-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p834-348-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p835-193-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p839-583-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p840-488-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p847-264-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p861-24-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p869-19-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p898-353-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p909-568-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p929-399-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p931-324-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p955-452-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    },
+    {
+      "base_case_id": "parmbench-v1-p98-60-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: cue_too_strong_without_memory,ordinary_evidence_too_weak_in_control"
+    },
+    {
+      "base_case_id": "parmbench-v1-p993-104-s2",
+      "reason": "fairness_unrepaired_after_2_attempts: ceiling_memory_not_actionable"
+    }
+  ],
+  "repairs": {
+    "parmbench-v1-p115-343-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "positive"
+      ]
+    },
+    "parmbench-v1-p115-507-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "cue-ablated",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p121-207-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p14-326-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p140-533-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p154-639-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p19-33-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p192-21-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p205-11-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p224-298-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive"
+      ]
+    },
+    "parmbench-v1-p300-598-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p350-661-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p367-341-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p392-573-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p417-480-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p423-54-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p437-519-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p440-466-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "positive"
+      ]
+    },
+    "parmbench-v1-p459-574-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p464-484-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p466-505-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p483-566-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p488-515-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p49-591-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p514-115-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "positive"
+      ]
+    },
+    "parmbench-v1-p518-534-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "positive"
+      ]
+    },
+    "parmbench-v1-p535-349-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p535-526-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p574-386-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p611-269-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p663-607-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p696-460-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p708-382-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p723-538-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive"
+      ]
+    },
+    "parmbench-v1-p724-627-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p736-425-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p739-346-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p751-456-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "cue-ablated",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p79-391-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p828-267-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p855-595-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p877-22-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p880-237-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p900-396-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive"
+      ]
+    },
+    "parmbench-v1-p929-417-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "cue-ablated",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p930-553-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p943-383-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p945-75-s2": {
+      "attempt": 2,
+      "failed_variants": [
+        "positive",
+        "cue-ablated",
+        "memory-included"
+      ]
+    },
+    "parmbench-v1-p960-424-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    },
+    "parmbench-v1-p981-72-s2": {
+      "attempt": 1,
+      "failed_variants": [
+        "positive",
+        "cue-ablated"
+      ]
+    }
+  }
+}

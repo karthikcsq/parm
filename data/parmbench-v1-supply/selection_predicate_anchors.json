@@ -1,0 +1,59 @@
+{
+  "description": "User-approved anchor scenarios for the selection-predicate construction stage. Each anchor's evidence span was verified verbatim against the raw PersonaMem record named by source_id. These are construction anchors, not licenses to strengthen the source: the span_caveat field records exactly how the fact sits in its source turn.",
+  "anchors": [
+    {
+      "anchor_id": "anchor-dessert-menu",
+      "corpus_id": "personamem-v2/train/persona-19",
+      "source_id": "notes/persona-19/turns-0085-0088",
+      "evidence_span": "But I’ve learned to skip the syrupy desserts, not just for the sake of staying sharp, but because I’ve seen what unchecked habits can do in my own family. Instead, I’ll choose a small bowl of fresh fruit",
+      "span_caveat": "The span is the body of a first-person creative piece the user submitted for editing. The habit statement is user-authored autobiography; the surrounding turn is an editing request. The deeper family-health motivation is stated but is sensitive context, not part of the predicate.",
+      "fact": "The user skips syrupy desserts and chooses fresh fruit instead.",
+      "selection_predicate": "Prefer a plain fresh-fruit dessert; avoid syrup-soaked desserts.",
+      "relation_type": "stable_preference",
+      "task_family": "menu_or_catering_selection",
+      "task_shape": "Choose one dessert from a realistic menu.",
+      "ordinary_winner_shape": "A dessert that wins on chef recommendation, signature status, or broad popularity; gulab jamun described as syrup-soaked is a valid option.",
+      "target_shape": "Plain fresh strawberries or a comparably direct fresh-fruit option.",
+      "cue_rule": "The late cue exposes the target's plain fresh-fruit property without stating the persona fact or labeling it personalized.",
+      "control_rule": "Remove the fresh/plain property so the target no longer satisfies the predicate; must not redirect the memory to a third item.",
+      "sensitive": true,
+      "sensitive_terms": ["family health history"]
+    },
+    {
+      "anchor_id": "anchor-reading-group",
+      "corpus_id": "personamem-v2/train/persona-28",
+      "source_id": "notes/persona-28/turns-0085-0086",
+      "evidence_span": "I am drafting a piece on how theological traditions adjust when entering politically diverse societies",
+      "span_caveat": "Explicit first-person statement of an active writing project, embedded in a message the user asked to have refined. The project statement is the user's own words.",
+      "fact": "The user is actively drafting a piece on how theological traditions adjust when entering politically diverse societies.",
+      "selection_predicate": "Prefer reading material directly useful to the active project on theological traditions in politically diverse societies.",
+      "relation_type": "active_project_relevance",
+      "task_family": "reading_or_study_material_selection",
+      "task_shape": "Find a book to discuss with a college reading group.",
+      "ordinary_winner_shape": "A strong general or science-fiction pick that wins on normal group-selection evidence such as acclaim or discussability.",
+      "target_shape": "A book about theological traditions in pluralistic societies.",
+      "cue_rule": "The target's description contains the theological/pluralism affordance; broad topic overlap elsewhere is insufficient.",
+      "control_rule": "Replace only that affordance with an unrelated theme.",
+      "sensitive": false,
+      "sensitive_terms": []
+    },
+    {
+      "anchor_id": "anchor-vintage-store",
+      "corpus_id": "personamem-v2/train/persona-855",
+      "source_id": "notes/persona-855/turns-0105-0108",
+      "evidence_span": "pulled the old NES out of the closet and played through my favorite side scroller",
+      "span_caveat": "First-person account in the user's own post submitted for editing; ownership is expressed by taking the console from their own closet and playing it. A follow-up turn in the same record adopts the assistant's 'my old NES' phrasing.",
+      "fact": "The user owns an old NES console.",
+      "selection_predicate": "Prefer vintage items usable with or specifically made for an NES.",
+      "relation_type": "owned_item_compatibility",
+      "task_family": "vintage_or_secondhand_finds",
+      "task_shape": "Say whether anything at a vintage-items store is interesting.",
+      "ordinary_winner_shape": "An item that wins on ordinary collector evidence such as rarity, condition, or store prominence.",
+      "target_shape": "An NES cartridge, compatible accessory, or another item directly usable with the owned console.",
+      "cue_rule": "Compatibility appears in a late listing detail with little decision weight without the memory.",
+      "control_rule": "Remove NES compatibility without adding compatibility elsewhere.",
+      "sensitive": false,
+      "sensitive_terms": []
+    }
+  ]
+}

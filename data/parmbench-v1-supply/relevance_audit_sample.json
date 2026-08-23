@@ -1,0 +1,176 @@
+[
+ {
+  "base_case_id": "parmbench-v1-p102-182",
+  "capability": "relationship_named_entity",
+  "known_failure": true,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p113-223",
+  "capability": "paraphrased_semantic_fact",
+  "known_failure": true,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p172-153",
+  "capability": "one_hop_relational",
+  "known_failure": true,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p177-204",
+  "capability": "negative_preference_exclusion",
+  "known_failure": true,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p19-33-s2",
+  "capability": "negative_preference_exclusion",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p190-172",
+  "capability": "one_hop_relational",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p223-567-s2",
+  "capability": "one_hop_relational",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p28-251",
+  "capability": "schedule_commitment",
+  "known_failure": true,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p284-100",
+  "capability": "paraphrased_semantic_fact",
+  "known_failure": false,
+  "strong_candidate": true
+ },
+ {
+  "base_case_id": "parmbench-v1-p350-39",
+  "capability": "negative_preference_exclusion",
+  "known_failure": false,
+  "strong_candidate": true
+ },
+ {
+  "base_case_id": "parmbench-v1-p367-341-s2",
+  "capability": "schedule_commitment",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p417-480-s2",
+  "capability": "paraphrased_semantic_fact",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p435-212-s2",
+  "capability": "negative_preference_exclusion",
+  "known_failure": true,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p459-574-s2",
+  "capability": "schedule_commitment",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p461-63",
+  "capability": "one_hop_relational",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p471-418-s2",
+  "capability": "relationship_named_entity",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p497-389-s2",
+  "capability": "schedule_commitment",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p509-109",
+  "capability": "paraphrased_semantic_fact",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p535-349-s2",
+  "capability": "negative_preference_exclusion",
+  "known_failure": true,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p535-526-s2",
+  "capability": "relationship_named_entity",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p553-44",
+  "capability": "direct_lexical_fact",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p648-560-s2",
+  "capability": "relationship_named_entity",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p666-244",
+  "capability": "paraphrased_semantic_fact",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p681-495-s2",
+  "capability": "direct_lexical_fact",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p747-77",
+  "capability": "negative_preference_exclusion",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p751-456-s2",
+  "capability": "negative_preference_exclusion",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p855-595-s2",
+  "capability": "one_hop_relational",
+  "known_failure": false,
+  "strong_candidate": true
+ },
+ {
+  "base_case_id": "parmbench-v1-p940-464-s2",
+  "capability": "direct_lexical_fact",
+  "known_failure": false,
+  "strong_candidate": false
+ },
+ {
+  "base_case_id": "parmbench-v1-p945-75-s2",
+  "capability": "direct_lexical_fact",
+  "known_failure": true,
+  "strong_candidate": false
+ }
+]

@@ -1,0 +1,38 @@
+{
+  "capability": {
+    "paraphrased_semantic_fact": 1
+  },
+  "cases": 3,
+  "construction_prompt_version": "parmbench_construction_v6",
+  "decision_validity_gate": true,
+  "decision_validity_rejections": {
+    "assumptions_required": 13,
+    "capability_label_valid": 14,
+    "control_valid": 6,
+    "cue_alone_sufficient": 4,
+    "cue_specificity": 2,
+    "judge_accept": 19,
+    "memory_affordance_entailment": 12,
+    "ordinary_winner_valid": 9,
+    "rejection_reasons": 22
+  },
+  "dropped": 47,
+  "dropped_reasons": {
+    "control_residual_claim_overlap": 8,
+    "decision_validity_rejected": 24,
+    "decoy_annotates_personalisation_axis": 7,
+    "evidence_span_leaks_into_memory_text": 1,
+    "family_cannot_realize_predicate": 6,
+    "prompt_states_ordinary_mechanism_as_instruction": 1
+  },
+  "live_construction_calls": 0,
+  "personas": 1,
+  "relation_type": {
+    "stable_preference": 1
+  },
+  "repaired": 0,
+  "scenarios": 1,
+  "task_family": {
+    "supplies_selection": 1
+  }
+}

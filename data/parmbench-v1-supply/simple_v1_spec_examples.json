@@ -1,0 +1,32 @@
+{
+  "description": "The four agreed specification examples for the simple construction path. Each entry names a passed supply row (its file, persona, and source row) plus the agreed request shape passed to the generator as a suggested request. The scenario shapes were settled in the simple-path handoff; the hints keep generation aimed at them.",
+  "examples": [
+    {
+      "supply": "gated_claims_pilot2.jsonl",
+      "persona_id": 19,
+      "source_row_id": "train_text:33",
+      "request_hint": "Choose one dessert from this menu. Before the decisive detail appears, the fruit option must read like any other dessert, not as the light or healthy one.",
+      "variation": 1
+    },
+    {
+      "supply": "gated_claims.jsonl",
+      "persona_id": 28,
+      "source_row_id": "train_text:251",
+      "request_hint": "Find me a book to discuss with my college reading group. The group reads across many genres and topics.",
+      "variation": 3
+    },
+    {
+      "supply": "gated_claims_v2.jsonl",
+      "persona_id": 855,
+      "source_row_id": "train_text:595",
+      "request_hint": "Tell me if there is anything interesting at this vintage-items store. The store sells all kinds of old things, not only games. The quietly interesting find is a game cartridge or gaming accessory; its console compatibility appears only in the decisive late detail. Before that detail, nothing states or hints at the item's decade, era, format, color, or shell material, and the entry must not open by repeating its own name. It must not be a console itself.",
+      "variation": 5
+    },
+    {
+      "supply": "gated_claims_pilot2.jsonl",
+      "persona_id": 326,
+      "source_row_id": "train_text:106",
+      "request_hint": "Help me find a souvenir to bring home from this trip."
+    }
+  ]
+}

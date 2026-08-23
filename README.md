@@ -1,8 +1,10 @@
 # PARM
 
-**PARM is a causal benchmark suite for output-conditioned personal memory in AI agents.**
+**PARM is a causal benchmark suite for when an agent should use personal memory during a real workflow.**
 
-The benchmark targets a difficult and consequential failure mode: an agent begins with an ordinary request, then discovers a decisive cue inside a tool result, document, or other late observation. Prompt-time retrieval cannot see that cue. Naively searching the entire observation can find the right memory, but often floods the agent with unrelated personal context.
+**PARMBench Workflows is the primary evaluation track.** An agent receives an ordinary request, works through a seeded tool environment, discovers a decisive cue in a late observation, and is scored on the environment state it leaves behind. Prompt-time retrieval cannot see that cue. Naively searching the whole observation can find the right memory, but often floods the agent with unrelated personal context or changes an action when the cue is absent.
+
+The controlled PARMBench calibration batch is the companion mechanism track: it isolates the same late-cue retrieval question in small, reproducible causal triplets. It is useful for diagnosing retrieval and admission behavior, but it is not the project’s end goal.
 
 PARM asks a stricter question:
 

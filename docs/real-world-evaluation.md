@@ -11,12 +11,12 @@ judge as a scaled approximation only after its agreement and failure modes are
 measured. The [larger dataset survey](dataset-candidates.md) recommends public
 sources for both layers.
 
-The two suites answer different questions:
+The two tracks answer different questions:
 
-| Suite | Question |
-| --- | --- |
-| Deterministic PARMBench | Did the retrieval policy notice the new cue, admit the right memory, avoid the control, and produce the declared choice? |
-| PARMBench Workflows | Did output-triggered memory change what an agent actually did with real tools, in time to matter, without disturbing the control? |
+| Track | Role | Question |
+| --- | --- | --- |
+| PARMBench Workflows | Primary | Did output-triggered memory change what an agent actually did with real tools, in time to matter, without disturbing the control? |
+| Controlled PARMBench calibration | Companion mechanism gate | Did the retrieval policy notice the new cue, admit the right memory, avoid the control, and produce the declared choice? |
 
 ## What the current benchmark proves
 

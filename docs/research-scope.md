@@ -81,9 +81,7 @@ candidate ranking, admission, focused evidence handoff, and causal evaluation.
 Canonical benchmark runs load the tracked export directly and do not call
 GBrain search.
 
-The current benchmark evaluates one visible final choice. It does not yet
-establish natural drafting quality, multi-step planning, asynchronous latency,
-or broad product usefulness.
+The controlled calibration benchmark evaluates one visible final choice. PARMBench Workflows is the primary track for multi-step planning and tool use: it scores final environment state, whether memory was admitted before the governed action, and cue-ablated restraint. Neither track yet establishes broad product usefulness, natural drafting quality, or end-to-end latency.
 
 ## Hypotheses and current evidence
 
@@ -114,12 +112,7 @@ fictional, the outputs are generated catalogs, and V5 uses the expansion as
 development data. The next external-validity step is described in
 [Real-World Evaluation](real-world-evaluation.md).
 
-PARMBench Workflows begins to close the "generated catalogs" gap by scoring the
-environment an agent leaves behind after a real tool trajectory. It is one
-scenario at one sample per condition, so it demonstrates that the mechanism
-survives contact with a multi-step task; it does not yet measure how often.
-Its first-pass numbers are in the
-[workflows first pass](results/workflows-v1-first-pass.md).
+PARMBench Workflows is the primary evaluation track for closing the "generated catalogs" gap. It currently contains six deterministic GitHub-like scenario triplets (18 cases) and scores the environment an agent leaves behind after a tool trajectory. Its results remain mixed and one environment/model family is not sufficient to establish general workflow performance; the next evidence step is independent workflow families with certified ceilings.
 
 ## Evaluation principles
 

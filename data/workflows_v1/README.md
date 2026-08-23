@@ -8,7 +8,7 @@ This directory is a manifest for those artifacts. The guides live in
 ## Contents
 
 ```text
-cases.jsonl                      12 cases: four scenarios, three variants each
+cases.jsonl                      18 cases: six scenarios, three variants each
 dataset_manifest.json            corpus roots, source prefixes, upstream pins
 fixtures/                        initial environment state, one file per variant
 corpora/workflow-eng-lead-v1/    raw personal history, tiers, and manifests

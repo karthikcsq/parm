@@ -226,6 +226,11 @@ __marimo__/
 .claude/
 .codex/
 .Codex/
+.hermes/
+
+# Disposable workflow replay caches and retired diagnostics. Canonical frozen
+# artifacts live under their tracked data namespaces; these are local only.
+data/workflow-caches/
 
 # Repo-local gbrain runtime, model cache, corpus, config, and database.
 .gbrain-local/
